@@ -1,0 +1,51 @@
+{% extends "templates/web.html" %}
+
+{% block style %}
+<style>
+    {% include "templates/includes/signup/frappe-theme.css" %}
+	{% include "templates/includes/prepare_site/prepare_site.css" %}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<section>
+	<div class="container">
+		<div class="card w-500 card-body custom-padding">
+			<div class="text-center">
+				<h4> Your onehash account is being prepared.</h4>
+			</div>
+			<div class="lds-css ng-scope">
+				<div class="lds-spinner" style="margin:0 auto;">
+					<div></div>
+					<div></div>
+					<div></div>
+					<div></div>
+					<div></div>
+					<div></div>
+					<div></div>
+					<div></div>
+				</div>
+			</div>
+			<!-- <div class="progress-chart center-progress" style ="width: 150px;">
+				<div class="progress">
+					<div class="progress-bar" style="width: 2%; background-color: #5e64ff;"></div>
+				</div>
+			</div> -->
+			<div class="text-center">
+				<p class="setup-message text-muted" style="padding:10px;">Validating request</p>
+			</div>
+			<div class="text-center">
+				<p class="text-muted" style="padding:10px;">Please do not refresh this page!</p>
+			</div>
+		</div>
+	</div>
+</section>
+{% endblock %}
+
+{% block script %}    
+    <script>
+        {% include "templates/includes/prepare_site/prepare_site.js" %}
+    </script>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

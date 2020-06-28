@@ -1,0 +1,15 @@
+<p>Welcome {{ first_name }}{% if last_name %} {{ last_name}}{% endif %},</p>
+<p>{{_("A new OneHash account has been created for you at {0}").format(site_url)}}.</p>
+<p>{{_("Your login id is")}}: <b>{{ user }}</b>
+<p>{{_("Thanks for signing up for OneHash.")}}</p>
+
+<p>You can find the project's documentation <a href="{{help_url}}" target="_blank">Help</a></p>
+
+<p>We wish you a great journey with OneHash.</p><br>
+
+{% if user_fullname != "Administrator" %}
+<br>
+<p>{{_("Thank you")}},<br>
+Team OneHash</p>
+{% endif %}
+<br>

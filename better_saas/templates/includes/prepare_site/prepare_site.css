@@ -1,0 +1,103 @@
+.center-progress {
+    position: absolute;
+    margin-top: 130px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0px;
+    padding-top: 30px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height:50px;
+}
+.custom-padding {
+    padding: 100px 20px;
+}
+
+@keyframes lds-spinner {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@-webkit-keyframes lds-spinner {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.lds-spinner {
+  position: relative;
+}
+.lds-spinner div {
+  left: 95px;
+  top: 79px;
+  position: absolute;
+  -webkit-animation: lds-spinner linear 1s infinite;
+  animation: lds-spinner linear 1s infinite;
+  background: #5e64ff;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  -webkit-transform-origin: 5px 21px;
+  transform-origin: 5px 21px;
+}
+.lds-spinner div:nth-child(1) {
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+  -webkit-animation-delay: -0.875s;
+  animation-delay: -0.875s;
+}
+.lds-spinner div:nth-child(2) {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  -webkit-animation-delay: -0.75s;
+  animation-delay: -0.75s;
+}
+.lds-spinner div:nth-child(3) {
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+  -webkit-animation-delay: -0.625s;
+  animation-delay: -0.625s;
+}
+.lds-spinner div:nth-child(4) {
+  -webkit-transform: rotate(135deg);
+  transform: rotate(135deg);
+  -webkit-animation-delay: -0.5s;
+  animation-delay: -0.5s;
+}
+.lds-spinner div:nth-child(5) {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+  -webkit-animation-delay: -0.375s;
+  animation-delay: -0.375s;
+}
+.lds-spinner div:nth-child(6) {
+  -webkit-transform: rotate(225deg);
+  transform: rotate(225deg);
+  -webkit-animation-delay: -0.25s;
+  animation-delay: -0.25s;
+}
+.lds-spinner div:nth-child(7) {
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+  -webkit-animation-delay: -0.125s;
+  animation-delay: -0.125s;
+}
+.lds-spinner div:nth-child(8) {
+  -webkit-transform: rotate(315deg);
+  transform: rotate(315deg);
+  -webkit-animation-delay: 0s;
+  animation-delay: 0s;
+}
+.lds-spinner {
+  width: 200px !important;
+  height: 200px !important;
+  -webkit-transform: translate(-100px, -100px) scale(1) translate(100px, 100px);
+  transform: translate(-100px, -100px) scale(1) translate(100px, 100px);
+}
