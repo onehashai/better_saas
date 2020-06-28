@@ -1,0 +1,119 @@
+{
+ "creation": "2020-03-04 17:50:02.993591",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "domain",
+  "mysql_root_password",
+  "install_erpnext",
+  "include_management_site_subdomain",
+  "management_subdomain",
+  "column_break_4",
+  "default_limit_for_users",
+  "default_limit_for_emails",
+  "default_limit_for_space",
+  "default_limit_for_email_group",
+  "default_expiry"
+ ],
+ "fields": [
+  {
+   "fieldname": "domain",
+   "fieldtype": "Data",
+   "label": "Domain"
+  },
+  {
+   "fieldname": "mysql_root_password",
+   "fieldtype": "Data",
+   "label": "Mysql Root Password"
+  },
+  {
+   "default": "1",
+   "description": "Install ERPNEXT for all the customers ?",
+   "fieldname": "install_erpnext",
+   "fieldtype": "Check",
+   "label": "Install Erpnext"
+  },
+  {
+   "default": "0",
+   "description": "Is this site on a subdomain ?",
+   "fieldname": "include_management_site_subdomain",
+   "fieldtype": "Check",
+   "label": "Include Management Site Subdomain"
+  },
+  {
+   "depends_on": "eval:(doc.include_management_site_subdomain == 1)",
+   "fieldname": "management_subdomain",
+   "fieldtype": "Data",
+   "label": "Management Site Subdomain"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "description": "Limit on the number of maximum users for a site",
+   "fieldname": "default_limit_for_users",
+   "fieldtype": "Int",
+   "label": "Default Limit for Users"
+  },
+  {
+   "description": "Limit on the number of emails sent per month from the site.",
+   "fieldname": "default_limit_for_emails",
+   "fieldtype": "Int",
+   "label": "Default Limit for Emails"
+  },
+  {
+   "description": "Limit on the maximum space the site can use (GB)",
+   "fieldname": "default_limit_for_space",
+   "fieldtype": "Int",
+   "label": "Default Limit for Space"
+  },
+  {
+   "description": "Limit on the maximum number of members allowed in an Email Group",
+   "fieldname": "default_limit_for_email_group",
+   "fieldtype": "Int",
+   "label": "Default Limit for Email Group"
+  },
+  {
+   "default": "15",
+   "description": "Days after which a site should expire.",
+   "fieldname": "default_expiry",
+   "fieldtype": "Int",
+   "label": "Default Expiry"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2020-03-23 22:27:11.294958",
+ "modified_by": "vignesh@gmail.com",
+ "module": "Better Saas",
+ "name": "Saas Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Guest",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,0 +1,154 @@
+{
+ "autoname": "field:site_name",
+ "creation": "2020-03-05 17:20:38.973199",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "site_name",
+  "section_break_6",
+  "number_of_users",
+  "column_break_1",
+  "number_of_active_users",
+  "column_break_6",
+  "site_status",
+  "section_break_4",
+  "user_details",
+  "section_break_12",
+  "limit_for_users",
+  "limit_for_emails",
+  "limit_for_space",
+  "column_break_8",
+  "limit_for_email_group",
+  "expiry",
+  "apply_new_limits"
+ ],
+ "fields": [
+  {
+   "fieldname": "site_name",
+   "fieldtype": "Data",
+   "label": "Site Name",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Limit on the number of maximum users for this site.\n",
+   "fieldname": "limit_for_users",
+   "fieldtype": "Int",
+   "label": "Limit for Users"
+  },
+  {
+   "description": "Limit on the number of emails sent per month from this site.",
+   "fieldname": "limit_for_emails",
+   "fieldtype": "Int",
+   "label": "Limit for Emails"
+  },
+  {
+   "description": "Limit on the maximum space this site can use (GB).",
+   "fieldname": "limit_for_space",
+   "fieldtype": "Int",
+   "label": "Limit for Space"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Limit on the maximum number of members allowed in an Email Group.\n\n",
+   "fieldname": "limit_for_email_group",
+   "fieldtype": "Int",
+   "label": "Limit for Email Group"
+  },
+  {
+   "description": "Date after which a site should expire.\n\n",
+   "fieldname": "expiry",
+   "fieldtype": "Date",
+   "label": "Expiry"
+  },
+  {
+   "fieldname": "apply_new_limits",
+   "fieldtype": "Button",
+   "label": "Apply New Limits"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "number_of_users",
+   "fieldtype": "Int",
+   "label": "Number of Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "number_of_active_users",
+   "fieldtype": "Int",
+   "label": "Number of Active Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_details",
+   "fieldtype": "Table",
+   "label": "User Details",
+   "options": "User Details"
+  },
+  {
+   "fieldname": "section_break_12",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_status",
+   "fieldtype": "Data",
+   "label": "Site Status",
+   "read_only": 1
+  }
+ ],
+ "modified": "2020-04-04 21:21:09.537557",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Saas Site",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
