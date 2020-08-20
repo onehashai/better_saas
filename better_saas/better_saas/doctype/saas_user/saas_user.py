@@ -254,13 +254,14 @@ def get_users_list(site_name):
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=None):
 	import re
 	phone_number = re.sub(r"[^0-9]","",phone_number)
+	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	sass_user = frappe.get_doc({
 			"doctype":"Saas User",
 			"email": email,
 			"mobile": phone_number,
 			"first_name": first_name,
 			"last_name": last_name,
-			"subdomain": subdomain,
+			"subdomain": subdomain.lower(),
 			"confirm_password":passphrase,
 			"password":passphrase,
 			"otp": generate_otp()
