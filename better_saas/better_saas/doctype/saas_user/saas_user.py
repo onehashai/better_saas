@@ -11,7 +11,7 @@ from frappe.utils.file_manager import get_file_path
 import pathlib
 from frappe.utils.background_jobs import enqueue
 import requests
-import math, random
+import math, random, re, time
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 class SaasUser(Document):
@@ -34,7 +34,7 @@ def setup(account_request):
 	# creation of site and install erpnext
 	if saas_settings.install_erpnext:
 		install_erpnext = "true"
-		commands.append("bench --site {site_name} install-app erpnext".format(site_name=site_name))
+		commands.append("bench --site {site_name} install-app erpnext journeys".format(site_name=site_name))
 	else:
 		install_erpnext = "false"
 	
@@ -51,21 +51,22 @@ def setup(account_request):
 	# # setup nginx config and reloading the nginx service
 	commands.append("bench setup nginx --yes")
 	commands.append("bench setup reload-nginx")
+	commands.append("bench --site admin_onehash execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(saas_user=saas_user.name)+'"')
 	
-	# limit_users = int(saas_settings.default_limit_for_users) 
-	# limit_emails = int(saas_settings.default_limit_for_emails)
-	# limit_space = int(saas_settings.default_limit_for_space)
-	# limit_email_group = int(saas_settings.default_limit_for_email_group)
-	# limit_expiry = add_days(today(), int(saas_settings.default_expiry))
+	limit_users = int(saas_settings.default_limit_for_users) 
+	limit_emails = int(saas_settings.default_limit_for_emails)
+	limit_space = int(saas_settings.default_limit_for_space)
+	limit_email_group = int(saas_settings.default_limit_for_email_group)
+	limit_expiry = add_days(today(), int(saas_settings.default_expiry))
 
-	# commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
-	# 	site_name = site_name,
-	# 	limit_users = limit_users,
-	# 	limit_emails = limit_emails,
-	# 	limit_space = limit_space,
-	# 	limit_email_group = limit_email_group,
-	# 	limit_expiry = limit_expiry
-	# ))
+	commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
+	 	site_name = site_name,
+	 	limit_users = limit_users,
+	 	limit_emails = limit_emails,
+	 	limit_space = limit_space,
+	 	limit_email_group = limit_email_group,
+	 	limit_expiry = limit_expiry
+	 ))
 	command_key = today() + " " + nowtime()
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
@@ -76,11 +77,11 @@ def setup(account_request):
 	saas_site = frappe.new_doc("Saas Site")
 	saas_site.site_name = site_name
 	saas_site.site_status = "Active"
-	# saas_site.limit_for_users = limit_users
-	# saas_site.limit_for_emails = limit_emails
-	# saas_site.limit_for_space = limit_space
-	# saas_site.limit_for_email_group = limit_email_group
-	# saas_site.expiry = limit_expiry
+	saas_site.limit_for_users = limit_users
+	saas_site.limit_for_emails = limit_emails
+	saas_site.limit_for_space = limit_space
+	saas_site.limit_for_email_group = limit_email_group
+	saas_site.expiry = limit_expiry
 	saas_site.insert(ignore_permissions=True)
 	saas_user.linked_saas_site = saas_site.name
 	saas_user.linked_saas_domain = new_subdomain.name
@@ -89,30 +90,56 @@ def setup(account_request):
 
 @frappe.whitelist(allow_guest=True)
 def get_status(account_request):
-	doc = frappe.get_doc("Saas User",account_request)
-	commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
+	doc = frappe.get_doc("Saas User",account_request)	
+	if(doc.key):
+		commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
+	else:
+		frappe.throw("You will get confirmation email once your site is ready.","ValidationError")
+
+	result = {}
 	if(doc.linked_saas_domain and commandStatus.status=="Success"):
-		create_first_user_on_target_site(doc)
-		result = {}
+		#create_first_user_on_target_site(doc.name)
 		result['user'] = doc.email
 		result['password'] = doc.password
 		result['link'] = "https://"+doc.linked_saas_site
-		return result
-	else:
-		return {}
+	elif commandStatus.status=="Failed":
+		create_first_user_on_target_site(doc.name)
+		result['status']="Failed"
+	return result
 	
-def create_first_user_on_target_site(site_user):
+def create_first_user_on_target_site(saas_user):
+	site_user =  frappe.get_doc('Saas User',saas_user)
 	domain = site_user.linked_saas_site
 	site_password = site_user.password
 	is_new_user = False
+	conn=""
+	retry_count = 1
 	from better_saas.better_saas.doctype.saas_user.frappeclient import FrappeClient
-	conn = FrappeClient("https://"+domain, "Administrator", site_password)
+	while(conn==""):
+		try:
+			conn = FrappeClient("https://"+domain, "Administrator", site_password)
+		except Exception as e:
+			print("Exception in connection to site:")
+			print(e)
+			print("Connection Object")
+			print(conn)
+			print(str(retry_count)+" Retry to Connect:")
+			retry_count = retry_count+1
+			time.sleep(2)
+
+		if(retry_count>3):
+			break			
+				
+		
 	try:
-		user = conn.get_doc("User",site_user.email)		
-	except:
-		user = False		
+		user = conn.get_list("User",filters={"email":site_user.email})
+		if(len(user)==0):
+			user = False
+	except Exception as e:
+		print(e)	
 		pass
-	if(not user):		
+	
+	if(not user):
 		conn.insert({
 		"doctype": "User",
 		"first_name": site_user.first_name,
@@ -198,7 +225,11 @@ def disable_enable_site(site_name, status):
 	)
 
 @frappe.whitelist(allow_guest=True)
-def check_subdomain_avai(subdomain):
+def check_subdomain_avai(subdomain):	
+	if(not bool(re.match('^[a-zA-Z0-9]+$',subdomain))):
+		print("Exception")
+		frappe.throw("Sub-domain can only contain letters and numbers","ValidationError")		
+
 	saas_settings = frappe.get_doc("Saas Settings")
 	if frappe.db.exists("Saas Domains", {"domain": subdomain}):
 		status = "False"
@@ -246,30 +277,42 @@ def get_users_list(site_name):
 	domain = domain + "." + saas_settings.domain
 	from better_saas.better_saas.doctype.saas_user.frappeclient import FrappeClient
 	conn = FrappeClient("https://"+domain, "Administrator", site_password)
-	total_users = conn.get_list('User', fields = ['name', 'first_name', 'last_name', 'enabled'])
-	active_users = conn.get_list('User', fields = ['name', 'first_name', 'last_name'], filters = {'enabled':'1'})
+	total_users = conn.get_list('User', fields = ['name', 'first_name', 'last_name', 'enabled', 'last_active','user_type'],limit_page_length=10000)
+	active_users = conn.get_list('User', fields = ['name', 'first_name', 'last_name','last_active','user_type'], filters = {'enabled':'1'},limit_page_length=10000)
 	return {"total_users":total_users, "active_users":active_users}
 
 @frappe.whitelist(allow_guest=True)
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=None):
-	import re
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
-	sass_user = frappe.get_doc({
-			"doctype":"Saas User",
-			"email": email,
-			"mobile": phone_number,
-			"first_name": first_name,
-			"last_name": last_name,
-			"subdomain": subdomain.lower(),
-			"confirm_password":passphrase,
-			"password":passphrase,
-			"otp": generate_otp()
-		})
+	existing_saas_user = frappe.get_list('Saas User', filters={'email': email, 'linked_saas_site': ''})
+	if len(existing_saas_user)>0:
+		saas_user = frappe.get_doc("Saas User",existing_saas_user[0]['name'])
+		saas_user.email = email
+		saas_user.mobile = phone_number
+		saas_user.first_name = first_name
+		saas_user.last_name = last_name
+		saas_user.subdomain = subdomain.lower()
+		saas_user.password = passphrase
+		saas_user.otp = generate_otp()
+		saas_user.flags.ignore_permissions=True
+		result = saas_user.save()
+	else:
+		sass_user = frappe.get_doc({
+				"doctype":"Saas User",
+				"email": email,
+				"mobile": phone_number,
+				"first_name": first_name,
+				"last_name": last_name,
+				"subdomain": subdomain.lower(),
+				"confirm_password":passphrase,
+				"password":passphrase,
+				"otp": generate_otp()
+			})
+		sass_user.flags.ignore_permissions = True
+		result = sass_user.insert()
+		lead = create_lead(result)
 
-	sass_user.flags.ignore_permissions = True
-	result = sass_user.insert()
-	lead = create_lead(result)
 	doc = frappe.get_doc("Saas User",result.name)
 	doc.otp = generate_otp()
 	doc.save()
@@ -282,15 +325,19 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=Non
 	return final_result
 
 def create_lead(saas_user):
-	lead = frappe.get_doc({
-			"doctype":"Lead",
-			"email_id": saas_user.email,
-			"mobile_no": saas_user.mobile
-		})
-	lead.lead_name = saas_user.first_name+" "+saas_user.last_name
-	lead.source = "Walk In"
-	lead.flags.ignore_permissions = True
-	return lead.insert()	
+	existing_lead = frappe.get_list("Lead",filters={"email_id":saas_user.email})
+	if(len(existing_lead)>0):
+		pass
+	else:
+		lead = frappe.get_doc({
+				"doctype":"Lead",
+				"email_id": saas_user.email,
+				"mobile_no": saas_user.mobile
+			})
+		lead.lead_name = saas_user.first_name+" "+saas_user.last_name
+		lead.source = "Walk In"
+		lead.flags.ignore_permissions = True
+		return lead.insert()	
 
 
 @frappe.whitelist(allow_guest=True)

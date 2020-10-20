@@ -49,31 +49,35 @@
   },
   {
    "fieldname": "column_break_4",
-   "fieldtype": "Section Break",
-   "hidden": 1
+   "fieldtype": "Section Break"
   },
   {
+   "default": "7",
    "description": "Limit on the number of maximum users for a site",
    "fieldname": "default_limit_for_users",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Default Limit for Users"
   },
   {
    "description": "Limit on the number of emails sent per month from the site.",
    "fieldname": "default_limit_for_emails",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Default Limit for Emails"
   },
   {
    "description": "Limit on the maximum space the site can use (GB)",
    "fieldname": "default_limit_for_space",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Default Limit for Space"
   },
   {
    "description": "Limit on the maximum number of members allowed in an Email Group",
    "fieldname": "default_limit_for_email_group",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Default Limit for Email Group"
   },
   {
@@ -85,8 +89,8 @@
   }
  ],
  "issingle": 1,
- "modified": "2020-03-23 22:27:11.294958",
- "modified_by": "vignesh@gmail.com",
+ "modified": "2020-09-03 12:22:25.769430",
+ "modified_by": "engg.ny@gmail.com",
  "module": "Better Saas",
  "name": "Saas Settings",
  "owner": "Administrator",

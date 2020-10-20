@@ -2,8 +2,8 @@
 	frappe.ready(function () {
 	let $page = $('#page-signup, #page-signup-1');
 	let minimum = {
-		'P-Pro-2020': 10,
-		'P-Standard-2020': 5
+		'P-Pro-2020': 1,
+		'P-Standard-2020': 1
 	}
 
 	window.minimum_users = minimum[frappe.utils.get_query_params().plan] || 5;
@@ -152,8 +152,8 @@
 		});*/
 	}
 
-	/*frappe.call({
-		method: "central.www.signup.load_dropdowns",
+	frappe.call({
+		method: "better_saas.www.signup.load_dropdowns",
 		callback: function (r) {
 			let $country_select = $("select[name*='country']");
 			r.message.countries.forEach(country_name => {
@@ -192,7 +192,7 @@
 			}
 			$country_select.trigger('change');
 		}
-	});*/
+	});
 
 });
 
@@ -547,7 +547,9 @@ function setup_account_request ($page, changeRoute){
 					location.hash = r.message.location;
 					localStorage.setItem("reference", r.message.reference);
 					localStorage.setItem("email", r.message.email);
+					localStorage.setItem("mobile", r.message.mobile);
 					$('.verify-otp .email').text(r.message.email);
+					$('.mobile').text(r.message.mobile);
 					changeRoute('verify-email');
 				}
 			},
@@ -652,7 +654,7 @@ function setup_other_details($page, changeRoute){
 			}, {});
 	args['id'] = localStorage.getItem("reference");
 
-	if (cint(args['users']) < 5 || cint(args['users']) > 100000){
+	if (cint(args['users']) < 1 || cint(args['users']) > 100000){
 		frappe.msgprint(`Please select number of users between range ${minimum_users} to 100000`);
 		return false;
 	}

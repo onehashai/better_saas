@@ -40,7 +40,7 @@ frappe.ready(function() {
     }
     setInterval(get_status, 10000);
 
-    function redirect(data){
+    function redirect(data){        
         if(data.link && !frappe.flags.is_dirty){
             if(data.user && data.password){
                 clearTimeout(get_status);
@@ -64,6 +64,7 @@ frappe.ready(function() {
                     success: function(res) {
                         localStorage.removeItem("reference");
                         localStorage.removeItem("email");
+                        localStorage.removeItem("mobile");
                         window.open(data.link+'/desk', "_self");
                     },
                     error : function(xhr, textStatus, errorThrown ) {
@@ -82,6 +83,9 @@ frappe.ready(function() {
             else {
                 window.open(data.link, "_self")
             }
+        } else if(typeof data.status!=='undefined' && data.status=="Failed"){
+            msgprint("Sorry, Your site cannot be created at the moment. You will get an Email once you site is ready.", 'Site Creation Failed')
+            setInterval(window.close(), 5000);
         } else {
             window.open(data.link, "_self");
         }

@@ -35,16 +35,21 @@ frappe.ui.form.on('Saas Site', {
 					},
 					async: false,
 					callback: function (r) {
-						frm.set_value("number_of_users", r.message.total_users.length);
-						frm.set_value("number_of_active_users", r.message.active_users.length);
+						frm.set_value("number_of_users", r.message.total_users.length-2);
+						frm.set_value("number_of_active_users", (r.message.active_users.length-2));
 						frm.clear_table("user_details");
 						for (let i = 0; i < r.message.total_users.length; i++) {
 							const element = r.message.total_users[i];
+							if(element.name=="Administrator" || element.name=="Guest"){
+								continue;
+							}
 							let row = frappe.model.add_child(frm.doc, "User Details", "user_details");
 							row.emai_id = element.name;
 							row.first_name = element.first_name;
 							row.last_name = element.last_name;
 							row.active = element.enabled;
+							row.user_type = element.user_type;
+							row.last_active = element.last_active;
 						}
 						frm.refresh_fields("user_details");
 						frappe.show_alert({

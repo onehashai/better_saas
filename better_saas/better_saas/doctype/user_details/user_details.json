@@ -6,7 +6,9 @@
   "emai_id",
   "first_name",
   "last_name",
-  "active"
+  "active",
+  "last_active",
+  "user_type"
  ],
  "fields": [
   {
@@ -37,11 +39,26 @@
    "in_list_view": 1,
    "label": "Active",
    "read_only": 1
+  },
+  {
+   "fieldname": "last_active",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Last Active",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "User Type",
+   "options": "\nSystem User\nWebsite User",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2020-04-04 20:05:55.992725",
- "modified_by": "Administrator",
+ "modified": "2020-09-22 01:00:00.794052",
+ "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "User Details",
  "owner": "Administrator",

@@ -102,8 +102,7 @@
   },
   {
    "fieldname": "section_break_12",
-   "fieldtype": "Section Break",
-   "hidden": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_6",
@@ -116,8 +115,8 @@
    "read_only": 1
   }
  ],
- "modified": "2020-04-04 21:21:09.537557",
- "modified_by": "Administrator",
+ "modified": "2020-09-03 12:27:21.797307",
+ "modified_by": "engg.ny@gmail.com",
  "module": "Better Saas",
  "name": "Saas Site",
  "owner": "Administrator",

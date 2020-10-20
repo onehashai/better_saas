@@ -90,13 +90,13 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"better_saas.tasks.all"
 # 	],
-# 	"daily": [
-# 		"better_saas.tasks.daily"
-# 	],
+ 	"daily": [
+ 		"better_saas.better_saas.doctype.saas_site.saas_site.update_user_to_main_app"
+ 	]
 # 	"hourly": [
 # 		"better_saas.tasks.hourly"
 # 	],
@@ -106,7 +106,7 @@ app_license = "MIT"
 # 	"monthly": [
 # 		"better_saas.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------
