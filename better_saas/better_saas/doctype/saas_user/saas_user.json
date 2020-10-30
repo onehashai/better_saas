@@ -16,6 +16,7 @@
   "subdomain",
   "private_domain",
   "confirm_password",
+  "promocode",
   "section_break_13",
   "linked_saas_site",
   "column_break_15",
@@ -130,10 +131,15 @@
    "fieldtype": "Data",
    "label": "Mobile",
    "reqd": 1
+  },
+  {
+   "fieldname": "promocode",
+   "fieldtype": "Data",
+   "label": "Promocode"
   }
  ],
- "modified": "2020-04-17 12:26:24.874901",
- "modified_by": "Administrator",
+ "modified": "2020-10-30 22:16:47.975291",
+ "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "Saas User",
  "owner": "Administrator",

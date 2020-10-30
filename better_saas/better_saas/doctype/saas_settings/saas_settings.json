@@ -9,6 +9,8 @@
   "install_erpnext",
   "include_management_site_subdomain",
   "management_subdomain",
+  "column_break_6",
+  "reserved_subdomain",
   "column_break_4",
   "default_limit_for_users",
   "default_limit_for_emails",
@@ -86,11 +88,20 @@
    "fieldname": "default_expiry",
    "fieldtype": "Int",
    "label": "Default Expiry"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reserved_subdomain",
+   "fieldtype": "Small Text",
+   "label": "Reserved Subdomain"
   }
  ],
  "issingle": 1,
- "modified": "2020-09-03 12:22:25.769430",
- "modified_by": "engg.ny@gmail.com",
+ "modified": "2020-10-29 23:34:47.422666",
+ "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "Saas Settings",
  "owner": "Administrator",

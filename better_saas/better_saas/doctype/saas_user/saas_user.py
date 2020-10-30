@@ -226,8 +226,7 @@ def disable_enable_site(site_name, status):
 
 @frappe.whitelist(allow_guest=True)
 def check_subdomain_avai(subdomain):	
-	if(not bool(re.match('^[a-zA-Z0-9]+$',subdomain))):
-		print("Exception")
+	if(not bool(re.match('^[a-zA-Z0-9]+$',subdomain))):		
 		frappe.throw("Sub-domain can only contain letters and numbers","ValidationError")		
 
 	saas_settings = frappe.get_doc("Saas Settings")
@@ -282,7 +281,7 @@ def get_users_list(site_name):
 	return {"total_users":total_users, "active_users":active_users}
 
 @frappe.whitelist(allow_guest=True)
-def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=None):
+def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	existing_saas_user = frappe.get_list('Saas User', filters={'email': email, 'linked_saas_site': ''})
@@ -294,9 +293,11 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=Non
 		saas_user.last_name = last_name
 		saas_user.subdomain = subdomain.lower()
 		saas_user.password = passphrase
+		saas_user.promocode = promocode
 		saas_user.otp = generate_otp()
 		saas_user.flags.ignore_permissions=True
 		result = saas_user.save()
+		lead = create_lead(result)
 	else:
 		sass_user = frappe.get_doc({
 				"doctype":"Saas User",
@@ -307,6 +308,7 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=Non
 				"subdomain": subdomain.lower(),
 				"confirm_password":passphrase,
 				"password":passphrase,
+				"promocode":promocode,
 				"otp": generate_otp()
 			})
 		sass_user.flags.ignore_permissions = True
@@ -327,12 +329,19 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,plan=Non
 def create_lead(saas_user):
 	existing_lead = frappe.get_list("Lead",filters={"email_id":saas_user.email})
 	if(len(existing_lead)>0):
-		pass
+		lead_doc = frappe.get_doc("Lead",existing_lead[0].name)
+		lead_doc.email_id = saas_user.email
+		lead_doc.mobile_no = saas_user.mobile
+		lead_doc.promocode = saas_user.promocode
+		lead_doc.flags.ignore_permissions = True
+		lead_doc.save()
+		
 	else:
 		lead = frappe.get_doc({
 				"doctype":"Lead",
 				"email_id": saas_user.email,
-				"mobile_no": saas_user.mobile
+				"mobile_no": saas_user.mobile,
+				"promocode": saas_user.promocode
 			})
 		lead.lead_name = saas_user.first_name+" "+saas_user.last_name
 		lead.source = "Walk In"
@@ -357,6 +366,13 @@ def verify_account_request(id,otp):
 		result = {}				
 		result['location'] = "#account-setup"
 		return result
+
+@frappe.whitelist(allow_guest=True)
+def validate_promocode(promocode):
+	pass
+
+
+
 
 @frappe.whitelist(allow_guest=True)
 def update_account_request(id,country=None,industry_type=None,currency=None,language=None,timezone=None,domain=None):
