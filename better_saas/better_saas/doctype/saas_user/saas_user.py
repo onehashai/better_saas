@@ -13,6 +13,7 @@ from frappe.utils.background_jobs import enqueue
 import requests
 import math, random, re, time
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
+from frappe.core.doctype.user.user import test_password_strength
 
 class SaasUser(Document):
 	pass
@@ -130,7 +131,9 @@ def create_first_user_on_target_site(saas_user):
 		if(retry_count>3):
 			break			
 				
-		
+	if(retry_count>3):
+		return False
+
 	try:
 		user = conn.get_list("User",filters={"email":site_user.email})
 		if(len(user)==0):
@@ -284,6 +287,10 @@ def get_users_list(site_name):
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
+	password_test_result = test_password_strength(passphrase)
+	if(not password_test_result['feedback']['password_policy_validation_passed']):
+		frappe.throw(password_test_result['feedback']['warning']+"\r\n"+password_test_result['feedback']['suggestions'][0],"ValidationError")
+	
 	existing_saas_user = frappe.get_list('Saas User', filters={'email': email, 'linked_saas_site': ''})
 	if len(existing_saas_user)>0:
 		saas_user = frappe.get_doc("Saas User",existing_saas_user[0]['name'])
@@ -319,7 +326,7 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 	doc.otp = generate_otp()
 	doc.save()
 	send_otp_sms(doc.mobile,doc.otp)
-
+	send_otp_email(doc)
 	final_result = {}
 	final_result["location"] = "verify"
 	final_result["reference"] = result.name
@@ -330,9 +337,16 @@ def create_lead(saas_user):
 	existing_lead = frappe.get_list("Lead",filters={"email_id":saas_user.email})
 	if(len(existing_lead)>0):
 		lead_doc = frappe.get_doc("Lead",existing_lead[0].name)
+		if(lead_doc.contact_date and lead_doc.contact_date.strftime("%Y-%m-%d %H:%M:%S.%f") < frappe.utils.now()):
+			lead_doc.contact_date = ""
+
 		lead_doc.email_id = saas_user.email
 		lead_doc.mobile_no = saas_user.mobile
+		lead_doc.primary_mobile = saas_user.mobile
 		lead_doc.promocode = saas_user.promocode
+		lead_doc.industry_type = saas_user.industry_type
+		lead_doc.company_name = saas_user.company_name
+		lead_doc.expected_users = saas_user.expected_users
 		lead_doc.flags.ignore_permissions = True
 		lead_doc.save()
 		
@@ -341,7 +355,14 @@ def create_lead(saas_user):
 				"doctype":"Lead",
 				"email_id": saas_user.email,
 				"mobile_no": saas_user.mobile,
-				"promocode": saas_user.promocode
+				"primary_mobile": saas_user.mobile,
+				"promocode": saas_user.promocode,
+				"lead_stage": "Lead",
+				"utm_source":saas_user.utm_source,
+				"utm_campaign":saas_user.utm_campaign,
+				"utm_medium":saas_user.utm_medium,
+				"utm_term":saas_user.utm_term,
+				"utm_content":saas_user.utm_content
 			})
 		lead.lead_name = saas_user.first_name+" "+saas_user.last_name
 		lead.source = "Walk In"
@@ -355,6 +376,7 @@ def resend_otp(id):
 	doc.otp = generate_otp()
 	doc.save()
 	send_otp_sms(doc.mobile,doc.otp)
+	send_otp_email(doc)
 	frappe.msgprint("Verification code has been sent to registered email id and mobile.")
 
 @frappe.whitelist(allow_guest=True)
@@ -376,13 +398,41 @@ def validate_promocode(promocode):
 
 @frappe.whitelist(allow_guest=True)
 def update_account_request(id,country=None,industry_type=None,currency=None,language=None,timezone=None,domain=None):
-	#doc = frappe.get_doc("Saas User",id)
+	doc = frappe.get_doc("Saas User",id)
+	try:
+		doc.country = country
+		doc.industry_type = industry_type
+		doc.currency = currency
+		doc.language  = language
+		doc.timezone = timezone
+		doc.save()
+	except Exception as e:
+		print("Exception While Updating Data slide 3")
+		print(e)
+
 	result = {}	
 	if(industry_type):
 		result['location'] = "#other-details"
-	else:
-		result['location'] = "../prepare_site"
 	return result
+
+@frappe.whitelist(allow_guest=True)
+def update_other_details_request(id,company=None,users=None,designation=None,referral_source=None):
+	doc = frappe.get_doc("Saas User",id)
+	try:
+		doc.company_name = company
+		doc.expected_users = users
+		doc.designation = designation
+		doc.referral_source  = referral_source
+		doc.save()
+	except Exception as e:
+		print("Exception While Updating Data slide 4")
+		print(e)
+		
+	result = {}
+	result['location'] = "../prepare_site"
+	return result
+
+
 
 def generate_otp():  
     # Declare a digits variable
@@ -400,3 +450,19 @@ def send_otp_sms(number,otp):
 	receiver_list.append(number)
 	message = otp+" is OTP to verify your account request for OneHash."
 	send_sms(receiver_list,message)
+
+def send_otp_email(site_user):
+	STANDARD_USERS = ("Guest", "Administrator")
+	subject="Please confirm this email address for OneHash"
+	template="signup_otp_email"
+	args = {
+			'first_name': site_user.first_name or site_user.last_name or "user",
+			'last_name': site_user.last_name,
+			'title': subject,
+			'otp':site_user.otp
+			}
+	sender = None
+	frappe.sendmail(recipients=site_user.email, sender=sender, subject=subject, bcc=["anand@onehash.ai"],
+			template=template, args=args, header=[subject, "green"],
+			delayed=False)
+	return True

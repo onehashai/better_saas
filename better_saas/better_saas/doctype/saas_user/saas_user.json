@@ -21,7 +21,23 @@
   "linked_saas_site",
   "column_break_15",
   "linked_saas_domain",
-  "otp"
+  "otp",
+  "more_information_section",
+  "company_name",
+  "country",
+  "currency",
+  "language",
+  "timezone",
+  "expected_users",
+  "industry_type",
+  "designation",
+  "referral_source",
+  "utm_details_section",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term"
  ],
  "fields": [
   {
@@ -136,9 +152,95 @@
    "fieldname": "promocode",
    "fieldtype": "Data",
    "label": "Promocode"
+  },
+  {
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Organisation Name",
+   "options": "Name"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "language",
+   "fieldtype": "Link",
+   "label": "Language",
+   "options": "Language"
+  },
+  {
+   "fieldname": "timezone",
+   "fieldtype": "Data",
+   "label": "Timezone"
+  },
+  {
+   "fieldname": "industry_type",
+   "fieldtype": "Data",
+   "label": "Industry Type",
+   "options": "Domain"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation"
+  },
+  {
+   "fieldname": "referral_source",
+   "fieldtype": "Select",
+   "label": "Referral Source",
+   "options": "\nLinkedIn\nFacebook\nTwitter\nEmail\nRecommended By a friend/colleague\nBlogs/Reviews\nOthers"
+  },
+  {
+   "fieldname": "expected_users",
+   "fieldtype": "Int",
+   "label": "Expected Users"
+  },
+  {
+   "fieldname": "utm_details_section",
+   "fieldtype": "Section Break",
+   "label": "UTM Details"
+  },
+  {
+   "fieldname": "utm_source",
+   "fieldtype": "Data",
+   "label": "UTM Source"
+  },
+  {
+   "fieldname": "utm_medium",
+   "fieldtype": "Data",
+   "label": "UTM Medium"
+  },
+  {
+   "fieldname": "utm_campaign",
+   "fieldtype": "Data",
+   "label": "UTM Campaign"
+  },
+  {
+   "fieldname": "utm_content",
+   "fieldtype": "Data",
+   "label": "UTM Content"
+  },
+  {
+   "fieldname": "utm_term",
+   "fieldtype": "Data",
+   "label": "UTM Term"
   }
  ],
- "modified": "2020-10-30 22:16:47.975291",
+ "modified": "2021-02-08 15:55:15.622261",
  "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "Saas User",

@@ -6,7 +6,7 @@
 		'P-Standard-2020': 1
 	}
 
-	window.minimum_users = minimum[frappe.utils.get_query_params().plan] || 5;
+	window.minimum_users = minimum[frappe.utils.get_query_params().plan] || 1;
 
 	//setup route
 	document.onload = checkLocationHash();
@@ -518,20 +518,33 @@ function setup_account_request ($page, changeRoute){
 
 		//goog_report_conversion(); // eslint-disable-line
 
-		/*let locationParams = localStorage.getItem('urlKeywordParams')
+		let locationParams = localStorage.getItem('urlKeywordParams')
 		if (locationParams) {
 			let urlParams = new URLSearchParams(locationParams);
-			let ga_params = {
+			/*let ga_params = {
 				keyword: urlParams.get('utm_keyword'),
 				utm_source: urlParams.get('utm_source'),
 				campaignid: urlParams.get('utm_campaign'),
 				adgroupid: urlParams.get('adgroupid'),
 				loc_physical_ms: urlParams.get('utm_loc_physical_ms'),
 				vertical: urlParams.get('vertical')
-			}
-
-			args['ga_params'] = ga_params
-		}*/
+			}*/
+			args['utm_source'] = urlParams.get('utm_source');
+			args['utm_campaign'] = urlParams.get('utm_campaign');
+			args['utm_medium'] = urlParams.get('utm_medium');
+			args['utm_content'] = urlParams.get('utm_content');
+			args['utm_term'] = urlParams.get('utm_term');
+		//	args['ga_params'] = ga_params
+			
+		} else {
+			let urlParams = new URLSearchParams(window.location.search)
+			args['utm_source'] = urlParams.get('utm_source');
+			args['utm_campaign'] = urlParams.get('utm_campaign');
+			args['utm_medium'] = urlParams.get('utm_medium');
+			args['utm_content'] = urlParams.get('utm_content');
+			args['utm_term'] = urlParams.get('utm_term');
+		}
+		
 
 		delete args['agree-checkbox'];
 
@@ -664,7 +677,7 @@ function setup_other_details($page, changeRoute){
 	$btn.prop("disabled", true).html("Updating...");
 
 	frappe.call({
-		method: 'better_saas.better_saas.doctype.saas_user.saas_user.update_account_request',
+		method: 'better_saas.better_saas.doctype.saas_user.saas_user.update_other_details_request',
 		args: args,
 		type: 'POST',
 		btn: $btn,
