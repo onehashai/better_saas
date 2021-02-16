@@ -1,0 +1,75 @@
+{
+ "creation": "2021-02-15 20:34:37.154895",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "service_name",
+  "available_credits",
+  "uom",
+  "rate",
+  "currency",
+  "minimum_quantity"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "service_name",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Service Name",
+   "options": "FinRich",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "minimum_quantity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Minimum Quantity",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Rate"
+  },
+  {
+   "columns": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "columns": 2,
+   "fieldname": "available_credits",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Available Credits"
+  }
+ ],
+ "istable": 1,
+ "modified": "2021-02-15 20:44:56.808473",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Saas Site Addon",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

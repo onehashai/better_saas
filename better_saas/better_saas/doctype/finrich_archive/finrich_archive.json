@@ -1,0 +1,147 @@
+{
+ "autoname": "naming_series:",
+ "creation": "2021-02-10 21:18:39.169081",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "cin",
+  "company_name",
+  "reference_doctype",
+  "reference_docname",
+  "status",
+  "request_data",
+  "traceback",
+  "message",
+  "reference_site",
+  "requested_by",
+  "reference_finrich_request"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "FRA-.YYYY.-.MM.-.#####"
+  },
+  {
+   "fieldname": "cin",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "CIN",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company Name",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reference DocType",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reference Name",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "\nQueued\nSuccess\nError",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_data",
+   "fieldtype": "Code",
+   "label": "Request Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "traceback",
+   "fieldtype": "Code",
+   "label": "Traceback",
+   "read_only": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "label": "Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_site",
+   "fieldtype": "Link",
+   "label": "Reference Site",
+   "options": "Saas Site",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Data",
+   "label": "Requested By",
+   "options": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_finrich_request",
+   "fieldtype": "Data",
+   "label": "Reference FinRich Request",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "modified": "2021-02-11 05:07:31.946070",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "FinRich Archive",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
