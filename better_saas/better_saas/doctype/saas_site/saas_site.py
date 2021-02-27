@@ -4,10 +4,20 @@
 
 from __future__ import unicode_literals
 import frappe
+import json
 from frappe.model.document import Document
+from journeys.addon_limits import update_limits
 
 class SaasSite(Document):
-	pass
+    pass            
+
+@frappe.whitelist()
+def update_addon_limits(addon_limits,site_name):
+    #return json.loads(addon_limits)
+    limit_dict = {}
+    for limit in json.loads(addon_limits):
+        limit_dict[limit["service_name"]]=limit
+    return update_limits(limit_dict,site_name=site_name)
 
 def update_user_to_main_app():
     admin_site_name = "admin_onehash"

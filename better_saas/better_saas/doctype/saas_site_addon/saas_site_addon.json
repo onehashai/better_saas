@@ -18,7 +18,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Service Name",
-   "options": "FinRich",
+   "options": "FinRich\nProfile Enrich",
    "reqd": 1
   },
   {
@@ -62,8 +62,8 @@
   }
  ],
  "istable": 1,
- "modified": "2021-02-15 20:44:56.808473",
- "modified_by": "Administrator",
+ "modified": "2021-02-26 13:07:44.298186",
+ "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "Saas Site Addon",
  "owner": "Administrator",

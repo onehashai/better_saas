@@ -21,17 +21,19 @@ def insert_finrich_archive(finrich_request):
 		"cin":finrich_request.cin,
 		"reference_finrich_request":finrich_request.name,
 		"requested_by":finrich_request.owner,
+		"request_for":finrich_request.request_for,
 		"status":"Queued",
 		"reference_site":finrich_request.reference_finrich_site
 	}).insert(ignore_permissions=True)
 	frappe.db.commit()
+	journeys.destroy_admin_connection()
 	return finrich_archive
 
 def update_finrich_archive_request(insta_summary,finrich_archive):
 	journeys.connect_admin_db()
 	finrich_archive_name = finrich_archive.name
 	finrich_archive = frappe.get_doc('FinRich Archive',finrich_archive_name)
-	message, request_data, traceback, status,company_name = parse_insta_summary_response(insta_summary)
+	message, request_data, traceback, status,company_name = parse_insta_summary_response(insta_summary,finrich_archive.request_for)
 	finrich_archive.message = message
 	finrich_archive.request_data = json.dumps(request_data, indent=1)
 	finrich_archive.traceback = traceback
@@ -39,6 +41,7 @@ def update_finrich_archive_request(insta_summary,finrich_archive):
 	finrich_archive.company_name = company_name
 	finrich_archive.save()
 	frappe.db.commit()
+	journeys.destroy_admin_connection()
 	return update_finrich_request(finrich_archive)
 	
 
@@ -55,7 +58,7 @@ def update_finrich_request(finrich_archive):
 	frappe.db.commit()
 	return finrich_request
 
-def parse_insta_summary_response(insta_summary):
+def parse_insta_summary_response(insta_summary,request_for="Summary"):
 	message=""
 	request_data=""
 	traceback = ""
@@ -68,6 +71,6 @@ def parse_insta_summary_response(insta_summary):
 		company_name=""
 	else:
 		request_data = insta_summary
-		company_name = request_data["InstaSummary"]["CompanyMasterSummary"]["CompanyName"]
+		company_name = request_data["InstaSummary"]["CompanyMasterSummary"]["CompanyName"] if request_for=="Summary" else request_data["InstaBasic"]["CompanyMasterSummary"]["CompanyName"]
 		status = "Success"
 	return message,request_data,traceback,status,company_name

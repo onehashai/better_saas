@@ -16,7 +16,9 @@
   "default_limit_for_emails",
   "default_limit_for_space",
   "default_limit_for_email_group",
-  "default_expiry"
+  "default_expiry",
+  "addons_section",
+  "instafinancial_key"
  ],
  "fields": [
   {
@@ -97,10 +99,20 @@
    "fieldname": "reserved_subdomain",
    "fieldtype": "Small Text",
    "label": "Reserved Subdomain"
+  },
+  {
+   "fieldname": "addons_section",
+   "fieldtype": "Section Break",
+   "label": "AddOns"
+  },
+  {
+   "fieldname": "instafinancial_key",
+   "fieldtype": "Data",
+   "label": "InstaFinancial Key"
   }
  ],
  "issingle": 1,
- "modified": "2020-10-29 23:34:47.422666",
+ "modified": "2021-02-22 12:36:05.747181",
  "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "Saas Settings",

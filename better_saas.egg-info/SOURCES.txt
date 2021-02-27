@@ -15,6 +15,11 @@ better_saas.egg-info/requires.txt
 better_saas.egg-info/top_level.txt
 better_saas/better_saas/__init__.py
 better_saas/better_saas/doctype/__init__.py
+better_saas/better_saas/doctype/finrich_archive/__init__.py
+better_saas/better_saas/doctype/finrich_archive/finrich_archive.js
+better_saas/better_saas/doctype/finrich_archive/finrich_archive.json
+better_saas/better_saas/doctype/finrich_archive/finrich_archive.py
+better_saas/better_saas/doctype/finrich_archive/test_finrich_archive.py
 better_saas/better_saas/doctype/saas_domains/__init__.py
 better_saas/better_saas/doctype/saas_domains/saas_domains.js
 better_saas/better_saas/doctype/saas_domains/saas_domains.json
@@ -33,6 +38,9 @@ better_saas/better_saas/doctype/saas_site/saas_site.json
 better_saas/better_saas/doctype/saas_site/saas_site.py
 better_saas/better_saas/doctype/saas_site/test_saas_site.js
 better_saas/better_saas/doctype/saas_site/test_saas_site.py
+better_saas/better_saas/doctype/saas_site_addon/__init__.py
+better_saas/better_saas/doctype/saas_site_addon/saas_site_addon.json
+better_saas/better_saas/doctype/saas_site_addon/saas_site_addon.py
 better_saas/better_saas/doctype/saas_user/__init__.py
 better_saas/better_saas/doctype/saas_user/frappeclient.py
 better_saas/better_saas/doctype/saas_user/saas_user.js
@@ -53,6 +61,7 @@ better_saas/config/better_saas.py
 better_saas/config/desktop.py
 better_saas/config/docs.py
 better_saas/templates/__init__.py
+better_saas/templates/emails/signup_otp_email.html
 better_saas/templates/emails/welcome_email.html
 better_saas/templates/includes/footer/footer_powered.html
 better_saas/templates/includes/prepare_site/prepare_site.css

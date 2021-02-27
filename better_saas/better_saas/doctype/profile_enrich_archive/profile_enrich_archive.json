@@ -1,13 +1,13 @@
 {
  "autoname": "naming_series:",
- "creation": "2021-02-10 21:18:39.169081",
+ "creation": "2021-02-26 00:53:11.749308",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "cin",
-  "company_name",
+  "mobile_no",
+  "email",
   "reference_doctype",
   "reference_docname",
   "status",
@@ -16,31 +16,31 @@
   "message",
   "reference_site",
   "requested_by",
-  "reference_finrich_request",
-  "request_for"
+  "reference_profile_enrich_request"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "FRA-.YYYY.-.MM.-.#####"
+   "options": "PEA-.YYYY.-.MM.-.#####"
   },
   {
-   "fieldname": "cin",
+   "fieldname": "mobile_no",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "CIN",
+   "label": "Mobile No",
+   "options": "Phone",
    "read_only": 1,
-   "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "company_name",
+   "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Company Name",
+   "label": "Email",
+   "options": "Email",
    "read_only": 1,
    "search_index": 1
   },
@@ -104,23 +104,17 @@
    "read_only": 1
   },
   {
-   "fieldname": "reference_finrich_request",
+   "fieldname": "reference_profile_enrich_request",
    "fieldtype": "Data",
-   "label": "Reference FinRich Request",
+   "label": "Reference Profile Enrich Request",
    "read_only": 1
-  },
-  {
-   "fieldname": "request_for",
-   "fieldtype": "Select",
-   "label": "Request For",
-   "options": "Basic\nSummary"
   }
  ],
  "in_create": 1,
- "modified": "2021-02-22 11:40:03.405101",
+ "modified": "2021-02-26 14:17:14.961507",
  "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
- "name": "FinRich Archive",
+ "name": "Profile Enrich Archive",
  "owner": "Administrator",
  "permissions": [
   {

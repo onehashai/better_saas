@@ -21,7 +21,10 @@
   "column_break_8",
   "limit_for_email_group",
   "expiry",
-  "apply_new_limits"
+  "apply_new_limits",
+  "addons_section",
+  "addon_limits",
+  "apply_addon_limits"
  ],
  "fields": [
   {
@@ -113,10 +116,26 @@
    "fieldtype": "Data",
    "label": "Site Status",
    "read_only": 1
+  },
+  {
+   "fieldname": "addons_section",
+   "fieldtype": "Section Break",
+   "label": "AddOns"
+  },
+  {
+   "fieldname": "addon_limits",
+   "fieldtype": "Table",
+   "label": "Addon Limits",
+   "options": "Saas Site Addon"
+  },
+  {
+   "fieldname": "apply_addon_limits",
+   "fieldtype": "Button",
+   "label": "Apply Addon Limits"
   }
  ],
- "modified": "2020-09-03 12:27:21.797307",
- "modified_by": "engg.ny@gmail.com",
+ "modified": "2021-02-23 20:15:12.046246",
+ "modified_by": "narendra@onehash.ai",
  "module": "Better Saas",
  "name": "Saas Site",
  "owner": "Administrator",

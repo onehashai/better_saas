@@ -4,7 +4,7 @@
 frappe.ui.form.on('Saas Site', {
 	apply_new_limits: function(frm) {
 		if (frm.doc.__unsaved) {
-			frappe.throw("Please Save and then Try Again")
+			frappe.throw("Please Save and then Try Again");
 		}
 		else{
 			frappe.call({
@@ -15,6 +15,28 @@ frappe.ui.form.on('Saas Site', {
 					"limit_for_space" : frm.doc.limit_for_space,
 					"limit_for_email_group" : frm.doc.limit_for_email_group,
 					"expiry" : frm.doc.expiry,
+					"site_name" : frm.doc.site_name	
+				},
+				callback: function (r) {
+					frappe.msgprint("Request Queued.. Please Wait...");
+				}
+			});
+		}
+	},
+	onload: function(frm) {
+		if (frm.doc.__islocal != 1) {
+			frm.save();
+		}
+	},
+	apply_addon_limits: function(frm) {
+		if (frm.doc.__unsaved) {
+			frappe.throw("Please Save and then Try Again")
+		}
+		else{
+			frappe.call({
+				"method": "better_saas.better_saas.doctype.saas_site.saas_site.update_addon_limits",
+				args: {
+					"addon_limits" : frm.doc.addon_limits,
 					"site_name" : frm.doc.site_name	
 				},
 				callback: function (r) {
