@@ -142,7 +142,7 @@
 					window.plan = plan;
 					let pricing = plan.pricing;
 
-					$('.plan-name').html('ERPNext ' + plan_name.replace('P-', ''));
+					$('.plan-name').html('OneHash ' + plan_name.replace('P-', ''));
 					$('.pricing-currency').html(pricing.symbol);
 
 					$('.monthly-pricing, .total-cost').html(pricing.monthly_amount);

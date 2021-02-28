@@ -20,6 +20,11 @@ better_saas/better_saas/doctype/finrich_archive/finrich_archive.js
 better_saas/better_saas/doctype/finrich_archive/finrich_archive.json
 better_saas/better_saas/doctype/finrich_archive/finrich_archive.py
 better_saas/better_saas/doctype/finrich_archive/test_finrich_archive.py
+better_saas/better_saas/doctype/profile_enrich_archive/__init__.py
+better_saas/better_saas/doctype/profile_enrich_archive/profile_enrich_archive.js
+better_saas/better_saas/doctype/profile_enrich_archive/profile_enrich_archive.json
+better_saas/better_saas/doctype/profile_enrich_archive/profile_enrich_archive.py
+better_saas/better_saas/doctype/profile_enrich_archive/test_profile_enrich_archive.py
 better_saas/better_saas/doctype/saas_domains/__init__.py
 better_saas/better_saas/doctype/saas_domains/saas_domains.js
 better_saas/better_saas/doctype/saas_domains/saas_domains.json

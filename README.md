@@ -3,6 +3,6 @@
     <h2>Better SaaS</h2>
     <p align="center">
         <p>Powered by OneHash</p>   </p>
- App for Deploying a Saas based version of Frappe or ERPNext Site.
+ App for Deploying a Saas based version of Frappe or OneHash Site.
 
 </div>
