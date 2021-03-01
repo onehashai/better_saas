@@ -318,8 +318,8 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 				"promocode":promocode,
 				"otp": generate_otp()
 			})
-		sass_user.flags.ignore_permissions = True
-		result = sass_user.insert()
+		#sass_user.flags.ignore_permissions = True
+		result = sass_user.insert(ignore_permissions=True)
 		lead = create_lead(result)
 
 	doc = frappe.get_doc("Saas User",result.name)
@@ -334,6 +334,7 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 	return final_result
 
 def create_lead(saas_user):
+	frappe.set_user("Administrator")
 	existing_lead = frappe.get_list("Lead",filters={"email_id":saas_user.email})
 	if(len(existing_lead)>0):
 		lead_doc = frappe.get_doc("Lead",existing_lead[0].name)
@@ -348,7 +349,7 @@ def create_lead(saas_user):
 		lead_doc.company_name = saas_user.company_name
 		lead_doc.expected_users = saas_user.expected_users
 		lead_doc.flags.ignore_permissions = True
-		lead_doc.save()
+		lead_doc.save(ignore_permissions=True)
 		
 	else:
 		lead = frappe.get_doc({
@@ -366,8 +367,7 @@ def create_lead(saas_user):
 			})
 		lead.lead_name = saas_user.first_name+" "+saas_user.last_name
 		lead.source = "Walk In"
-		lead.flags.ignore_permissions = True
-		return lead.insert()	
+		return lead.insert(ignore_permissions=True)	
 
 
 @frappe.whitelist(allow_guest=True)
