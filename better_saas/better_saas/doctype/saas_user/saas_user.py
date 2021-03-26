@@ -284,10 +284,16 @@ def get_users_list(site_name):
 	return {"total_users":total_users, "active_users":active_users}
 
 @frappe.whitelist(allow_guest=True)
+def check_password_strength(passphrase,first_name,last_name,email):
+	user_data = (first_name, "", last_name, email, "")
+	return test_password_strength(passphrase,user_data=user_data)
+
+@frappe.whitelist(allow_guest=True)
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
-	password_test_result = test_password_strength(passphrase)
+	user_data = (first_name, "", last_name, email, "")
+	password_test_result = test_password_strength(passphrase,user_data=user_data)
 	if(not password_test_result['feedback']['password_policy_validation_passed']):
 		frappe.throw(password_test_result['feedback']['warning']+"\r\n"+password_test_result['feedback']['suggestions'][0],"ValidationError")
 	

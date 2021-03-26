@@ -413,9 +413,12 @@ setup_signup = function (page) {
 		window.timout_password_strength = null;
 		return frappe.call({
 			type: 'GET',
-			method: 'frappe.core.doctype.user.user.test_password_strength',
+			method: 'better_saas.better_saas.doctype.saas_user.saas_user.check_password_strength',
 			args: {
-				new_password: $('#passphrase').val()
+				passphrase: $('#passphrase').val(),
+				first_name: $('input[name="first_name"]').val(),
+				last_name: $('input[name="last_name"]').val(),
+				email: $('input[name="email"]').val()
 			},
 			callback: function (r) {
 				if (r.message) {
