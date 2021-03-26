@@ -1,0 +1,49 @@
+{
+ "cards": [],
+ "category": "Modules",
+ "charts": [],
+ "creation": "2021-03-12 13:38:54.915764",
+ "developer_mode_only": 0,
+ "disable_user_customization": 0,
+ "docstatus": 0,
+ "doctype": "Desk Page",
+ "extends_another_page": 0,
+ "hide_custom": 0,
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "label": "Better Saas",
+ "modified": "2021-03-12 13:38:54.915764",
+ "modified_by": "narendra@onehash.ai",
+ "module": "Better Saas",
+ "name": "Better Saas",
+ "owner": "narendra@onehash.ai",
+ "pin_to_bottom": 0,
+ "pin_to_top": 0,
+ "shortcuts": [
+  {
+   "doc_view": "List",
+   "label": "Saas Site",
+   "link_to": "Saas Site",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "List",
+   "label": "Saas User",
+   "link_to": "Saas User",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "List",
+   "label": "Saas Settings",
+   "link_to": "Saas Settings",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "List",
+   "label": "Saas Domains",
+   "link_to": "Saas Domains",
+   "type": "DocType"
+  }
+ ]
+}
