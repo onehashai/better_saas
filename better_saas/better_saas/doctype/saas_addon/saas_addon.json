@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:addon_name",
+ "creation": "2021-03-13 17:25:53.757626",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "addon_name",
+  "yearly_amount",
+  "monthly_amount",
+  "addon_type",
+  "addon_value",
+  "currency",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "addon_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Addon Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "yearly_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Yearly Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "monthly_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Monthly Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "addon_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Addon Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "addon_value",
+   "fieldtype": "Data",
+   "label": "Addon Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-03-13 18:18:12.501308",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Saas AddOn",
+ "name_case": "Title Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "addon_name",
+ "show_name_in_global_search": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "addon_name",
+ "track_changes": 1
+}

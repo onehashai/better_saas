@@ -5,8 +5,9 @@
 from __future__ import unicode_literals
 import frappe
 import json
+#import journeys
 from frappe.model.document import Document
-from journeys.addon_limits import update_limits
+#from journeys.addon_limits import update_limits
 
 class SaasSite(Document):
     pass            
@@ -75,17 +76,21 @@ def update_user_to_main_app():
             frappe.destroy()
 
 def get_all_database_config():
-    admin_site_name = "admin_onehash"
-    frappe.destroy()
-    frappe.init(site=admin_site_name)
-    frappe.connect()
-    all_sites = frappe.get_all("Saas Site")
-    for site in all_sites:
+    try:
+        admin_site_name = "admin_onehash"
         frappe.destroy()
-        current_site_name = site.name
-        frappe.init(site=current_site_name)
+        frappe.init(site=admin_site_name)
         frappe.connect()
-        conf = frappe.local.conf
-        #print(current_site_name+","+conf['db_name']+","+conf['db_password']+"\r\n")
-        print("CREATE USER '"+conf['db_name']+"'@'%' IDENTIFIED BY '"+conf['db_password']+"';")
-        print("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, CREATE VIEW, EVENT, TRIGGER, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, EXECUTE ON "+conf["db_name"]+".* TO `"+conf["db_name"]+"`@`%`;")
+        all_sites = frappe.get_all("Saas Site")
+        for site in all_sites:
+            frappe.destroy()
+            current_site_name = site.name
+            frappe.init(site=current_site_name)
+            frappe.connect()
+            conf = frappe.local.conf
+            #print(current_site_name+","+conf['db_name']+","+conf['db_password']+"\r\n")
+            print("CREATE USER '"+conf['db_name']+"'@'%' IDENTIFIED BY '"+conf['db_password']+"';")
+            print("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, CREATE VIEW, EVENT, TRIGGER, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, EXECUTE ON "+conf["db_name"]+".* TO `"+conf["db_name"]+"`@`%`;")
+
+    except Exception as e:
+        pass

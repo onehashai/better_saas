@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "creation": "2021-03-10 12:43:40.507015",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "app_id",
+  "app_secret",
+  "master_domain",
+  "master_subscription_endpoint",
+  "client_verify_token",
+  "facebook_verify_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "app_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "App Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "app_secret",
+   "fieldtype": "Password",
+   "label": "App Secret"
+  },
+  {
+   "fieldname": "client_verify_token",
+   "fieldtype": "Data",
+   "label": "Client Verify Token"
+  },
+  {
+   "fieldname": "facebook_verify_token",
+   "fieldtype": "Data",
+   "label": "Facebook Verify Token"
+  },
+  {
+   "fieldname": "master_subscription_endpoint",
+   "fieldtype": "Data",
+   "label": "Master Subscription Endpoint"
+  },
+  {
+   "fieldname": "master_domain",
+   "fieldtype": "Data",
+   "label": "Master Domain"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2021-03-24 14:53:54.269686",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Facebook Integration",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

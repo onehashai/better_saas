@@ -28,7 +28,7 @@ def load_dropdowns():
     response['countries'] = all_country
     response['languages'] = all_languages
     response['currencies'] = all_currency
-    response['default_country'] = geo_country['names']['en']
+    response['default_country'] = geo_country['names']['en'] if geo_country else None
     response['country_info'] = country_timezone_info['country_info']
     response['all_timezones'] = country_timezone_info['all_timezones']
     return response

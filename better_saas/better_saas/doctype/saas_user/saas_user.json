@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "saasuser.#####",
  "creation": "2020-03-04 17:48:56.589222",
  "doctype": "DocType",
@@ -69,6 +70,7 @@
   {
    "fieldname": "password",
    "fieldtype": "Data",
+   "ignore_xss_filter": 1,
    "in_list_view": 1,
    "label": "Password",
    "read_only": 1,
@@ -77,6 +79,7 @@
   {
    "fieldname": "confirm_password",
    "fieldtype": "Data",
+   "ignore_xss_filter": 1,
    "label": "Confirm Password",
    "read_only": 1,
    "reqd": 1
@@ -190,8 +193,7 @@
   {
    "fieldname": "industry_type",
    "fieldtype": "Data",
-   "label": "Industry Type",
-   "options": "Domain"
+   "label": "Industry Type"
   },
   {
    "fieldname": "designation",
@@ -240,8 +242,10 @@
    "label": "UTM Term"
   }
  ],
- "modified": "2021-02-08 15:55:15.622261",
- "modified_by": "narendra@onehash.ai",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-03-24 15:16:53.468492",
+ "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas User",
  "owner": "Administrator",

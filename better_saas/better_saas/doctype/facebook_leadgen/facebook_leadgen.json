@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "creation": "2021-03-10 12:03:20.445367",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "id",
+  "status",
+  "source",
+  "fetch_time",
+  "form_id",
+  "leadgen_id",
+  "lead_creation_time",
+  "page_id",
+  "data"
+ ],
+ "fields": [
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "Id"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending\nQueued\nSuccess\nFailed"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source"
+  },
+  {
+   "fieldname": "fetch_time",
+   "fieldtype": "Datetime",
+   "label": "Fetch Time"
+  },
+  {
+   "fieldname": "form_id",
+   "fieldtype": "Data",
+   "label": "Form Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "leadgen_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Leadgen Id"
+  },
+  {
+   "fieldname": "lead_creation_time",
+   "fieldtype": "Datetime",
+   "label": "Lead Creation Time"
+  },
+  {
+   "fieldname": "page_id",
+   "fieldtype": "Data",
+   "label": "Page Id"
+  },
+  {
+   "fieldname": "data",
+   "fieldtype": "Text",
+   "label": "Data"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-03-18 12:08:11.261829",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Facebook Leadgen",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
