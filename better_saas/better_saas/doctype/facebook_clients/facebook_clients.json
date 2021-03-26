@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "autoname": "field:client",
  "creation": "2021-03-11 15:45:20.473255",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -16,7 +17,8 @@
   {
    "fieldname": "client",
    "fieldtype": "Data",
-   "label": "Client"
+   "label": "Client",
+   "unique": 1
   },
   {
    "fieldname": "url",
@@ -48,7 +50,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-11 16:48:52.179986",
+ "modified": "2021-03-26 10:15:57.959443",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Facebook Clients",
