@@ -292,7 +292,7 @@ def check_password_strength(passphrase,first_name,last_name,email):
 	return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
-def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode,plan=None):
+def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	user_data = (first_name, "", last_name, email, "")
@@ -325,7 +325,12 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 				"confirm_password":passphrase,
 				"password":passphrase,
 				"promocode":promocode,
-				"otp": generate_otp()
+				"otp": generate_otp(),
+				"utm_source":utm_source,
+				"utm_medium":utm_medium,
+				"utm_content":utm_content,
+				"utm_term":utm_term,
+				"utm_campaign":utm_campaign
 			})
 		#sass_user.flags.ignore_permissions = True
 		result = sass_user.insert(ignore_permissions=True)
