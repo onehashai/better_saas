@@ -55,17 +55,17 @@ def lead_insertion(doc, client, page_access_token):
 		try:
 			client_domain = frappe.get_value("Facebook Clients", client, "url")
 			frappe.local.initialised = False
-			frappe.connect(site=client_domain, set_admin_as_user=True)
+			frappe.connect(site=client_domain)
 			lead_doc = frappe.get_doc(lead_doc)					
 			res = lead_doc.insert(ignore_permissions=True)
 			frappe.db.commit()
 			frappe.destroy()
 			frappe.local.initialised = False
-			frappe.connect(site=master_site, set_admin_as_user=True)
+			frappe.connect(site=master_site)
 		except Exception as e:
 			res = {}
 			frappe.local.initialised = False
-			frappe.connect(site=master_site, set_admin_as_user=True)
+			frappe.connect(site=master_site)
 			frappe.log_error("Error occured while saving lead into client: {} :".format(client_domain)+str(e), 
 				"Error Saving Lead")
 		if res.get("name"):

@@ -93,7 +93,10 @@ def setup(account_request):
 def get_status(account_request):
 	doc = frappe.get_doc("Saas User",account_request)	
 	if(doc.key):
-		commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
+		try:
+			commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
+		except Exception as e:
+			pass
 	else:
 		frappe.throw("You will get confirmation email once your site is ready.","ValidationError")
 
