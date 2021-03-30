@@ -51,6 +51,10 @@ def lead_insertion(doc, client, page_access_token):
 	else:
 		for data in lead_data["field_data"]:
 			if data["name"] in field_mapping:
+				if data["name"] == "country":
+					country_name = frappe.get_value("Country", filters={"code": data["values"][0].lower()}, fieldname=["name"])
+					lead_doc[field_mapping[data["name"]]] = country_name if country_name else ""
+					continue
 				lead_doc[field_mapping[data["name"]]] = data["values"][0]
 		try:
 			client_domain = frappe.get_value("Facebook Clients", client, "url")
