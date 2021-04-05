@@ -15,13 +15,14 @@ class FacebookIntegration(Document):
         with open(os.getcwd()+'/common_site_config.json', 'r') as f:
             config = json.load(f)
         facebook_config = config.get("facebook_config") if config.get("facebook_config") else {}
-        app_id = master_subscription_endpoint = master_domain = client_verify_token = facebook_verify_token = None
+        app_id = master_subscription_endpoint = master_domain = client_verify_token = facebook_verify_token = facebook_webhook_endpoint = None
         if facebook_config:
             app_id = facebook_config.get("facebook_app_id")
             master_domain = facebook_config.get("master_domain")
             master_subscription_endpoint = facebook_config.get("master_subscription_endpoint")
             client_verify_token = facebook_config.get("client_verify_token")
             facebook_verify_token = facebook_config.get("facebook_verify_token")
+            facebook_webhook_endpoint = facebook_config.get("facebook_webhook_endpoint")
         changes = False
         if self.app_id != app_id:
             facebook_config["facebook_app_id"] = self.app_id
@@ -37,6 +38,9 @@ class FacebookIntegration(Document):
             changes = True
         if self.facebook_verify_token != facebook_verify_token:
             facebook_config["facebook_verify_token"] = self.facebook_verify_token
+            changes = True            
+        if self.facebook_webhook_endpoint != facebook_webhook_endpoint:
+            facebook_config["facebook_webhook_endpoint"] = self.facebook_webhook_endpoint
             changes = True
         if changes:
             config["facebook_config"] = facebook_config
@@ -50,11 +54,15 @@ def save_subscription(**kwargs):
     """
     config = frappe.get_site_config()
     facebook_config = config.get("facebook_config") if config.get("facebook_config") else {}
+    
     if not kwargs.get("verify_token") and kwargs.get("verify_token") != facebook_config.get("client_verify_token"):
         return "error"
+    
     page_id, page_access_token, client_domain = kwargs.get("page_id"), kwargs.get("page_access_token"), kwargs.get("domain")
-    user_id, user_access_token = kwargs.get("user_id"), kwargs.get("user_access_token")
-    if page_id and user_id and user_access_token and page_access_token and client_domain:
+    user_id, user_access_token, form_id = kwargs.get("user_id"), kwargs.get("user_access_token"), kwargs.get("form_id")
+    field_mapping = json.loads(kwargs.get("field_mapping"))
+
+    if page_id and user_id and user_access_token and page_access_token and client_domain and form_id:
         client = frappe.get_value("Facebook Clients", filters={"url": client_domain}, fieldname=["name"])
         app_id = facebook_config.get("facebook_app_id")
         if client:
@@ -83,6 +91,31 @@ def save_subscription(**kwargs):
                 short_user_token=user_access_token, user_id=user_id, client_domain=client_domain, app_id=app_id)
             client_doc.append("pages", {"page_id": page_id, "page_access_token": long_page_token})
             client_doc.insert(ignore_permissions=True)
+        
+        if frappe.db.exists("Facebook Forms", form_id):
+            frappe.delete_doc("Facebook Forms", form_id, ignore_permissions=True)
+
+        facebook_forms = frappe.get_doc({
+            "doctype": "Facebook Forms",
+            "page_id": page_id,
+            "form_id": form_id
+        })
+        for k,v in field_mapping.items():
+            if v[1] != "Do Not Map":
+                facebook_forms.append("field_mapping", {
+                "facebook_field_label": v[0],
+                    "lead_field_label": v[1],
+                    "facebook_fieldname": k,
+                    "lead_fieldname": v[2],
+                    "lead_field_type": v[3]                
+                })
+            else:
+                facebook_forms.append("field_mapping", {
+                    "facebook_field_label": v[0],
+                    "lead_field_label": v[1],
+                    "facebook_fieldname": k,
+                })
+        facebook_forms.insert(ignore_permissions=True)
         frappe.db.commit()
         return "success"
     return "error"
@@ -95,11 +128,11 @@ def prolong_token(app_secret, short_user_token, user_id, client_domain, app_id):
                             +app_id+"&client_secret="+app_secret+"&fb_exchange_token="+short_user_token)
         long_user_token = json.loads(long_user_token.text).get("access_token")
     except Exception as e:
-        frappe.log_error("Error occured while fetching facebook client: {} long-lived user token: ".format(client_domain) + str(e), "Error Facebook Token")
+        frappe.log_error("Error occured while fetching facebook client: {} long-lived user token: ".format(client_domain) + frappe.get_traceback(), "Error Facebook Token")
     try:
         long_page_token = requests.get("https://graph.facebook.com/v10.0/"+user_id+"/accounts?access_token="+long_user_token)
         long_page_token = json.loads(long_page_token.text)["data"][0]["access_token"]
     except Exception as e:
-        frappe.log_error("Error occured while fetching facebook client: {} long-lived page token: ".format(client_domain) + str(e), "Error Facebook Token")
+        frappe.log_error("Error occured while fetching facebook client: {} long-lived page token: ".format(client_domain) + frappe.get_traceback(), "Error Facebook Token")
 
     return long_page_token

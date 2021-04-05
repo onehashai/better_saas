@@ -9,6 +9,7 @@
   "app_secret",
   "master_domain",
   "master_subscription_endpoint",
+  "facebook_webhook_endpoint",
   "client_verify_token",
   "facebook_verify_token"
  ],
@@ -44,12 +45,17 @@
    "fieldname": "master_domain",
    "fieldtype": "Data",
    "label": "Master Domain"
+  },
+  {
+   "fieldname": "facebook_webhook_endpoint",
+   "fieldtype": "Data",
+   "label": "Facebook Webhook Endpoint"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2021-03-24 14:53:54.269686",
+ "modified": "2021-04-02 16:59:03.373343",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Facebook Integration",

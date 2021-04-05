@@ -31,18 +31,16 @@ def lead_insertion(doc, client, page_access_token):
 	except Exception as e:
 		doc.status = "Failed"
 		doc.save()
-		frappe.log_error("Error occured while fetching facebook leadgen data for leadgen id: {} ".format(doc.leadgen_id) + str(e), "Error Facebook Leadgen")
-	#facebook form fields: lead field
-	field_mapping = {
-		"city": "city",
-		"state": "state",
-		"gender": "gender",
-		"email":  "email_id",
-		"country":   "country",
-		"full_name": "lead_name",
-		"phone_number":"mobile_no",
-		"company_name": "company_name"
-		}
+		frappe.log_error("Error occured while fetching facebook leadgen data for leadgen id: {} ".format(doc.leadgen_id) + frappe.get_traceback(), "Error Facebook Leadgen")
+	
+	#facebook form fields: lead label
+	field_mapping = {}
+
+	if doc.form_id:
+		for fm in frappe.get_doc("Facebook Forms", doc.form_id).get("field_mapping"):
+			if fm.lead_field_label != "Do Not Map":
+				field_mapping[fm.facebook_fieldname] = [fm.lead_fieldname, fm.lead_field_type]
+
 	lead_doc = {"doctype": "Lead"}
 	if lead_data and lead_data.get("error"):
 		doc.status = "Failed"
@@ -53,15 +51,26 @@ def lead_insertion(doc, client, page_access_token):
 			if data["name"] in field_mapping:
 				if data["name"] == "country":
 					country_name = frappe.get_value("Country", filters={"code": data["values"][0].lower()}, fieldname=["name"])
-					lead_doc[field_mapping[data["name"]]] = country_name if country_name else ""
+					lead_doc[field_mapping[data["name"]][0]] = country_name if country_name else ""
 					continue
-				lead_doc[field_mapping[data["name"]]] = data["values"][0]
+				if field_mapping[data["name"]][1] == "Date":
+					lead_doc[field_mapping[data["name"]][0]] = frappe.utils.getdate(data["values"][0])
+					continue
+				if field_mapping[data["name"]][1] == "Datetime":
+					lead_doc[field_mapping[data["name"]][0]] = frappe.utils.get_datetime(frappe.utils.format_datetime(data["values"][0]))
+					continue					
+				lead_doc[field_mapping[data["name"]][0]] = data["values"][0]
 		try:
+			if "address_line1" not in lead_doc:
+				lead_doc["address_line1"] = "default address_line1"
+			if "city" not in lead_doc:
+				lead_doc["city"] = "default city"
+
 			client_domain = frappe.get_value("Facebook Clients", client, "url")
 			frappe.local.initialised = False
 			frappe.connect(site=client_domain)
 			lead_doc = frappe.get_doc(lead_doc)					
-			res = lead_doc.insert(ignore_permissions=True)
+			res = lead_doc.insert(ignore_permissions=True, ignore_mandatory=True)# ignore_links=True)
 			frappe.db.commit()
 			frappe.destroy()
 			frappe.local.initialised = False
@@ -70,7 +79,7 @@ def lead_insertion(doc, client, page_access_token):
 			res = {}
 			frappe.local.initialised = False
 			frappe.connect(site=master_site)
-			frappe.log_error("Error occured while saving lead into client: {} :".format(client_domain)+str(e), 
+			frappe.log_error("Error occured while saving lead into client: {} :".format(client_domain)+frappe.get_traceback(), 
 				"Error Saving Lead")
 		if res.get("name"):
 			doc.status = "Success"

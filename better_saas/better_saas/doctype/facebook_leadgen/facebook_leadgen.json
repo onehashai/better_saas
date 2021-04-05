@@ -41,6 +41,7 @@
   {
    "fieldname": "form_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Form Id",
    "reqd": 1
   },
@@ -68,7 +69,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-18 12:08:11.261829",
+ "modified": "2021-04-05 14:13:02.345138",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Facebook Leadgen",
