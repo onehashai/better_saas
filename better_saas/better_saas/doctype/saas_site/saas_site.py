@@ -5,9 +5,9 @@
 from __future__ import unicode_literals
 import frappe
 import json
-#import journeys
+import journeys
 from frappe.model.document import Document
-#from journeys.addon_limits import update_limits
+from journeys.addon_limits import update_limits
 
 class SaasSite(Document):
     pass            

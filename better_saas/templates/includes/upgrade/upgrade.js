@@ -83,7 +83,7 @@ frappe.ready(function () {
             let subscribed_users = site_details.limit_for_users;
             let subscription_value = r.message.subscription_value;
             let site_usages = `<div><span>
-            Your trial expires on <b> ${formatted_expiry} </b></span>
+            Your subscription expires on <b> ${formatted_expiry} </b></span>
         <!---->
         </div>
         <div>
