@@ -29,7 +29,7 @@ def insert_profile_enrich_archive(profile_enrich_request):
 	journeys.destroy_admin_connection()
 	return profile_enrich_archive
 
-def update_profile_enrich_archive_request(profile_enrich,profile_enrich_archive):
+def update_profile_enrich_archive_request(profile_enrich, profile_enrich_archive, profile_enrich_request):
 	journeys.connect_admin_db()
 	profile_enrich_archive_name = profile_enrich_archive.name
 	profile_enrich_archive = frappe.get_doc('Profile Enrich Archive',profile_enrich_archive_name)
@@ -41,13 +41,13 @@ def update_profile_enrich_archive_request(profile_enrich,profile_enrich_archive)
 	profile_enrich_archive.save()
 	frappe.db.commit()
 	journeys.destroy_admin_connection()
-	return update_profile_enrich_request(profile_enrich_archive)
+	return update_profile_enrich_request(profile_enrich_archive,profile_enrich_request)
 	
 
 
-def update_profile_enrich_request(profile_enrich_archive):
+def update_profile_enrich_request(profile_enrich_archive,profile_enrich_request):
 	journeys.switch_to_site_db()
-	profile_enrich_request = frappe.get_doc('Profile Enrich Request',profile_enrich_archive.reference_profile_enrich_request)
+	profile_enrich_request = frappe.get_doc('Profile Enrich Request',profile_enrich_request.name)
 	profile_enrich_request.request_data = profile_enrich_archive.request_data
 	profile_enrich_request.traceback = profile_enrich_archive.traceback
 	profile_enrich_request.message = profile_enrich_archive.message
