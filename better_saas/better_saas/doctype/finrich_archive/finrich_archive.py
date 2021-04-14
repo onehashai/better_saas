@@ -29,7 +29,7 @@ def insert_finrich_archive(finrich_request):
 	journeys.destroy_admin_connection()
 	return finrich_archive
 
-def update_finrich_archive_request(insta_summary,finrich_archive):
+def update_finrich_archive_request(insta_summary,finrich_archive,finrich_request):
 	journeys.connect_admin_db()
 	finrich_archive_name = finrich_archive.name
 	finrich_archive = frappe.get_doc('FinRich Archive',finrich_archive_name)
@@ -42,13 +42,13 @@ def update_finrich_archive_request(insta_summary,finrich_archive):
 	finrich_archive.save()
 	frappe.db.commit()
 	journeys.destroy_admin_connection()
-	return update_finrich_request(finrich_archive)
+	return update_finrich_request(finrich_archive,finrich_request)
 	
 
 
-def update_finrich_request(finrich_archive):
+def update_finrich_request(finrich_archive,finrich_request):
 	journeys.switch_to_site_db()
-	finrich_request = frappe.get_doc('FinRich Request',finrich_archive.reference_finrich_request)
+	finrich_request = frappe.get_doc('FinRich Request',finrich_request.name)
 	finrich_request.request_data = finrich_archive.request_data
 	finrich_request.traceback = finrich_archive.traceback
 	finrich_request.message = finrich_archive.message
