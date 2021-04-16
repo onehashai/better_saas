@@ -62,15 +62,19 @@ def parse_insta_summary_response(insta_summary,request_for="Summary"):
 	message=""
 	request_data=""
 	traceback = ""
-	#print("Insta Summary",insta_summary)
-	if("Response" in insta_summary and insta_summary['Response']['Status']=='error'):
-		message = _(str(insta_summary['Response']['Type']))
-		traceback = frappe.get_traceback()
-		request_data = insta_summary['Response']
-		status = "Error"
-		company_name=""
-	else:
-		request_data = insta_summary
-		company_name = request_data["InstaSummary"]["CompanyMasterSummary"]["CompanyName"] if request_for=="Summary" else request_data["InstaBasic"]["CompanyMasterSummary"]["CompanyName"]
-		status = "Success"
+	try:
+		if("Response" in insta_summary and insta_summary['Response']['Status']=='error'):
+			message = _(str(insta_summary['Response']['Type']))
+			traceback = frappe.get_traceback()
+			request_data = insta_summary['Response']
+			status = "Error"
+			company_name=""
+		else:
+			request_data = insta_summary
+			company_name = request_data["InstaSummary"]["CompanyMasterSummary"]["CompanyName"] if request_for=="Summary" else request_data["InstaBasic"]["CompanyMasterSummary"]["CompanyName"]
+			status = "Success"
+	except Exception as e:
+		frappe.msgprint("Could not parse the result response.")
+		frappe.log_error(e)
+
 	return message,request_data,traceback,status,company_name
