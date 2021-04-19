@@ -63,6 +63,7 @@ def parse_insta_summary_response(insta_summary,request_for="Summary"):
 	status=""
 	request_data=""
 	traceback = ""
+	company_name=""
 	try:
 		if("Response" in insta_summary and insta_summary['Response']['Status']=='error'):
 			message = _(str(insta_summary['Response']['Type']))
