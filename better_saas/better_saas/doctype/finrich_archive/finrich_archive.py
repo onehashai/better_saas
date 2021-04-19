@@ -39,7 +39,7 @@ def update_finrich_archive_request(insta_summary,finrich_archive,finrich_request
 	finrich_archive.traceback = traceback
 	finrich_archive.status=status
 	finrich_archive.company_name = company_name
-	finrich_archive.save()
+	finrich_archive.save(ignore_permissions=True)
 	frappe.db.commit()
 	journeys.destroy_admin_connection()
 	return update_finrich_request(finrich_archive,finrich_request)
