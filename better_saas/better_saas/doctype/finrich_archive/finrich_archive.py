@@ -60,6 +60,7 @@ def update_finrich_request(finrich_archive,finrich_request):
 
 def parse_insta_summary_response(insta_summary,request_for="Summary"):
 	message=""
+	status=""
 	request_data=""
 	traceback = ""
 	try:
@@ -76,5 +77,6 @@ def parse_insta_summary_response(insta_summary,request_for="Summary"):
 	except Exception as e:
 		frappe.msgprint("Could not parse the result response.")
 		frappe.log_error(e)
-
+	if(status==""):
+		frappe.log_error(insta_summary,"Summary Response")
 	return message,request_data,traceback,status,company_name
