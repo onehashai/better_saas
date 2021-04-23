@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 import json
 import journeys
+from frappe.utils import today, nowtime, add_days
 from frappe.model.document import Document
 from journeys.addon_limits import update_limits
 
@@ -78,10 +79,9 @@ def update_user_to_main_app():
 # mute emails for the site which are going to expire tomorrow unsubscribe from Schedule Error notification
 def mute_emails_on_expiry():
     try:
-        all_sites = frappe.get_all("Saas Site",filters=[["Saas Site","expiry","Timespan","yesterday"]])
+        all_sites = frappe.get_all("Saas Site",filters=[["Saas Site","expiry","<","2021-04-23"]])
         for site in all_sites:
-            commands = ["bench --site {site_name} set-config mute_emails true".format(site_name = site_name)]
-	
+            commands = ["bench --site {site_name} set-config mute_emails true".format(site_name = site.name)]
             frappe.enqueue('bench_manager.bench_manager.utils.run_command',
                 commands=commands,
                 doctype="Bench Settings",

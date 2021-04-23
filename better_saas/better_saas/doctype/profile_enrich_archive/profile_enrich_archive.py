@@ -38,7 +38,7 @@ def update_profile_enrich_archive_request(profile_enrich, profile_enrich_archive
 	profile_enrich_archive.request_data = json.dumps(request_data, indent=1)
 	profile_enrich_archive.traceback = traceback
 	profile_enrich_archive.status=status
-	profile_enrich_archive.save()
+	profile_enrich_archive.save(ignore_permissions=True)
 	frappe.db.commit()
 	journeys.destroy_admin_connection()
 	return update_profile_enrich_request(profile_enrich_archive,profile_enrich_request)
@@ -60,13 +60,13 @@ def parse_profile_enrich_response(profile_enrich):
 	message=""
 	request_data=""
 	traceback = ""
+	status="Error"
 	#print("Insta Summary",profile_enrich)
 	if("Response" in profile_enrich and profile_enrich['Response']['Status']=='error'):
 		message = _(str(profile_enrich['Response']['Type']))
 		traceback = frappe.get_traceback()
 		request_data = profile_enrich['Response']
 		status = "Error"
-		company_name=""
 	else:
 		request_data = profile_enrich
 		status = "Success"
