@@ -102,7 +102,7 @@ def get_subscription_data(site_name, controller, settings, **args):
     try:
         subscription = frappe.get_doc('Saas Site', site_name, ignore_permissions=True).subscription
 
-        if subscription:
+        if not subscription:
             subscription = controller.setup_subscription(settings, **args)
         else:
             subscription_id = frappe.get_doc('Subscription', subscription).subscription_id
@@ -314,8 +314,7 @@ def update_razorpay_subscription(data):
 
 def update_site_subscription(site_name, customer, base_plan, qty, subscription_id, end_date):
     try:
-        subscriptions = frappe.get_list('Subscription', filters={'reference_site': site_name},ignore_permissions=True)
-        
+        subscription = frappe.get_doc('Saas Site', site_name, ignore_permissions=True).subscription
         if len(subscriptions) == 0 :
             subscription = frappe.new_doc('Subscription')
             subscription.subscription_id = subscription_id
