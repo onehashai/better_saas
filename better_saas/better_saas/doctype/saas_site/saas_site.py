@@ -79,7 +79,7 @@ def update_user_to_main_app():
 # mute emails for the site which are going to expire tomorrow unsubscribe from Schedule Error notification
 def mute_emails_on_expiry():
     try:
-        all_sites = frappe.get_all("Saas Site",filters=[["Saas Site","expiry","<","2021-04-23"]])
+        all_sites = frappe.get_all("Saas Site",filters=[["Saas Site","expiry","Timespan","yesterday"]])
         for site in all_sites:
             commands = ["bench --site {site_name} set-config mute_emails true".format(site_name = site.name)]
             frappe.enqueue('bench_manager.bench_manager.utils.run_command',
