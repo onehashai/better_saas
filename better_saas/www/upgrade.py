@@ -12,6 +12,7 @@ from frappe.integrations.utils import get_payment_gateway_controller
 from better_saas.better_saas.doctype.saas_user.saas_user import apply_new_limits
 from better_saas.better_saas.doctype.saas_site.saas_site import update_addon_limits
 from erpnext.accounts.doctype.subscription.subscription import get_subscription_updates
+from erpnext.crm.doctype.lead.lead import make_customer
 
 
 def get_context(context):
@@ -96,22 +97,7 @@ def get_cart_value(site_details, cart):
     cart_details["payment_gateway"] = frappe.get_value(
         "Payment Gateway Account", plan.payment_gateway, "payment_gateway")
     return {"cart_details": cart_details, "addons": addons, "plan": plan, "site_data": site_data}
-
-
-def get_subscription_data(site_name, controller, settings, **args):
-    try:
-        subscription = frappe.get_doc('Saas Site', site_name, ignore_permissions=True).subscription
-
-        if not subscription:
-            subscription = controller.setup_subscription(settings, **args)
-        else:
-            subscription_id = frappe.get_doc('Subscription', subscription).subscription_id
-            subscription = controller.update_subscription(settings, subscription_id, **args)
-    except Exception as e:
-        log = frappe.log_error(frappe.get_traceback(), "Subscription Fetching Error")
     
-    return subscription
-
 
 @frappe.whitelist(allow_guest=True)
 def pay(site_name, email, onehash_partner, cart):
@@ -141,25 +127,38 @@ def pay(site_name, email, onehash_partner, cart):
         # "addons": addons
     }
 
-    subscription = get_subscription_data(site_name, controller, settings, **args)
+    try:
+        site = frappe.get_doc('Saas Site', site_name, ignore_permissions=True)
+        subscription = site.subscription
+    except Exception as e:
+        log = frappe.log_error(frappe.get_traceback(), "Subscription Fetching Error")
 
-    payment_details = {
-        "amount": cart["cart_details"]["total"],
-        "title": "OneHash",
-        "description": "Subscription Fee",
-        "reference_doctype": "Saas Site",
-        "reference_docname": site_name,
-        "payer_email": email,
-        "payer_name": frappe.utils.get_fullname(frappe.session.user),
-        "order_id": "",
-        "subscription_id": subscription["subscription_id"],
-        "currency": "INR",
-        "redirect_to": frappe.utils.get_url("https://app.onehash.ai/signup" or "")
-    }
+    if not subscription:
 
-    # Redirect the user to this url
-    return {"redirect_to": controller.get_payment_url(**payment_details) + get_razorpay_args(site_name,cart)}
+        subscription = controller.setup_subscription(settings, **args)
+        payment_details = {
+            "amount": cart["cart_details"]["total"],
+            "title": "OneHash",
+            "description": "Subscription Fee",
+            "reference_doctype": "Saas Site",
+            "reference_docname": site_name,
+            "payer_email": email,
+            "payer_name": frappe.utils.get_fullname(frappe.session.user),
+            "order_id": "",
+            "subscription_id": subscription["subscription_id"],
+            "currency": "INR",
+            "redirect_to": frappe.utils.get_url("https://app.onehash.ai/signup" or "")
+        }
 
+        # Redirect the user to this url
+        return {"redirect_to": controller.get_payment_url(**payment_details) + get_razorpay_args(site_name,cart)}
+    
+    else:
+        subscription_id = frappe.get_doc('Subscription', subscription, ignore_permissions=True).subscription_id
+        controller.update_subscription(settings, subscription_id, **args)
+        
+        # Redirect the user to this url
+        return {"redirect_to": frappe.utils.get_url("https://app.onehash.ai/signup" or "")}   
 
 
 def verify_signature(data):
@@ -227,8 +226,8 @@ def verify_signature(data):
 def trigger_razorpay_subscription(*args, **kwargs):
     
     data = frappe._dict(json.loads(frappe.request.get_data()))
-    with open("/home/frappe/frappe-bench//apps/better_saas/better_saas/www/data.json", 'w') as f:
-        json.dump(data, f) # TODO: Remove After Testing also delete file
+    # with open("/home/frappe/frappe-bench//apps/better_saas/better_saas/www/data.json", 'w') as f:
+    #     json.dump(data, f) # TODO: Remove After Testing also delete file
 
     try:
         verify_signature(data)
@@ -242,26 +241,50 @@ def trigger_razorpay_subscription(*args, **kwargs):
         try:
             update_razorpay_subscription(data)
         except Exception as e:
-            log = frappe.log_error(e, "Subscription Error")
+            log = frappe.log_error(e, "Subscription Charged Error")
             notify_failure(log)
             return {"status": "Failed", "reason": e}
-        return {"status": "Success"}
+        return {"status": "Charged Success"}
 
-    # SUbscription Updated
+    # Subscription Updated
     if data.event == "subscription.updated":
         try:
             update_razorpay_subscription(data)
         except Exception as e:
-            log = frappe.log_error(frappe.get_traceback(), "Subscription Error")
+            log = frappe.log_error(frappe.get_traceback(), "Subscription Update Error")
             notify_failure(log)
             return {"status": "Failed", "reason": e}
         return {"status": "Update Success"}
 
 
+def create_customer_from_lead(site_name):
+    saas_user = frappe.get_list('Saas User', filters={'linked_saas_site':site_name}, ignore_permissions=True)[0].name
+    saas_user_email = frappe.get_doc('Saas User', saas_user).email
+    lead_name = frappe.get_list('Lead', filters={'email_id': saas_user_email}, ignore_permissions=True)[0].name
+    try:
+        cur_user = frappe.session.user
+        frappe.set_user("Administrator")
+
+        customer = make_customer(lead_name)
+        customer.insert(ignore_permissions=True)
+        name = customer.name
+
+        frappe.set_user(cur_user)
+
+    except:
+        frappe.log_error(frappe.get_traceback(),'Make Customer Error')
+    return name
+
+
 def update_razorpay_subscription(data):
     subscription_data = get_razorpay_subscription_data(data)
 
-    site = frappe.get_doc("Saas Site", subscription_data.site_name)
+    site = frappe.get_doc("Saas Site", subscription_data.site_name, ignore_permissions=True)
+
+    if not site.customer:
+        site.customer = create_customer_from_lead(site.site_name)
+        site.save(ignore_permissions=True)
+
     site_data = frappe._dict({
         'limit_for_users': site.limit_for_users,
         'expiry': site.expiry,
@@ -284,7 +307,7 @@ def update_razorpay_subscription(data):
 
         site_data["limit_for_users"] = subscription_data.quantity
         site_data["expiry"] = expiry_date
-            
+
     # Case 3: Email & Space Add-on
     # if subscription_data.emails:
     #     site_data['limit_for_emails'] = site.limit_for_emails + int(subscription_data.emails)
@@ -293,29 +316,28 @@ def update_razorpay_subscription(data):
                 
     # Case 4: Change in Users
     # if subscription_data.users:
-        # User Added
-        # TODO: To be added by renewal date
-        # site_data['limit_for_users'] = site.limit_for_users + int(subscription_data.users)
-        # TODO: Update subscription on Razorpay
+    #     User Added
+    #     TODO: To be added by renewal date
+    #     site_data['limit_for_users'] = site.limit_for_users + int(subscription_data.users)
+    #     TODO: Update subscription on Razorpay
 
-        # User Reduced
-        # TODO: To be reduced by next month if triggered after mid-month
+    #     User Reduced
+    #     TODO: To be reduced by next month if triggered after mid-month
     
     # Case 5: Add-on Services: Finrich & Profile Enrich
     # if subscription_data.addon:
     #     for service_name in subscription_data.addon:
     #         site_data['addon_limits'][service_name] = int(subscription_data.addon.service_name)
 
-    update_saas_site(site, site_data)
-    update_site_subscription(site.site_name, site.customer, site.base_plan, subscription_data.quantity, subscription_data.id, expiry_date)
-
+    subscription_name = update_site_subscription(site.site_name, site.customer, site.base_plan, subscription_data.quantity, subscription_data.id, expiry_date)
+    update_saas_site(site, site_data, subscription_name)
 # Downgrade will take effect after grace period [using Background Jobs] on Downgrading date
 
 
 def update_site_subscription(site_name, customer, base_plan, qty, subscription_id, end_date):
     try:
-        subscription = frappe.get_doc('Saas Site', site_name, ignore_permissions=True).subscription
-        if len(subscriptions) == 0 :
+        subscription_name = frappe.get_doc('Saas Site', site_name, ignore_permissions=True).subscription
+        if not subscription_name :
             subscription = frappe.new_doc('Subscription')
             subscription.subscription_id = subscription_id
             subscription.reference_site = site_name
@@ -328,22 +350,37 @@ def update_site_subscription(site_name, customer, base_plan, qty, subscription_i
             subscription.insert(ignore_permissions=True)
             frappe.db.commit()
         else:
-            subscription_name = subscriptions[0].name
-            
-            subscription = frappe.get_doc('Subscription', subscription_name)
+            subscription = frappe.get_doc('Subscription', subscription_name, ignore_permissions=True)
             for subscription_plan in subscription.plans:
                 if subscription_plan.plan == base_plan:
                     subscription_plan.qty = qty
             subscription.save(ignore_permissions=True)
             frappe.db.commit()
 
-            frappe.set_user('Administrator')
+            frappe.set_user("Administrator")
             get_subscription_updates(subscription.name)
+        
+        return subscription.name
 
     except Exception as e:
         log = frappe.log_error(frappe.get_traceback(), "Subscription Create Error")
         notify_failure(log)
         return {"status": "Failed", "reason": e}
+
+
+def update_saas_site(doc, data, subscription_name):
+    doc.limit_for_users = data.limit_for_users
+    doc.expiry = data.expiry
+    doc.limit_for_space = data.limit_for_space
+    doc.limit_for_emails = data.limit_for_emails
+    doc.subscription = subscription_name
+    # for addon in data['addon_limits']:
+    #     doc.addon_limits.service_name
+    doc.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    apply_new_limits(doc.limit_for_users, doc.limit_for_emails, doc.limit_for_space, doc.limit_for_email_group, doc.expiry, doc.site_name)
+
 
 def get_razorpay_subscription_data(data):
 
@@ -367,29 +404,25 @@ def get_razorpay_subscription_data(data):
             else:
                 subscription_data[key] = notes[key]
         #TODO change addon services list to dynamic list
+    
+    # For Upgrade & Monthly Payments
+    if not notes.site_name:
+        subscription_doc = frappe.get_list('Subscription', filters={'subscription_id':subscription.id}, ignore_permissions=True)[0].name
+        site_name = frappe.get_list('Saas Site', filters = dict(subscription = subscription_doc))[0].name
+        subscription_data["site_name"] = site_name
+
     return subscription_data
 
 
 def get_razorpay_args(site_name, cart):
     args = '&site_name='+ site_name
     for cart_item in cart["cart_details"]["cart"]:
-        if cart_item["upgrade_type"] != "Subscription":
+        if cart_item["upgrade_type"] not in ["Subscription", "Users"]:
             addon , qty = cart_item["upgrade_type"], str(cart_item["value"])
             args += '&{addon}={qty}'
     return args
+ # update_addon_limits(json.dumps(doc.get('addon_limits',{})), doc.site_name)
 
-def update_saas_site(doc, data):
-    doc.limit_for_users = data.limit_for_users
-    doc.expiry = data.expiry
-    doc.limit_for_space = data.limit_for_space
-    doc.limit_for_emails = data.limit_for_emails
-    # for addon in data['addon_limits']:
-    #     doc.addon_limits.service_name
-    doc.save(ignore_permissions=True)
-    frappe.db.commit()
-
-    apply_new_limits(doc.limit_for_users, doc.limit_for_emails, doc.limit_for_space, doc.limit_for_email_group, doc.expiry, doc.site_name)
-    # update_addon_limits(json.dumps(doc.get('addon_limits',{})), doc.site_name)
 
 def notify_failure(log):
     try:
@@ -405,3 +438,4 @@ def notify_failure(log):
             "[Important] [OneHash] Razorpay membership webhook failed , please check.", content)
     except:
         pass
+
