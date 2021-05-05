@@ -98,7 +98,8 @@ def save_subscription(**kwargs):
         facebook_forms = frappe.get_doc({
             "doctype": "Facebook Forms",
             "page_id": page_id,
-            "form_id": form_id
+            "form_id": form_id,
+            "enabled": 1
         })
         for k,v in field_mapping.items():
             if v[1] != "Do Not Map":
@@ -136,3 +137,48 @@ def prolong_token(app_secret, short_user_token, user_id, client_domain, app_id):
         frappe.log_error("Error occured while fetching facebook client: {} long-lived page token: ".format(client_domain) + frappe.get_traceback(), "Error Facebook Token")
 
     return long_page_token
+
+
+@frappe.whitelist(allow_guest=True)
+def get_subscription(**kwargs):
+    try:
+        domain = kwargs.get("domain")
+        client = frappe.get_list("Facebook Clients", {"url": domain}, ignore_permissions=True)
+        if client:
+            client = frappe.get_doc("Facebook Clients", client[0].name)
+        if not client or not client.enabled:
+            return "Client is not Enabled"
+        data_dic = {}
+        client_pages = [doc.page_id for doc in client.pages]
+        for page in client_pages:
+            forms = frappe.get_list("Facebook Forms", {"page_id": page, "enabled": 1}, ignore_permissions=True)
+            if forms:
+                forms_list = [doc.name for doc in forms]
+                data_dic[page] = forms_list
+        return data_dic
+    except:
+        frappe.log_error(frappe.get_traceback())
+        return "error"
+
+@frappe.whitelist(allow_guest=True)
+def unsubscribe(**kwargs):
+    try:
+        form = frappe.get_doc("Facebook Forms", kwargs.get("form_id"), ignore_permissions=True)
+        form.enabled = 0
+        form.save(ignore_permissions=True)
+        if kwargs.get("count") in [1,"1"]:
+            access_token, parent = frappe.get_value("Facebook Pages", {"page_id": kwargs.get("page_id")}, ["page_access_token", "parent"])
+            resp = requests.delete("https://graph.facebook.com/v10.0/"+kwargs.get("page_id")+"/subscribed_apps?access_token="+access_token)
+            if resp and json.loads(resp.text).get("success") in ["true", True]:
+                #disable facebook client
+                client = frappe.get_doc("Facebook Clients", parent)
+                client.enabled = 0
+                client.save(ignore_permissions=True)
+                return "success"
+            else:
+                frappe.log_error(json.loads(resp.text))
+                return "error"
+        return "success"
+    except:
+        return frappe.get_traceback()
+

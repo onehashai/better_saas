@@ -11,16 +11,21 @@ import json
 class FacebookLeadgen(Document):
 	def after_insert(self):
 		if self.page_id and self.leadgen_id and self.status:
-			client, page_access_token = frappe.get_value("Facebook Pages", filters={"page_id": self.page_id}, fieldname=["parent", "page_access_token"])
-			if page_access_token:
-				self.status = "Queued"
-				self.save()
-				frappe.utils.background_jobs.enqueue(lead_insertion, queue='default', timeout=None, event=None,	is_async=True, 
-					job_name=None, now=False, enqueue_after_commit=False, doc=self, client=client, page_access_token=page_access_token)
-			else:
+			if frappe.get_value("Facebook Forms", self.form_id, "enabled") == 0:
 				self.status = "Failed"
 				self.save()
-				frappe.log_error("Page access token was not found for facebook leadgen: "+self.name, 'No Page Access Token')
+				frappe.log_error("Facebook Form is disabled for facebook leadgen: "+self.name, 'Facebook Form Disabled')
+			else:
+				client, page_access_token = frappe.get_value("Facebook Pages", filters={"page_id": self.page_id}, fieldname=["parent", "page_access_token"])
+				if page_access_token:
+					self.status = "Queued"
+					self.save()
+					frappe.utils.background_jobs.enqueue(lead_insertion, queue='default', timeout=None, event=None,	is_async=True, 
+						job_name=None, now=False, enqueue_after_commit=False, doc=self, client=client, page_access_token=page_access_token)
+				else:
+					self.status = "Failed"
+					self.save()
+					frappe.log_error("Page access token was not found for facebook leadgen: "+self.name, 'No Page Access Token')
 			frappe.db.commit()
 
 def lead_insertion(doc, client, page_access_token):
@@ -88,3 +93,4 @@ def lead_insertion(doc, client, page_access_token):
 			doc.status = "Failed"
 			doc.save()
 			frappe.log_error("Saving lead on client's system: {} failed for leadgen id: {}".format(client_domain, doc.leadgen_id), "Lead Creation Failed")
+
