@@ -65,7 +65,8 @@ frappe.ready(function() {
                         localStorage.removeItem("reference");
                         localStorage.removeItem("email");
                         localStorage.removeItem("mobile");
-                        window.open(data.link+'/desk', "_self");
+                        console.log(data.link+'/app')
+                        window.open(data.link+'/app', "_self");
                     },
                     error : function(xhr, textStatus, errorThrown ) {
                         if (textStatus == 'timeout' || textStatus == 'parsererror') {
@@ -81,13 +82,13 @@ frappe.ready(function() {
                 })
             }
             else {
-                window.open(data.link, "_self")
+                window.open(data.link+"/app", "_self")
             }
         } else if(typeof data.status!=='undefined' && data.status=="Failed"){
             msgprint("Sorry, Your site cannot be created at the moment. You will get an Email once you site is ready.", 'Site Creation Failed')
             setInterval(window.close(), 5000);
         } else {
-            window.open(data.link, "_self");
+            window.open(data.link+"/app", "_self");
         }
     };
 })

@@ -26,7 +26,10 @@
   "addons_section",
   "addon_limits",
   "apply_addon_limits",
-  "base_plan"
+  "section_break_21",
+  "base_plan",
+  "column_break_23",
+  "customer"
  ],
  "fields": [
   {
@@ -140,11 +143,25 @@
    "fieldtype": "Link",
    "label": "Base Plan",
    "options": "Subscription Plan"
+  },
+  {
+   "fieldname": "section_break_21",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-24 15:15:23.556277",
+ "modified": "2021-04-24 02:22:04.673498",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",
@@ -163,16 +180,14 @@
    "write": 1
   },
   {
-   "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "Guest",
-   "share": 1,
-   "write": 1
+   "select": 1,
+   "share": 1
   }
  ],
  "quick_entry": 1,

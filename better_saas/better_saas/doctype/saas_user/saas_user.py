@@ -96,6 +96,8 @@ def get_status(account_request):
 		try:
 			commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
 		except Exception as e:
+			frappe.clear_last_message()
+			return {}
 			pass
 	else:
 		frappe.throw("You will get confirmation email once your site is ready.","ValidationError")
@@ -117,6 +119,7 @@ def create_first_user_on_target_site(saas_user):
 	site_password = site_user.password
 	is_new_user = False
 	conn=""
+	user=None
 	retry_count = 1
 	from better_saas.better_saas.doctype.saas_user.frappeclient import FrappeClient
 	while(conn==""):
@@ -142,7 +145,7 @@ def create_first_user_on_target_site(saas_user):
 		if(len(user)==0):
 			user = False
 	except Exception as e:
-		print(e)	
+		print(e)
 		pass
 	
 	if(not user):

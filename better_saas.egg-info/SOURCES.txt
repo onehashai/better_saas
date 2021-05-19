@@ -105,6 +105,7 @@ better_saas/templates/includes/upgrade/upgrade.js
 better_saas/templates/pages/__init__.py
 better_saas/templates/pages/__pycache__/__init__.py
 better_saas/www/__init__.py
+better_saas/www/data.json
 better_saas/www/prepare_site.html
 better_saas/www/signup.html
 better_saas/www/signup.py
