@@ -63,6 +63,7 @@ def save_subscription(**kwargs):
     field_mapping = json.loads(kwargs.get("field_mapping"))
 
     if page_id and user_id and user_access_token and page_access_token and client_domain and form_id:
+        frappe.set_user("Administrator")
         client = frappe.get_value("Facebook Clients", filters={"url": client_domain}, fieldname=["name"])
         app_id = facebook_config.get("facebook_app_id")
         if client:
@@ -74,11 +75,15 @@ def save_subscription(**kwargs):
                     short_user_token=user_access_token, user_id=user_id, client_domain=client_domain, app_id=app_id)
                 page_doc.page_access_token = long_page_token
                 page_doc.save(ignore_permissions=True)
+                client_doc = frappe.get_doc("Facebook Clients", client)
+                client_doc.enabled = 1
+                client_doc.save(ignore_permissions=True)
             else:
                 client_doc = frappe.get_doc("Facebook Clients", client)
                 long_page_token = prolong_token(app_secret=get_decrypted_password("Facebook Integration", "Facebook Integration", "app_secret"),
                     short_user_token=user_access_token, user_id=user_id, client_domain=client_domain, app_id=app_id)
                 client_doc.append("pages", {"page_id": page_id, "page_access_token": long_page_token})
+                client_doc.enabled = 1
                 client_doc.save(ignore_permissions=True)
         else:
             client_doc = frappe.get_doc({
@@ -181,4 +186,5 @@ def unsubscribe(**kwargs):
         return "success"
     except:
         return frappe.get_traceback()
+
 
