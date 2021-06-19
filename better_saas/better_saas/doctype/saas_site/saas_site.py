@@ -97,16 +97,19 @@ def get_all_database_config():
         frappe.destroy()
         frappe.init(site=admin_site_name)
         frappe.connect()
-        all_sites = frappe.get_all("Saas Site")
+        all_sites = frappe.get_list("Saas Site")
         for site in all_sites:
             frappe.destroy()
             current_site_name = site.name
             frappe.init(site=current_site_name)
             frappe.connect()
             conf = frappe.local.conf
-            #print(current_site_name+","+conf['db_name']+","+conf['db_password']+"\r\n")
+            print("--"+current_site_name+","+conf['db_name']+","+conf['db_password']+"\r\n")
             print("CREATE USER '"+conf['db_name']+"'@'%' IDENTIFIED BY '"+conf['db_password']+"';")
-            print("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, CREATE VIEW, EVENT, TRIGGER, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, EXECUTE ON "+conf["db_name"]+".* TO `"+conf["db_name"]+"`@`%`;")
-
+            #print("CREATE DATABASE '"+conf['db_name']+"'@'%' IDENTIFIED BY '"+conf['db_password']+"';")
+            #print("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, CREATE VIEW, EVENT, TRIGGER, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, EXECUTE ON "+conf["db_name"]+".* TO `"+conf["db_name"]+"`@`%`;")
+            print("GRANT ALL PRIVILEGES ON `"+conf["db_name"]+"`.* TO '"+conf["db_name"]+"'@'%';")
     except Exception as e:
+        print("-- Error: Could not connect with site "+current_site_name)
+        print(e)
         pass

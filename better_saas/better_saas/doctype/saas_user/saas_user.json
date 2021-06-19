@@ -63,7 +63,6 @@
    "in_list_view": 1,
    "label": "Email",
    "options": "Email",
-   "read_only": 1,
    "reqd": 1,
    "unique": 1
   },
@@ -244,7 +243,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-24 15:16:53.468492",
+ "modified": "2021-05-20 10:33:45.868197",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas User",

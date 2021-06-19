@@ -27,7 +27,7 @@ def setup(account_request):
 	key = saas_user.key
 	site_name = saas_user.subdomain + "." + saas_settings.domain
 
-	# # create user 
+	## create user 
 	frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
 	commands = ["bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} {site_name}".format(site_name=site_name,
 	admin_password=admin_password, mysql_password=mysql_password)]
@@ -91,19 +91,28 @@ def setup(account_request):
 
 @frappe.whitelist(allow_guest=True)
 def get_status(account_request):
-	doc = frappe.get_doc("Saas User",account_request)	
+	if frappe.db.exists("Saas User", account_request):
+		doc = frappe.get_doc("Saas User", account_request)
+	else:
+		return {'status': "Wait"}
+	commandStatus = frappe._dict()
+	commandStatus["status"] = ""
 	if(doc.key):
 		try:
-			commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
+			if frappe.db.exists("Bench Manager Command", doc.key):
+				commandStatus = frappe.get_doc("Bench Manager Command",doc.key)
+			else:
+				return {'status': "Wait"}
 		except Exception as e:
-			frappe.clear_last_message()
-			return {}
 			pass
 	else:
 		frappe.throw("You will get confirmation email once your site is ready.","ValidationError")
 
 	result = {}
-	if(doc.linked_saas_domain and commandStatus.status=="Success"):
+	if commandStatus.get("status") in ["", "Ongoing"]:
+		result['status'] = "Wait"
+		return result
+	elif(doc.linked_saas_domain and commandStatus.status=="Success"):
 		#create_first_user_on_target_site(doc.name)
 		result['user'] = doc.email
 		result['password'] = doc.password
@@ -111,6 +120,8 @@ def get_status(account_request):
 	elif commandStatus.status=="Failed":
 		create_first_user_on_target_site(doc.name)
 		result['status']="Failed"
+	else:
+		result['link'] = "https://"+doc.linked_saas_site
 	return result
 	
 def create_first_user_on_target_site(saas_user):
@@ -145,7 +156,7 @@ def create_first_user_on_target_site(saas_user):
 		if(len(user)==0):
 			user = False
 	except Exception as e:
-		print(e)
+		print(e)	
 		pass
 	
 	if(not user):

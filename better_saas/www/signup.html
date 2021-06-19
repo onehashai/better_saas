@@ -68,8 +68,8 @@
 									</div>
 								</div>
 								<div class="form-group">
-									<p class="help-block">Phone Number <em class="small text-muted">(with country code)</em></p>
-									<input name="phone_number" placeholder="+91 9823 000 000" class="form-control" type="tel" min="0">
+									<p class="help-block">Phone Number</p>
+									<input id="tphone" name="phone_number" placeholder="9823 000 000" class="form-control" type="tel" min="0">
 								</div>
 								<div class="form-group">
 									<p class="help-block">Your Email</p>
@@ -283,10 +283,14 @@
 
 	</div>
 </section>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+
 {% endblock %}
 
 {% block script %}    
 	<script>{% include "templates/includes/signup/signup.js" %}</script>
+	<script src="https://www.google.com/recaptcha/api.js?render=6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q"></script>
 {% endblock %}
 
 {% block sidebar %}{% endblock %}

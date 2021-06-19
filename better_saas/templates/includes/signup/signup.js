@@ -6,6 +6,14 @@
 		'P-Standard-2020': 1
 	}
 
+	// Get Country Codes
+	const phoneInputField = document.querySelector("#tphone");
+    const phoneInput = window.intlTelInput(phoneInputField, {
+        preferredCountries: ["us", "in", "co", "de"],
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+    });
+
 	window.minimum_users = minimum[frappe.utils.get_query_params().plan] || 1;
 
 	//setup route
@@ -83,9 +91,21 @@
 		}
 	});
 
+	// PHONE 
+	$page.find('input[name="phone_number"]').on('change focus', function () {
+		const phoneNumber = phoneInput.getNumber();
+		localStorage.setItem('phoneNum', phoneNumber);
+	});
+
+
 	// Check if form is completed and all values are valid
 	$page.find('.get-started-button').on('click', () => {
-		setup_account_request($page, changeRoute);
+		grecaptcha.ready(function() {
+			grecaptcha.execute('6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q', {action: 'submit'}).then(function(token) {
+		
+			setup_account_request($page, changeRoute);
+			});
+		});
 	});
 
 	$page.find('.btn-request').on('click', () => {
@@ -493,6 +513,9 @@ function setup_account_request ($page, changeRoute){
 				return acc;
 			}, {});
 
+		// Update Phone Number with Country Code 
+		args.phone_number = localStorage.getItem('phoneNum');
+		
 		// validate inputs
 		const validations = Array.from($page.find('.form-group.invalid'))
 			.map(form_group => $(form_group).find('.validation-message').html());

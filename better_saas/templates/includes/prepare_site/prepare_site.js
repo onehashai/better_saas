@@ -40,55 +40,62 @@ frappe.ready(function() {
     }
     setInterval(get_status, 10000);
 
-    function redirect(data){        
-        if(data.link && !frappe.flags.is_dirty){
-            if(data.user && data.password){
-                clearTimeout(get_status);
-                frappe.flags.is_dirty = true;
-                $.ajax({
-                    method: "POST",
-                    url: data.link,
-                    data: {
-                        cmd: "login",
-                        usr: data.user,
-                        pwd: data.password,
-                        device: "desktop"
-                    },
-                    tryCount : 0,
-                    retryLimit: 3,
-                    crossDomain: true,
-                    xhrFields: {
-                        withCredentials: true
-                    },
-                    dataType    : 'json',
-                    success: function(res) {
-                        localStorage.removeItem("reference");
-                        localStorage.removeItem("email");
-                        localStorage.removeItem("mobile");
-                        console.log(data.link+'/app')
-                        window.open(data.link+'/app', "_self");
-                    },
-                    error : function(xhr, textStatus, errorThrown ) {
-                        if (textStatus == 'timeout' || textStatus == 'parsererror') {
-                            this.tryCount++;
-                            if (this.tryCount <= this.retryLimit) {
-                                //try again
-                                $.ajax(this);
+    function redirect(data){
+        
+        if(data && data.status != "Wait"){
+
+            if(data.link && !frappe.flags.is_dirty){
+                if(data.user && data.password){
+                    clearTimeout(get_status);
+                    frappe.flags.is_dirty = true;
+                    $.ajax({
+                        method: "POST",
+                        url: data.link,
+                        data: {
+                            cmd: "login",
+                            usr: data.user,
+                            pwd: data.password,
+                            device: "desktop"
+                        },
+                        tryCount : 0,
+                        retryLimit: 3,
+                        crossDomain: true,
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        dataType    : 'json',
+                        success: function(res) {
+                            localStorage.removeItem("reference");
+                            localStorage.removeItem("email");
+                            localStorage.removeItem("mobile");
+                            window.open(data.link+'/app', "_self");
+                        },
+                        error : function(xhr, textStatus, errorThrown ) {
+                            if (textStatus == 'timeout' || textStatus == 'parsererror') {
+                                this.tryCount++;
+                                if (this.tryCount <= this.retryLimit) {
+                                    //try again
+                                    $.ajax(this);
+                                    return;
+                                }                            
                                 return;
-                            }                            
-                            return;
+                            }
                         }
-                    }
-                })
+                    })
+                }
+                else {
+                    window.open(data.link, "_self")
+                }
+            } else if(typeof data.status!=='undefined' && data.status=="Failed"){
+                msgprint("Sorry, Your site cannot be created at the moment. You will get an Email once you site is ready.", 'Site Creation Failed')
+                setInterval(window.close(), 5000);
+            } else {
+                window.open(data.link+'/app', "_self");
             }
-            else {
-                window.open(data.link+"/app", "_self")
-            }
-        } else if(typeof data.status!=='undefined' && data.status=="Failed"){
-            msgprint("Sorry, Your site cannot be created at the moment. You will get an Email once you site is ready.", 'Site Creation Failed')
-            setInterval(window.close(), 5000);
-        } else {
-            window.open(data.link+"/app", "_self");
-        }
+
+    }
+
     };
-})
+});
+
+
