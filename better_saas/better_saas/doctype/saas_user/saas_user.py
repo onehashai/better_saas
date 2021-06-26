@@ -306,7 +306,7 @@ def check_password_strength(passphrase,first_name,last_name,email):
 	return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
-def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
+def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	user_data = (first_name, "", last_name, email, "")
@@ -356,9 +356,10 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 	send_otp_sms(doc.mobile,doc.otp)
 	send_otp_email(doc)
 	final_result = {}
-	final_result["location"] = "verify"
+	# final_result["location"] = "verify"
 	final_result["reference"] = result.name
 	final_result['email'] = email
+	final_result['mobile'] = phone_number
 	return final_result
 
 def create_lead(saas_user):
@@ -401,21 +402,25 @@ def create_lead(saas_user):
 @frappe.whitelist(allow_guest=True)
 def resend_otp(id):
 	doc = frappe.get_doc("Saas User",id)
-	doc.otp = generate_otp()
-	doc.save()
+	if frappe.utils.time_diff_in_seconds(frappe.utils.now(),doc.modified.strftime("%Y-%m-%d %H:%M:%S.%f"))>600:
+		doc.otp = generate_otp()
+		doc.save()
 	send_otp_sms(doc.mobile,doc.otp)
 	send_otp_email(doc)
-	frappe.msgprint("Verification code has been sent to registered email id and mobile.")
+	# frappe.msgprint("Verification code has been sent to registered email id and mobile.")
 
 @frappe.whitelist(allow_guest=True)
 def verify_account_request(id,otp):
 	doc = frappe.get_doc("Saas User",id)
-	if(doc.otp!=otp):
-		frappe.throw("The OTP you entered could not be authenticated. Please try again","ValidationError")
+	# if(doc.otp!=otp):
+		# frappe.throw("Please enter valid OTP","ValidationError")
+
+	if frappe.utils.time_diff_in_seconds(frappe.utils.now(),doc.modified.strftime("%Y-%m-%d %H:%M:%S.%f"))>600:
+		return 'OTP Expired'
+	elif doc.otp != otp:
+		return 'Invalid OTP'
 	else:
-		result = {}				
-		result['location'] = "#account-setup"
-		return result
+		return 'OTP Verified'
 
 @frappe.whitelist(allow_guest=True)
 def validate_promocode(promocode):
@@ -477,7 +482,7 @@ def send_otp_sms(number,otp):
 	receiver_list = []
 	receiver_list.append(number)
 	message = otp+" is OTP to verify your account request for OneHash."
-	send_sms(receiver_list,message)
+	send_sms(receiver_list,message, sender_name = '', success_msg = False)
 
 def send_otp_email(site_user):
 	STANDARD_USERS = ("Guest", "Administrator")

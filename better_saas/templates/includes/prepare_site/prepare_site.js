@@ -38,7 +38,7 @@ frappe.ready(function() {
             }
         });
     }
-    setInterval(get_status, 10000);
+    setInterval(get_status, 5000);
 
     function redirect(data){
         

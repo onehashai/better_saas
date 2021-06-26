@@ -1,3 +1,11 @@
+:root {
+  --Red: #D13830;
+  --Yellow: #E5A403;
+  --Green: #0E8C4A;
+  --Blue: #377DE2;
+}
+
+/* Progress Bar */
 .center-progress {
     position: absolute;
     margin-top: 130px;
@@ -11,10 +19,18 @@
     left: 0;
     height:50px;
 }
+/* .card{
+  border-top: 4px solid var(--Red);
+  border-right: 4px solid var(--Yellow);
+  border-bottom: 4px solid var(--Green);
+  border-left: 4px solid var(--Blue);
+  border-radius: 20px;
+} */
 .custom-padding {
-    padding: 100px 20px;
+    padding: 20px;
 }
 
+/* LDS Spinner */
 @keyframes lds-spinner {
   0% {
     opacity: 1;
@@ -99,5 +115,100 @@
   width: 200px !important;
   height: 200px !important;
   -webkit-transform: translate(-100px, -100px) scale(1) translate(100px, 100px);
-  transform: translate(-100px, -100px) scale(1) translate(100px, 100px);
+  transform: translate(-100px, -100px) scale(1) translate(100px, 100px); 
+}
+
+/* Color Spinner */
+.color-spinner {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 8px solid var(--Red);
+  border-right: 8px solid var(--Yellow);
+  border-bottom: 8px solid var(--Green);
+  border-left: 8px solid var(--Blue);
+  width: 80px;
+  height: 80px;
+  -webkit-animation: color-spinner 2s linear infinite;
+  animation: color-spinner 2s linear infinite;
+}
+
+@-webkit-keyframes color-spinner {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes color-spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Icon Spinner */
+#icon-spinner{
+  margin-top: 25px;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+}
+#icon-spinner > div > div {
+  animation-play-state: paused;
+  border: 5px solid rgb(255, 0, 0);
+  border-radius: 50%;
+  border-top: 8px solid var(--Red);
+  border-right: 8px solid var(--Yellow);
+  border-bottom: 8px solid var(--Green);
+  border-left: 8px solid var(--Blue);
+  width: 100px;
+  height: 100px;
+  animation: rotate 2s infinite linear;
+}
+#icon-spinner > div {
+  margin: auto;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+}
+.icon-spinner #icon-spinner div div {
+  animation-play-state: running;
+}
+@keyframes loadicons {
+  0% {
+    transform: scale(0) translate3d(0, 0, 0);
+  }
+  11% {
+    transform: scale(1.2) translate3d(0, 0, 0);
+  }
+  22% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  33% {
+    transform: scale(0) translate3d(0, 0, 0);
+  }
+}
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.icon-spinner #icon-spinner i {
+  margin: 32px !important;
+  font-size: 36px;
+  position: absolute;
+  margin: auto;
+  transform: scale(0) translate3d(0, 0, 0);
+}
+.icon-spinner #icon-spinner i:nth-of-type(1) {
+  animation: loadicons 4s infinite ease-in-out;
+  color: var(--Red);
+}
+.icon-spinner #icon-spinner i:nth-of-type(2) {
+  animation: loadicons 4s 1s infinite ease-in-out;
+  color: var(--Yellow);
+}
+.icon-spinner #icon-spinner i:nth-of-type(3) {
+  animation: loadicons 4s 2s infinite ease-in-out;
+  color: var(--Green);
+}
+.icon-spinner #icon-spinner i:nth-of-type(4) {
+  animation: loadicons 4s 3s infinite ease-in-out;
+  color: var(--Blue);
 }

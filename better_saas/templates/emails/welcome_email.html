@@ -1,15 +1,23 @@
-<p>Welcome {{ first_name }}{% if last_name %} {{ last_name}}{% endif %},</p>
-<p>{{_("A new OneHash account has been created for you at {0}").format(site_url)}}.</p>
-<p>{{_("Your login id is")}}: <b>{{ user }}</b>
+<div style="width: 100%; display: flex; justify-content: center;">
+	<img src="https://app.onehash.ai/files/welcome_user.png">
+</div>
+<p>Hello {{ first_name }},</p>
+<br>
+<p>{{_("Welcome to the family of OneHash CRM. We hope your business attain new heights with the Power of One!")}}</p>
+<br>
+<p>{{_("Your account has been created at {0}. Login into the system and enjoy the plethora of benefits that we have in
+	store for you.").format(site_url)}}.</p>
+<br>
+<p>{{_("Your Login ID is")}}: <b>{{ user }}</b></p>
+<br>
 <p>{{_("Thanks for signing up for OneHash.")}}</p>
-
+<br>
+<p>Click on the button below to complete the registration process, and set a new password for your instance.</p>
+<br>
 <p>You can find the project's documentation <a href="{{help_url}}" target="_blank">Help</a></p>
-
-<p>We wish you a great journey with OneHash.</p><br>
-
-{% if user_fullname != "Administrator" %}
 <br>
-<p>{{_("Thank you")}},<br>
-Team OneHash</p>
-{% endif %}
+<p>OneHash CRM team wishes you all the luck for the future and hope to see you grow and attain new heights and glory!
+</p>
 <br>
+<p>Cheers,<br>
+	Team OneHash</p>

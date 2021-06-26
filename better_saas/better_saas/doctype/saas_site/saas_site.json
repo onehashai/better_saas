@@ -22,6 +22,8 @@
   "column_break_8",
   "limit_for_email_group",
   "expiry",
+  "warning_level",
+  "warning_date",
   "apply_new_limits",
   "addons_section",
   "addon_limits",
@@ -157,11 +159,24 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer"
+  },
+  {
+   "description": "Indicates the level of warning for site due to inactivity or expiration",
+   "fieldname": "warning_level",
+   "fieldtype": "Select",
+   "label": "Warning Level",
+   "options": "\nInitial Warning\nIntermittent Warning\nFinal Warning"
+  },
+  {
+   "description": "Indicates the date of initial warning",
+   "fieldname": "warning_date",
+   "fieldtype": "Date",
+   "label": "Warning Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-04-24 02:22:04.673498",
+ "modified": "2021-06-24 15:42:47.924793",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",
