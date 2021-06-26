@@ -8,13 +8,29 @@
 {% endblock %}
 
 {% block page_content %}
-<section>
+<section style="padding: 0px;">
 	<div class="container">
 		<div class="card w-500 card-body custom-padding">
 			<div class="text-center">
 				<h4> Your OneHash account is being prepared.</h4>
 			</div>
-			<div class="lds-css ng-scope">
+		<!-- Icon Spinner -->
+			<div class="icon-spinner">
+				<div id="icon-spinner">
+					<div>
+						<i class="fas fa-handshake"></i>
+						<i class="fas fa-funnel-dollar"></i>
+						<i class="fas fa-chart-line"></i>
+						<i class="fas fa-bullhorn"></i>
+						<div></div>
+					</div>
+				</div>
+			</div>
+		<!-- COLOR SPINNER -->
+			<!-- <div class="color-spinner" style="margin:0 auto;"></div> -->
+
+		<!-- LDS SPINNER -->
+			<!-- <div class="lds-css ng-scope">
 				<div class="lds-spinner" style="margin:0 auto;">
 					<div></div>
 					<div></div>
@@ -25,27 +41,40 @@
 					<div></div>
 					<div></div>
 				</div>
-			</div>
+			</div> -->
+
+		<!-- PROGRSS BAR -->
 			<!-- <div class="progress-chart center-progress" style ="width: 150px;">
 				<div class="progress">
 					<div class="progress-bar" style="width: 2%; background-color: #5e64ff;"></div>
 				</div>
 			</div> -->
-			<div class="text-center">
-				<p class="setup-message text-muted" style="padding:10px;">Creating Your Instance.</p>
-			</div>
-			<div class="text-center">
-				<p class="text-muted" style="padding:10px;">It may take upto 5 Minute. You will get an Email Alert once your account is ready.</p>
-			</div>
+			<center>
+					<p class="setup-message text-muted" style="padding:10px;">Creating Your Instance.</p>
+			</center>
+			<center>
+				<p class="text-muted" style="padding:10px;">It may take upto 5 minutes. You will get an Email Alert once your account is ready.</p>
+			</center>
+		</div>
+		<div class="card w-500 card-body custom-padding">
+			<center>
+				<p class="text-muted" style="padding: 10px;">Now that your instance is being created with us, why don't you take a tour of the instance before you start using it?</p>
+				<iframe src="https://drive.google.com/file/d/1TydFsvJ6zzLYVMD8wb_JqeJzu_Aoo5HS/preview" width="auto" height="240" allow="autoplay"></iframe>
+			</center>
+		</div>
+		<div class="card w-500 card-body custom-padding">
+			<center>
+				<p class="text-muted" style="padding-inline: 10px;">Book a personalized demo with our experts to unfold all the features of OneHash CRM.</p>
+				<a class="btn btn-outline-dark" href="https://calendly.com/onehash/anand/" target="_blank">Book Demo</a>
+			</center>
 		</div>
 	</div>
 </section>
 {% endblock %}
 
 {% block script %}    
-    <script>
-        {% include "templates/includes/prepare_site/prepare_site.js" %}
-    </script>
+	<script src="https://kit.fontawesome.com/b597afc600.js" crossorigin="anonymous"></script>
+    <script>{% include "templates/includes/prepare_site/prepare_site.js" %}</script>
 {% endblock %}
 
 {% block sidebar %}{% endblock %}

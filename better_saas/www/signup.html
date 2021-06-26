@@ -1,296 +1,105 @@
-{% extends "templates/web.html" %}
-
-{% block style %}
+{% extends "templates/web.html" %} {% block style %}
 <style>
     {% include "templates/includes/signup/frappe-theme.css" %}
-	{% include "templates/includes/signup/signup.css" %}
+    
+    {% include "templates/includes/signup/signup.css" %}
 </style>
-{% endblock %}
-
-{% block page_content %}
+{% endblock %} {% block page_content %}
 <!-- {{ for_test }} -->
 <section class="top-section staged-form">
-	<div class="container">
-		<h1 class="mb-4 text-center">Sign Up for OneHash</h1>
-		<div class="stage-container w-500">
-			<div class="stage-line"></div>
-			<i class="stage stage-1 completed"></i>
-			<i class="stage stage-2"></i>
-			<i class="stage stage-3"></i>
-			<i class="stage stage-4"></i>
-		</div>
+    <div class="container">
+        <h1 class="mb-4 text-center">Sign Up for OneHash</h1>
 
-		<div class="stage-names w-500">
-			<div class="stage-name personal-setup small text-center">Personal Info</div>
-			<div class="stage-name verify-email text-extra-muted small text-center">Verify Email</div>
-			<div class="stage-name regional-setup text-extra-muted small text-center">Regional Settings</div>
-			<div class="stage-name business-setup text-extra-muted small text-center">Business Settings</div>
-		</div>
+        <div class="missing-domain-msg text-center hidden w-500 mb-4">
+            <p class="alert alert-warning"><span class="missing-domain text-primary"></span> is not available</p>
+            <i class="octicon octicon-chevron-down mega-octicon" style="color: #36414C;"></i>
+        </div>
 
-
-		<div class="missing-domain-msg text-center hidden w-500 mb-4">
-			<p class="alert alert-warning"><span class="missing-domain text-primary"></span> is not available</p>
-			<i class="octicon octicon-chevron-down mega-octicon" style="color: #36414C;"></i>
-		</div>
-
-		<div>
-			<div class="w-500 card text-left">
-				<div class="card-body">
-						<!-- Personal Info Section -->
-						<div class="personal-info">
-							<form class="signup-state-details" role="form">
-								<div class="form-group signup-subdomain">
-									<p class="help-block">Your Site Name <em class="small text-muted">(can only contain letters and numbers.)</em></p>
-									<div class="input-group">
-										<input name="subdomain" placeholder="mycompany" class="form-control" type="text">
-										<div class="input-group-append">
-											<span class="input-group-text">.onehash.ai</span>
-										</div>
-									</div>
-									<div class="availability">
-										<span class="availability-status text-success"><i class="octicon octicon-check text-success"></i><span></span></span>
-										<span class="availability-spinner small text-muted hidden">checking...</span>
-									</div>
-									<p class="validation-message small"></p>
-								</div>
-
-								<div class="form-group row">
-									<div class="col-md-6">
-										<p class="help-block">First Name</p>
-										<input type="text" name="first_name" class="form-control">
-										<p class="validation-message"></p>
-									</div>
-
-									<div class="col-md-6">
-										<p class="help-block">Last Name</p>
-										<input type="text" name="last_name" class="form-control">
-										<p class="validation-message"></p>
-									</div>
-								</div>
-								<div class="form-group">
-									<p class="help-block">Phone Number</p>
-									<input id="tphone" name="phone_number" placeholder="9823 000 000" class="form-control" type="tel" min="0">
-								</div>
-								<div class="form-group">
-									<p class="help-block">Your Email</p>
-									<input name="email" placeholder="jane_doe@example.com" class="form-control" type="text">
-									<p class="validation-message">Please enter a valid email address</p>
-								</div>
-
-								<div class="form-group">
-									<p class="help-block">Password</p>
-									<input type="password" name="passphrase" id="passphrase" class="form-control">
-									<span class="password-strength-indicator indicator"></span>
-								</div>
-								<p class="password-strength-message text-muted small hidden"></p>
-								<div class="form-group">
-									<p class="help-block">Promocode</p>
-									<input name="promocode" placeholder="Promocode" class="form-control" type="text">
-									<p class="validation-message">Please Enter an Valid Code</p>
-								</div>
-								<div class="form-group text-center mb-4 text-muted small">
-									<label>
-										<input name="agree-checkbox" type="checkbox" aria-label="Accept Terms and Privacy Policy" onclick="toggle_button(event)">
-										<span>I have read and agree to the <a href="/terms" target="_blank">Terms of Use</a> and </span><a href="/privacy" target="_blank">Privacy Policy</a>.
-									</label>
-								</div>
-
-								<div class="form-group text-center">
-									<button type="button" class="btn btn-primary get-started-button" disabled="">Get Started</button>
-								</div>
-							</form>
-						</div>
-
-						<!-- Verify OTP -->
-						<div class="verify-otp hide">
-							<p>You will receive an verification code at registered email id <strong class="email"></strong>, and Mobile Number <strong class="mobile"></strong>asking you to verify this
-								account request.</p>
-							<br>
-							<form class="otp-verification-details" role="form">
-								<div class="form-group text-center">
-									<input name="otp" placeholder="Please enter verification code here" id="otp" class="form-control" type="text">
-								</div>
-								<div class="form-group text-center">
-									<button class="btn btn-primary btn-request" type="button" style="min-width:250px;">Verify</button><br>
-									<button class="btn btn-default btn-resend-otp" type="button" style="min-width:250px; margin-top:10px;">Resend
-										Verification Code</button><br>
-								</div>
-							</form>
-							<hr>
-							<b>Note : </b>
-							<p class="text-muted">It may take a few minutes before you receive this email.
-								If you don't find it, please check your SPAM folder.
-							</p>
-						</div>
-
-						<!-- Regional Settings/ Accounts Setup Section -->
-						<div class="regional-settings hide">
-							<form role="form">
-								<div class="form-group">
-									<p class="help-block">Country</p>									
-									<select name="country" class="form-control">
-								</select>
-									<p class="validation-message"></p>
-								</div>
-								<div class="form-group">
-									<p class="help-block">What does your organization do?</p>
-									<select name="industry_type" class="form-control">
-										<option value=""></option>
-										<option value="Services">Services</option>
-										<option value="Retail">Retail</option>
-										<option value="Manufacturing">Manufacturing</option>
-										<option value="Distribution">Distribution</option>
-										<option value="Education">Education</option>
-										<option value="Agriculture">Agriculture</option>
-										<option value="Healthcare">Healthcare</option>
-										<option value="Non Profit">Non Profit</option>
-										<option value="Media and Entertainment">Media and Entertainment</option>  
-									</select>
-									<p class="validation-message"></p>
-								</div>
-								<div class="form-group row">
-									<div class="col-md-6">
-										<p class="help-block">Currency</p>
-										<select name="currency" class="form-control">
-											</select>
-									</div>
-
-									<div class="col-md-6">
-										<p class="help-block">Language</p>
-										<select name="language" class="form-control"></select>
-										<p class="validation-message"></p>
-									</div>
-								</div>
-
-								<div class="form-group">
-									<p class="help-block">Timezone </p>
-									
-									<select name="timezone" class="form-control">
-										{% for timezone in all_timezones %}
-											  <option value="{{timezone}}" >{{timezone}}</option>
-										{% endfor %}
-									</select>
-									<p class="validation-message"></p>
-								</div>
-								<div class="form-group text-center">
-									<button type="button" class="btn btn-primary account-setup-button">Next</button>
-								</div>
-							</form>
-						</div>
-
-						<!-- Other Meta Details -->
-						<div class="other-details hide">
-							<form role="form">
-								<div class="form-group">
-									<p class="help-block">Company Name</p>
-									<input type="text" name="company" class="form-control">
-									<p class="validation-message"></p>
-								</div>
-								<div class="form-group row">
-									<div class="col-md-6">
-										<p class="help-block">Expected Number of Users</p>
-										<input type="number" name="users" class="form-control" min="1">
-									</div>
-
-									<div class="col-md-6">
-										<p class="help-block">Your Designation</p>
-										<input type="text" name="designation" class="form-control">
-										<p class="validation-message"></p>
-									</div>
-								</div>
-
-								<div class="form-group">
-									<p class="help-block">Where did you hear about OneHash</p>
-									<select name="referral_source" class="form-control">
-										<option></option>
-										<option value="LinkedIn">LinkedIn</option>
-										<option value="Twitter">Twitter</option>
-										<option value="Email">Email</option>
-										<option value="Recommended by a friend/colleague">Recommended by a friend/colleague</option>
-										<option value="Blogs/Reviews">Blogs/Reviews</option>
-										<option value="Others">Others</option>
-									</select>
-									<p class="validation-message"></p>
-								</div>
-								<div class="form-group text-center">
-									<button type="button" class="btn btn-primary other-settings-button">Next</button>
-								</div>
-							</form>
-						</div>
-
-						<!-- Subscription Details -->
-						<div class="subscription hide">
-							<div class="form-group signup-subdomain">
-								<p class="help-block">Your Site Name <em class="small text-muted">(can only contain letters and numbers.)</em></p>
-								<div class="input-group">
-									<input name="subdomain" placeholder="mycompany" class="form-control" type="text">
-									<div class="input-group-append">
-										<span class="input-group-text">.onehash.ai</span>
-									</div>
-								</div>
-								<div class="availability">
-									<span class="availability-status text-success"><i class="octicon octicon-check text-success"></i><span></span></span>
-									<span class="availability-spinner small text-muted hidden">checking...</span>
-								</div>
-								<p class="validation-message small"></p>
-							</div>
-
-							<div class="form-horizontal-group">
-								<!-- TODO: reenable these at the time of choice of subscription at the time of signup -->
-
-								<!-- <div class="form-group" style="margin-right: 15px;"> -->
-								<div class="form-group">
-									<p class="help-block">Number of Users</p>
-									<input name="number_of_users" placeholder="1" class="form-control" type="number" min="5">
-									<p class="validation-message small">Please enter a valid number of users.</p>
-								</div>
-
-								<!-- <div class="form-group">
-									<p class="help-block">Subscription Type</p>
-									<select name="subscription-type" class="form-control" type="text">
-										<option value='Monthly'>Monthly</option>
-										<option value='Annual'>Annual</option>
-									</select>
-								</div> -->
-							</div>
-
-							<!-- <div>
-								<h5 class="plan-name"></h5>
-								<h3 class="text-muted">
-									<span class="pricing-symbol"></span>
-									<span class="subscription-price"></span>/month
-								</h3>
-							</div> -->
-
-							
-
-							<div class="form-group text-center">
-								<button class="btn btn-primary btn-request" type="button">Proceed
-									
-								</button>
-							</div>
-						</div>
-
-				</div>
-			</div>
-		</div>
-		<!-- <div class="testimonial-container col-md-6 col-sm-12 py-5">
-			<div class="testimonial-card card p-5 m-3 text-left">
-					<p class="testimonial-text">"I love OneHash. I strongly recommend OneHash to everyone interested in running a successful online business! I could probably go into sales for you. We're loving it."</p>
-					- Annora R.
-			</div>
-		</div> -->
-
-	</div>
+        <div>
+            <div class="w-500 card text-left">
+                <div class="signup-card card-body">
+                    <form class="signup-state-details" role="form">
+                        <div class="form-group row" style="margin-bottom: 0px;">
+                            <div class="col-md-6">
+                                <p class="help-block">First Name</p>
+                                <input type="text" name="first_name" class="form-control">
+                                <p class="validation-message"></p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p class="help-block">Last Name</p>
+                                <input type="text" name="last_name" class="form-control">
+                                <p class="validation-message"></p>
+                            </div>
+                        </div>
+                        <div class="form-group signup-subdomain">
+                            <p class="help-block">Your Sitename <em class="small text-muted">(use only letters and numbers)</em></p>
+                            <div class="input-group">
+                                <input name="subdomain" placeholder="mycompany" class="form-control" type="text">
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.onehash.ai</span>
+                                </div>
+                            </div>
+                            <div class="availability" style="font-size: 80%; font-weight: 400;">
+                                <span class="availability-status text-success" style="height: 21px;"><span></span></span>
+                                <span class="availability-spinner small text-muted hidden">checking...</span>
+                            </div>
+                            <p class="validation-message small"></p>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-6" style="margin-bottom: 21px;">
+                                <p class="help-block">Your Email</p>
+                                <input name="email" placeholder="jane_doe@example.com" class="form-control" type="text">
+                                <p class="validation-message" id="emailValidationMsg">Please enter a valid email address</p>
+                            </div>
+                            <div class=" form-group col-md-6" style="margin-bottom: 21px;">
+                                <p class="help-block">Password</p>
+                                <input type="password" name="passphrase" id="passphrase" class="form-control">
+                                <span class="password-strength-indicator indicator"></span>
+                                <p class="password-strength-message text-muted small hidden"></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group mb-0 col-md-6" >
+                                <p class="help-block">Phone Number</p>
+                                <input id="tphone" name="phone_number" placeholder="9823 000 000" class="form-control" type="tel" min="0">
+                            </div>
+                            <div class="form-group mb-0 col-md-6">
+                                <div class=".verify-otp hide">
+                                    <form>
+                                        <p class="help-block">Enter OTP</p>
+                                        <input name="otp" placeholder="******" id="otp" class="form-control" type="text">
+                                        <p class="validation-message"></p>
+                                    </form>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary btn-block hide" type="button" style="margin-top: 27px;" id="getOTP">Get OTP</button><br>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group text-center mb-4 text-muted small" style="margin-top: 20px;">
+                            <label>
+                                <input name="agree-checkbox" type="checkbox" aria-label="Accept Terms and Privacy Policy" onclick="toggle_button(event)">
+                                <span>I have read and agree to the <a href="https://onehash.ai/terms-of-use" target="_blank" style="color: #2490ef;">Terms of Use</a> and </span><a href="https://onehash.ai/privacy" target="_blank" style="color: #2490ef;">Privacy Policy</a>
+                            </label>
+                        </div>
+                        <div class="form-group col-md-6 offset-md-3 text-center">
+                            <button type="button" class="btn btn-primary btn-lg btn-block get-started-button" disabled='false'>Get Started</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
+
+{% endblock %} {% block script %}
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+
+<script src="https://kit.fontawesome.com/b597afc600.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
-
-{% endblock %}
-
-{% block script %}    
-	<script>{% include "templates/includes/signup/signup.js" %}</script>
-	<script src="https://www.google.com/recaptcha/api.js?render=6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q"></script>
-{% endblock %}
-
-{% block sidebar %}{% endblock %}
+<script>{% include "templates/includes/signup/signup.js" %}</script>
+<script src="https://www.google.com/recaptcha/api.js?render=6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q"></script>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9HWLSJ"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+{% endblock %} {% block sidebar %}{% endblock %}
