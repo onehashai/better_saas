@@ -97,10 +97,10 @@ scheduler_events = {
  	"daily": [
  		"better_saas.better_saas.doctype.saas_site.saas_site.update_user_to_main_app",
 		"better_saas.better_saas.doctype.saas_site.saas_site.mute_emails_on_expiry"
- 	]
-# 	"hourly": [
-# 		"better_saas.tasks.hourly"
-# 	],
+ 	],
+	"hourly": [
+		"better_saas.better_saas.doctype.site_deletion_configuration.site_deletion_configuration.check_deletable_sites"
+	],
 # 	"weekly": [
 # 		"better_saas.tasks.weekly"
 # 	]
