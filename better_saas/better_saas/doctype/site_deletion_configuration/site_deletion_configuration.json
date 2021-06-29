@@ -6,7 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "enabled",
-  "run_at_hour",
+  "run_at_interval",
   "limit",
   "inactive_for_days",
   "column_break_5",
@@ -21,13 +21,6 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
-  },
-  {
-   "description": "The deletion task will run at this hour",
-   "fieldname": "run_at_hour",
-   "fieldtype": "Select",
-   "label": "Run At Hour",
-   "options": "00\n02\n04\n06\n08\n10\n12\n14\n16\n18\n20\n22"
   },
   {
    "description": "Indicates the number of inactive days to be considered for site deletion",
@@ -69,12 +62,19 @@
    "fieldtype": "Link",
    "label": "Deletion Warning Template",
    "options": "Email Template"
+  },
+  {
+   "description": "The deletion task will run at this hours interval",
+   "fieldname": "run_at_interval",
+   "fieldtype": "Select",
+   "label": "Run At Interval",
+   "options": "00\n02\n04\n06\n08\n10\n12\n14\n16\n18\n20\n22"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2021-06-28 16:08:42.503352",
+ "modified": "2021-06-29 16:55:41.662279",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Site Deletion Configuration",

@@ -17,8 +17,15 @@ def check_deletable_sites():
     if not site_deletion_config.enabled:
         return        
     
-    if site_deletion_config.run_at_hour != nowtime()[:2]:
+    if not site_deletion_config.run_at_interval:
         return
+    if int(site_deletion_config.run_at_interval) == 0:
+        if int(nowtime()[:2]) != 0:
+            return
+    else:
+        if int(nowtime()[:2]) % int(site_deletion_config.run_at_interval) != 0:
+            return
+
     check_sites()
 
 def check_sites():
@@ -103,7 +110,7 @@ def process_list(inter_warning_days, warning_days, site_list=None, limit=20):
                 #notification set for 3rd mail trigger on warning_level
                 doc.warning_level = "Final Warning"
                 doc.save()
-            elif doc.warning_level == "Final Warning":
+            elif doc.warning_level == "Final Warning" and getdate(nowdate()) == add_days(doc.warning_date, days=warning_days+1):
                 doc.warning_level = "Deletion Queued"
                 doc.save()
             elif doc.warning_level == "Deletion Approved":
