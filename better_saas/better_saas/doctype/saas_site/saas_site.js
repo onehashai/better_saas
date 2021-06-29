@@ -152,6 +152,21 @@ frappe.ui.form.on('Saas Site', {
 					});
 				});
 			}
+			if(frappe.user.has_role("System Manager") && frm.doc.warning_level == "Deletion Queued"){
+				frm.add_custom_button(__('Approve Deletion'), function(){
+					frappe.confirm(__("This action will approve the site for deletion. It can't be undone. Are you sure ?"), function() {
+						frm.doc.warning_level = "Deletion Approved";
+						frm.refresh_field("warning_level");
+						cur_frm.doc.__unsaved = 1
+						frm.save();
+					}, function(){
+						frappe.show_alert({
+							message: "Cancelled !!",
+							indicator: 'red'
+						});
+					});
+				});
+			}
 		}
 
 	}

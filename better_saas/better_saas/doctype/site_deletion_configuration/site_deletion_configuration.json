@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "creation": "2021-06-25 15:25:08.445304",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "run_at_hour",
+  "limit",
+  "inactive_for_days",
+  "column_break_5",
+  "expired_for_days",
+  "warning_days",
+  "intermittent_warning_day",
+  "deletion_warning_template"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "description": "The deletion task will run at this hour",
+   "fieldname": "run_at_hour",
+   "fieldtype": "Select",
+   "label": "Run At Hour",
+   "options": "00\n02\n04\n06\n08\n10\n12\n14\n16\n18\n20\n22"
+  },
+  {
+   "description": "Indicates the number of inactive days to be considered for site deletion",
+   "fieldname": "inactive_for_days",
+   "fieldtype": "Int",
+   "label": "Inactive For Days"
+  },
+  {
+   "description": "Indicates the number of days after which site will be deleted",
+   "fieldname": "warning_days",
+   "fieldtype": "Int",
+   "label": "Warning Days"
+  },
+  {
+   "description": "Indicates the number of day on which intermittent warning will be sent",
+   "fieldname": "intermittent_warning_day",
+   "fieldtype": "Int",
+   "label": "Intermittent Warning Day"
+  },
+  {
+   "description": "Limits the number of sites to be deleted at once",
+   "fieldname": "limit",
+   "fieldtype": "Int",
+   "label": "Limit"
+  },
+  {
+   "description": "Indicates the number of expired days to be considered for site deletion",
+   "fieldname": "expired_for_days",
+   "fieldtype": "Int",
+   "label": "Expired For Days"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "This template is for deletion success warning only. All the rest of  warnings are sent through Notification",
+   "fieldname": "deletion_warning_template",
+   "fieldtype": "Link",
+   "label": "Deletion Warning Template",
+   "options": "Email Template"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2021-06-28 16:08:42.503352",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Site Deletion Configuration",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

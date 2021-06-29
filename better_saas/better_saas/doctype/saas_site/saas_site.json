@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "autoname": "field:site_name",
  "creation": "2020-03-05 17:20:38.973199",
  "doctype": "DocType",
@@ -9,7 +10,9 @@
   "site_name",
   "section_break_6",
   "number_of_users",
+  "last_activity_time",
   "column_break_1",
+  "user",
   "number_of_active_users",
   "column_break_6",
   "site_status",
@@ -31,7 +34,8 @@
   "section_break_21",
   "base_plan",
   "column_break_23",
-  "customer"
+  "customer",
+  "subscription"
  ],
  "fields": [
   {
@@ -161,22 +165,37 @@
    "options": "Customer"
   },
   {
-   "description": "Indicates the level of warning for site due to inactivity or expiration",
+   "fieldname": "last_activity_time",
+   "fieldtype": "Datetime",
+   "label": "Last Activity Time"
+  },
+  {
+   "fieldname": "subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "Subscription"
+  },
+  {
    "fieldname": "warning_level",
    "fieldtype": "Select",
    "label": "Warning Level",
-   "options": "\nInitial Warning\nIntermittent Warning\nFinal Warning"
+   "options": "\nInitial Warning\nIntermittent Warning\nFinal Warning\nDeletion Queued\nDeletion Approved"
   },
   {
-   "description": "Indicates the date of initial warning",
    "fieldname": "warning_date",
    "fieldtype": "Date",
    "label": "Warning Date"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-06-24 15:42:47.924793",
+ "modified": "2021-06-28 13:53:43.529351",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",

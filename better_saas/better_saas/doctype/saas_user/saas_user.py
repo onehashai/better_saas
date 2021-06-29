@@ -74,7 +74,7 @@ def setup(account_request):
 		doctype="Bench Settings",
 		key=command_key
 	)
-	
+
 	saas_site = frappe.new_doc("Saas Site")
 	saas_site.site_name = site_name
 	saas_site.site_status = "Active"
@@ -83,6 +83,8 @@ def setup(account_request):
 	saas_site.limit_for_space = limit_space
 	saas_site.limit_for_email_group = limit_email_group
 	saas_site.expiry = limit_expiry
+	if frappe.db.exists({'doctype': 'User','name': saas_user.email}):
+		saas_user.user = saas_user.email
 	saas_site.insert(ignore_permissions=True)
 	saas_user.linked_saas_site = saas_site.name
 	saas_user.linked_saas_domain = new_subdomain.name
@@ -220,8 +222,30 @@ def delete_site(site_name):
 	domain = frappe.get_doc("Saas Domains", site.linked_saas_domain)
 	domain.delete()
 	saas_site = frappe.get_doc("Saas Site", site.linked_saas_site)
-	saas_site.delete()
-	
+	sub = saas_site.subscription
+	if sub:
+			sub = frappe.get_doc("Subscription", sub)
+			sub.reference_site = ""
+			sub.save(ignore_permissions=True)
+	integ_req = frappe.get_list("Integration Request", {"reference_docname": site_name})
+	if integ_req:
+			for req in integ_req:
+					req_doc = frappe.get_doc("Integration Request", req.name)
+					req_doc.reference_docname = ""
+					req_doc.save(ignore_permissions=True)
+	saas_site.delete(ignore_permissions=True)
+	site_deletion_config = frappe.get_doc("Site Deletion Configuration", "Site Deletion Configuration")
+	if site_deletion_config:
+		template = site_deletion_config.deletion_warning_template
+	data = dict(
+		email=user.email,
+		user_name=user.full_name
+		)
+	email_template = frappe.get_doc("Email Template", template)
+	if email_template:
+		message = frappe.render_template(email_template.response_html, data)
+		frappe.sendmail(user.email, subject=email_template.subject, message=message)
+
 	commands = ["bench drop-site {site_name} --root-password {mysql_password}".format(site_name=site_name, mysql_password=mysql_password)]
 	commands.append("bench setup nginx --yes")
 	commands.append("bench setup reload-nginx")
