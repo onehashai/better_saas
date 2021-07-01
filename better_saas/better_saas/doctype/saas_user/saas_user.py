@@ -213,47 +213,53 @@ def create_user(first_name, last_name, email, password):
 
 @frappe.whitelist()
 def delete_site(site_name):
-	saas_settings = frappe.get_doc("Saas Settings")
-	mysql_password = saas_settings.mysql_root_password
-	site = frappe.get_doc("Saas User", {"linked_saas_site": site_name})
-	site.delete()
-	user = frappe.get_doc("User", site.email)
-	user.delete()
-	domain = frappe.get_doc("Saas Domains", site.linked_saas_domain)
-	domain.delete()
-	saas_site = frappe.get_doc("Saas Site", site.linked_saas_site)
-	sub = saas_site.subscription
-	if sub:
+	try:			
+		saas_settings = frappe.get_doc("Saas Settings")
+		mysql_password = saas_settings.mysql_root_password
+		site = frappe.get_doc("Saas User", {"linked_saas_site": site_name})
+		site.delete()
+		user = frappe.get_doc("User", site.email)
+		user.delete()
+		domain = frappe.get_doc("Saas Domains", site.linked_saas_domain)
+		domain.delete()
+		saas_site = frappe.get_doc("Saas Site", site.linked_saas_site)
+		sub = saas_site.subscription
+		if sub:
 			sub = frappe.get_doc("Subscription", sub)
 			sub.reference_site = ""
 			sub.save(ignore_permissions=True)
-	integ_req = frappe.get_list("Integration Request", {"reference_docname": site_name})
-	if integ_req:
+		integ_req = frappe.get_list("Integration Request", {"reference_docname": site_name})
+		if integ_req:
 			for req in integ_req:
-					req_doc = frappe.get_doc("Integration Request", req.name)
-					req_doc.reference_docname = ""
-					req_doc.save(ignore_permissions=True)
-	saas_site.delete(ignore_permissions=True)
-	site_deletion_config = frappe.get_doc("Site Deletion Configuration", "Site Deletion Configuration")
-	if site_deletion_config:
-		template = site_deletion_config.deletion_warning_template
-	data = dict(
-		email=user.email,
-		user_name=user.full_name
-		)
-	email_template = frappe.get_doc("Email Template", template)
-	if email_template:
-		message = frappe.render_template(email_template.response_html, data)
-		frappe.sendmail(user.email, subject=email_template.subject, message=message)
+				req_doc = frappe.get_doc("Integration Request", req.name)
+				req_doc.reference_docname = ""
+				req_doc.save(ignore_permissions=True)
+		saas_site.delete(ignore_permissions=True)
+		
+		site_deletion_config = frappe.get_doc("Site Deletion Configuration", "Site Deletion Configuration")
+		if site_deletion_config:
+			template = site_deletion_config.deletion_warning_template
+		data = dict(
+			email=user.email,
+			user_name=user.full_name
+			)
+		if template:
+			email_template = frappe.db.get_value("Email Template", {"name": template})
+		if email_template:
+			email_template = frappe.get_doc("Email Template", email_template)
+			message = frappe.render_template(email_template.response_html, data)
+			frappe.sendmail(user.email, subject=email_template.subject, message=message)
 
-	commands = ["bench drop-site {site_name} --root-password {mysql_password}".format(site_name=site_name, mysql_password=mysql_password)]
-	commands.append("bench setup nginx --yes")
-	commands.append("bench setup reload-nginx")
-	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
-		commands=commands,
-		doctype="Bench Settings",
-		key=today() + " " + nowtime()
-	)
+		commands = ["bench drop-site {site_name} --root-password {mysql_password}".format(site_name=site_name, mysql_password=mysql_password)]
+		commands.append("bench setup nginx --yes")
+		commands.append("bench setup reload-nginx")
+		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=today() + " " + nowtime()
+		)
+	except:
+		frappe.log_error(frappe.get_traceback())
 
 @frappe.whitelist()
 def disable_enable_site(site_name, status):
