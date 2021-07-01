@@ -9,6 +9,7 @@
   "run_at_interval",
   "limit",
   "inactive_for_days",
+  "deletion_approval_role",
   "column_break_5",
   "expired_for_days",
   "warning_days",
@@ -69,12 +70,19 @@
    "fieldtype": "Select",
    "label": "Run At Interval",
    "options": "00\n02\n04\n06\n08\n10\n12\n14\n16\n18\n20\n22"
+  },
+  {
+   "description": "User with role is allowed to approve deletion of site",
+   "fieldname": "deletion_approval_role",
+   "fieldtype": "Link",
+   "label": "Deletion Approval Role",
+   "options": "Role"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2021-06-29 16:55:41.662279",
+ "modified": "2021-07-01 12:47:16.492922",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Site Deletion Configuration",
