@@ -218,8 +218,6 @@ def delete_site(site_name):
 		mysql_password = saas_settings.mysql_root_password
 		site = frappe.get_doc("Saas User", {"linked_saas_site": site_name})
 		site.delete()
-		user = frappe.get_doc("User", site.email)
-		user.delete()
 		domain = frappe.get_doc("Saas Domains", site.linked_saas_domain)
 		domain.delete()
 		saas_site = frappe.get_doc("Saas Site", site.linked_saas_site)
@@ -235,7 +233,8 @@ def delete_site(site_name):
 				req_doc.reference_docname = ""
 				req_doc.save(ignore_permissions=True)
 		saas_site.delete(ignore_permissions=True)
-		
+		user = frappe.get_doc("User", site.email)
+		user.delete()
 		site_deletion_config = frappe.get_doc("Site Deletion Configuration", "Site Deletion Configuration")
 		if site_deletion_config:
 			template = site_deletion_config.deletion_warning_template
