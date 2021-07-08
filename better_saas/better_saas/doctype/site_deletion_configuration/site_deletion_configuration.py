@@ -15,16 +15,16 @@ class SiteDeletionConfiguration(Document):
 def check_deletable_sites():
     site_deletion_config = frappe.get_doc("Site Deletion Configuration", "Site Deletion Configuration")
     if not site_deletion_config.enabled:
-        return        
-    
+        return
     if not site_deletion_config.run_at_interval:
         return
-    if int(site_deletion_config.run_at_interval) == 0:
-        if int(nowtime()[:2]) != 0:
-            return
-    else:
-        if int(nowtime()[:2]) % int(site_deletion_config.run_at_interval) != 0:
-            return
+    
+    curtime = nowtime()
+    if curtime[:2] == "00":
+        curtime = "24" + curtime[2:]
+
+    if int(curtime[:2]) % int(site_deletion_config.run_at_interval) != 0:
+        return
 
     check_sites()
 
@@ -108,9 +108,6 @@ def process_list(inter_warning_days, warning_days, site_list=None, limit=20):
                 doc.save()
             elif doc.warning_level == "Intermittent Warning" and getdate(nowdate()) == add_days(doc.warning_date, days=warning_days):
                 #notification set for 3rd mail trigger on warning_level
-                doc.warning_level = "Final Warning"
-                doc.save()
-            elif doc.warning_level == "Final Warning" and getdate(nowdate()) == add_days(doc.warning_date, days=warning_days+1):
                 doc.warning_level = "Deletion Queued"
                 doc.save()
             elif doc.warning_level == "Deletion Approved":

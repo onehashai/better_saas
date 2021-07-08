@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "autoname": "naming_series:######",
+ "creation": "2021-07-05 12:40:25.761890",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "admin_password",
+  "renamed",
+  "status",
+  "assigned_to"
+ ],
+ "fields": [
+  {
+   "fieldname": "renamed",
+   "fieldtype": "Data",
+   "label": "Renamed"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Available\nPicked\nAssigned"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Data",
+   "label": "Assigned To"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "tsite"
+  },
+  {
+   "fieldname": "admin_password",
+   "fieldtype": "Data",
+   "label": "Admin Password"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-07-07 17:13:27.957402",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Stock Sites",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
