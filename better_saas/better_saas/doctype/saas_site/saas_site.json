@@ -179,7 +179,7 @@
    "fieldname": "warning_level",
    "fieldtype": "Select",
    "label": "Warning Level",
-   "options": "\nInitial Warning\nIntermittent Warning\nFinal Warning\nDeletion Queued\nDeletion Approved"
+   "options": "\nInitial Warning\nIntermittent Warning\nDeletion Queued\nDeletion Approved"
   },
   {
    "fieldname": "warning_date",
