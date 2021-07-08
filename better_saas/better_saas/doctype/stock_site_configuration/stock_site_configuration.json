@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "creation": "2021-07-05 12:28:14.072259",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "run_at_interval",
+  "number_of_sites",
+  "threshold_number_of_sites"
+ ],
+ "fields": [
+  {
+   "description": "The stock site creation task will run at this hours interval",
+   "fieldname": "run_at_interval",
+   "fieldtype": "Select",
+   "label": "Run At Interval",
+   "options": "02\n04\n06\n08\n10\n12\n14\n16\n18\n20\n22\n24"
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "description": "Ideal number of stock sites to be kept ready at all time",
+   "fieldname": "number_of_sites",
+   "fieldtype": "Int",
+   "label": "Number of Sites"
+  },
+  {
+   "description": "Indicates the number of stock sites below which new stock sites will be created",
+   "fieldname": "threshold_number_of_sites",
+   "fieldtype": "Int",
+   "label": "Threshold Number of Sites"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2021-07-08 10:52:07.549070",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Stock Site Configuration",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
