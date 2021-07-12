@@ -33,7 +33,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "tsite"
+   "options": "STK-SITE.-.YYYY.-.#####"
   },
   {
    "fieldname": "admin_password",
@@ -43,7 +43,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-07-07 17:13:27.957402",
+ "modified": "2021-07-08 20:05:20.242788",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Stock Sites",

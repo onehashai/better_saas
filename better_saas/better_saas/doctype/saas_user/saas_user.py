@@ -32,7 +32,7 @@ def setup(account_request):
 		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
 		
 		# check if stock site available
-		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation desc', ignore_permissions=True)
+		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation asc', ignore_permissions=True)
 		stock_site_doc = None
 		if stock_list:
 			stock_site = stock_list[0].get("name")
