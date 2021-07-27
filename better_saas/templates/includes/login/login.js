@@ -24,7 +24,7 @@ login.bind_events = function () {
             paras = document.getElementById('domain_field');
         };
 
-        frappe.call('better_saas.templates.includes.login.login.fetch_site_by_email', {
+        frappe.call('better_saas.better_saas.login.login.fetch_site_by_email', {
             'email': $("#login_email").val()
         }).then(r => {
             if (r.message) {
@@ -43,7 +43,7 @@ login.bind_events = function () {
         };
 
 
-        frappe.call('better_saas.templates.includes.login.login.fetch_site_by_email', {
+        frappe.call('better_saas.better_saas.login.login.fetch_site_by_email', {
             'email': $("#forgot_email").val()
         }).then(r => {
             if (r.message) {
@@ -156,7 +156,7 @@ login.login = function () {
     $(".for-login").toggle(true);
 
     if($("#login_email").val()){
-        frappe.call('better_saas.templates.includes.login.login.fetch_site_by_email', {
+        frappe.call('better_saas.better_saas.login.login.fetch_site_by_email', {
             'email': $("#login_email").val()
         }).then(r => {
             if (r.message) {
@@ -195,7 +195,7 @@ login.forgot = function () {
     $("#forgot_email").focus();
 
     if($("#forgot_email").val()){
-    frappe.call('better_saas.templates.includes.login.login.fetch_site_by_email', {
+    frappe.call('better_saas.better_saas.login.login.fetch_site_by_email', {
         'email': $("#forgot_email").val()
     }).then(r => {
         if (r.message) {
