@@ -99,7 +99,9 @@ scheduler_events = {
 		"better_saas.better_saas.doctype.saas_site.saas_site.mute_emails_on_expiry"
  	],
 	"hourly": [
-		"better_saas.better_saas.doctype.site_deletion_configuration.site_deletion_configuration.check_deletable_sites"
+		"better_saas.better_saas.doctype.site_deletion_configuration.site_deletion_configuration.check_deletable_sites",
+		"better_saas.better_saas.doctype.testing.check_stock_sites"
+
 	],
 # 	"weekly": [
 # 		"better_saas.tasks.weekly"

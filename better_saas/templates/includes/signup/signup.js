@@ -42,7 +42,7 @@ frappe.ready(function () {
                 } else {
                     $(this).closest('.form-group').removeClass('invalid');
                     $('#emailValidationMsg').html(`<span style="color:#0E8C4A;">Email is available 👍</span>`).show();
-                    $('input[name="email"]').css('border-color','#0E8C4A');
+                    $('input[name="email"]').css('border-color', '#0E8C4A');
                 }
             });
         }
@@ -379,7 +379,7 @@ function setup_account_request($page) {
                 !$page.find('input[name="subdomain"]').val() ||
                 !$page.find('input[name="email"]').val() ||
                 !$page.find('input[name="phone_number"]').val() ||
-                !$page.find('input[name="passphrase"]').val()) {
+                !$page.find('input[name="passphrase"]').val() || !$page.find('input[name="company_name"]').val()) {
 
                 frappe.msgprint("All fields are necessary. Please try again.");
                 return false;
@@ -402,6 +402,10 @@ function setup_account_request($page) {
             } else if ($page.find('input[name="phone_number"]').parent().hasClass('invalid')) {
 
                 frappe.msgprint("Please enter Phone Number.");
+                return false;
+
+            } else if ($page.find('input[name="company_name"]').parent().hasClass('invalid')) {
+                frappe.msgprint("Please enter Company Name.");
                 return false;
 
             } else {
@@ -439,7 +443,7 @@ function setup_account_request($page) {
 
                 var $btn = $page.find('.get-started-button');
                 var btn_html = $btn.html();
-                $btn.prop("disabled", true).html("Sending OTP");
+                $btn.prop("disabled", true).html("OTP Sent");
 
                 // Lock Form Fields
                 let inputArray = Array.from($page.find('.signup-card form input'));

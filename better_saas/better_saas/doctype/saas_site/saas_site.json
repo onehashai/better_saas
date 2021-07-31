@@ -20,6 +20,7 @@
   "user_details",
   "section_break_12",
   "limit_for_users",
+  "discounted_users",
   "limit_for_emails",
   "limit_for_space",
   "column_break_8",
@@ -191,11 +192,16 @@
    "fieldtype": "Link",
    "label": "User",
    "options": "User"
+  },
+  {
+   "fieldname": "discounted_users",
+   "fieldtype": "Int",
+   "label": "Discounted Users"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-06-28 13:53:43.529351",
+ "modified": "2021-07-31 11:42:58.789073",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",

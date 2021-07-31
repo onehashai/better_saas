@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
+# from better_saas.better_saas.doctype.saas_user.saas_user import apply_new_limits
 import frappe
 from frappe.sessions import get_geo_ip_country
 from frappe.geo.country_info import get_country_timezone_info
-from frappe.utils.data import getdate
+from frappe.utils.data import add_days, getdate, today
+from werkzeug.exceptions import ExpectationFailed
 
 
 def get_context(context):
@@ -38,17 +40,47 @@ def load_dropdowns():
 
 
 @frappe.whitelist(allow_guest=True)
+def apply_promocode(promocode, site_name):
+	saas_user = frappe.get_list("Saas User",filters={"linked_saas_site":site_name},ignore_permissions=True)
+	if(len(saas_user)==0):
+		frappe.throw("Invalid Request",ExpectationFailed)
+		return
+	validResult = is_valid_promocode(promocode)
+	if(validResult):
+		promocode = frappe.get_list("Coupon Code", filters={'coupon_code': promocode}, ignore_permissions=True)[0].name
+		coupon_code  = frappe.get_list("Coupon Code", promocode, ignore_permissions=True)[0]
+
+		base_plan = coupon_code.base_plan
+		limit_users = int(coupon_code.limit_for_users) ## Applying Users count from promocode
+		limit_emails = int(coupon_code.limit_for_emails)
+		limit_space = int (coupon_code.limit_for_space)
+		limit_email_group = int(coupon_code.limit_for_email_group)
+
+		## Check for Life-Time Deals (i.e. for 100 years)
+		if coupon_code.no_expiry == 1:
+			limit_expiry = add_days(today(), int(36500))
+		
+		apply_new_limits(limit_users,limit_emails,limit_space,limit_email_group,limit_expiry,site_name)
+
+		## Promocode Consumed
+		coupon_code.used = coupon_code.used + 1
+		coupon_code.save(ignore_permissions=True)
+	else:
+		frappe.throw("Please Enter valid code",ExpectationFailed)
+		return False
+
+
+@frappe.whitelist(allow_guest=True)
 def is_valid_promocode(promocode):
-    promocode = frappe.get_list("Coupon Code", filters={'is_signup_scheme':1, 'coupon_code': promocode}, ignore_permissions=True)
-    if not len(promocode)>0:
-        return False
+	code = frappe.get_list("Coupon Code", filters={'is_signup_scheme':1, 'coupon_code': promocode}, ignore_permissions=True)
+	print(code)
+	if(len(code)==0):
+		return False
     # # Check for Promocode Validation
-    try:
-        from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
-        validate_coupon_code(promocode[0].name)
-        return True
-    except:
-        return False
+	
+	from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
+	return validate_coupon_code(code[0].name)
+	
 
 @frappe.whitelist(allow_guest=True)
 def email_exists(email):
