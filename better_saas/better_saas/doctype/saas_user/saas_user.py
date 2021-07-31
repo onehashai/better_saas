@@ -6,13 +6,10 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from bench_manager.bench_manager.doctype.site.site import create_site
-<<<<<<< HEAD
 from frappe.sessions import get_geo_ip_country
 from frappe.utils import today, nowtime, add_days
 from frappe.utils.data import getdate
-=======
 from frappe.utils import today, nowtime, add_days, get_formatted_email
->>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 from frappe.utils.file_manager import get_file_path
 from frappe import _, throw
 from frappe.utils.background_jobs import enqueue
@@ -39,27 +36,18 @@ def setup(account_request):
 		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
 		
 		# check if stock site available
-<<<<<<< HEAD
-		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation desc', ignore_permissions=True)
-		if stock_list:
-			stock_site = stock_list[0].get("name")
-			stock_site_doc = frappe.get_doc("Stock Sites", stock_site, ignore_permissions=True)
-			stock_site_doc.status = "Assigned"
-=======
 		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation asc', ignore_permissions=True)
 		stock_site_doc = None
 		if stock_list:
 			stock_site = stock_list[0].get("name")
 			stock_site_doc = frappe.get_doc("Stock Sites", stock_site, ignore_permissions=True)
 			stock_site_doc.status = "Picked"
->>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 			stock_site_doc.save(ignore_permissions=True)
 			commands = ["mv sites/{} sites/{}".format(stock_site, site_name)]
 			commands.append("bench --site {} set-admin-password {}".format(site_name, admin_password))
 		else:
 			commands = ["bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} {site_name}".format(site_name=site_name,
 			admin_password=admin_password, mysql_password=mysql_password)]
-<<<<<<< HEAD
 
 			# creation of site and install erpnext
 			if saas_settings.install_erpnext:
@@ -104,52 +92,6 @@ def setup(account_request):
 			key=command_key
 		)
 
-=======
-
-			# creation of site and install erpnext
-			if saas_settings.install_erpnext:
-				install_erpnext = "true"
-				commands.append("bench --site {site_name} install-app erpnext journeys".format(site_name=site_name))
-			else:
-				install_erpnext = "false"
-		
-		# # add custom domains
-		if saas_user.domain_type == "Private":
-			custom_domain = saas_user.private_domain
-		elif saas_user.domain_type == "Subdomain":
-			custom_domain = saas_user.subdomain + "." + saas_settings.domain
-			new_subdomain = frappe.new_doc("Saas Domains")
-			new_subdomain.domain = saas_user.subdomain
-			new_subdomain.insert(ignore_permissions=True)	
-		commands.append("bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name))
-
-		# # setup nginx config and reloading the nginx service
-		commands.append("bench setup nginx --yes")
-		commands.append("bench setup reload-nginx")
-		commands.append("bench --site admin_onehash execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(saas_user=saas_user.name)+'"')
-		
-		limit_users = int(saas_settings.default_limit_for_users) 
-		limit_emails = int(saas_settings.default_limit_for_emails)
-		limit_space = int(saas_settings.default_limit_for_space)
-		limit_email_group = int(saas_settings.default_limit_for_email_group)
-		limit_expiry = add_days(today(), int(saas_settings.default_expiry))
-
-		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
-			site_name = site_name,
-			limit_users = limit_users,
-			limit_emails = limit_emails,
-			limit_space = limit_space,
-			limit_email_group = limit_email_group,
-			limit_expiry = limit_expiry
-		))
-		command_key = today() + " " + nowtime()
-		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
-			commands=commands,
-			doctype="Bench Settings",
-			key=command_key
-		)
-
->>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 		saas_site = frappe.new_doc("Saas Site")
 		saas_site.site_name = site_name
 		saas_site.site_status = "Active"
@@ -158,10 +100,7 @@ def setup(account_request):
 		saas_site.limit_for_space = limit_space
 		saas_site.limit_for_email_group = limit_email_group
 		saas_site.expiry = limit_expiry
-<<<<<<< HEAD
 		saas_site.base_plan = saas_settings.base_plan_india if saas_user.country=="India" else saas_settings.base_plan_international
-=======
->>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 		if frappe.db.exists({'doctype': 'User','name': saas_user.email}):
 			saas_user.user = saas_user.email
 		saas_site.insert(ignore_permissions=True)
