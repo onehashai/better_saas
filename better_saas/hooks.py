@@ -100,8 +100,7 @@ scheduler_events = {
  	],
 	"hourly": [
 		"better_saas.better_saas.doctype.site_deletion_configuration.site_deletion_configuration.check_deletable_sites",
-		"better_saas.better_saas.doctype.testing.check_stock_sites"
-
+		"better_saas.better_saas.doctype.stock_site_configuration.stock_site_configuration.check_stock_sites"
 	],
 # 	"weekly": [
 # 		"better_saas.tasks.weekly"

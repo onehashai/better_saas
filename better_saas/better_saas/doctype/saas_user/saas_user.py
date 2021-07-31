@@ -6,9 +6,13 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from bench_manager.bench_manager.doctype.site.site import create_site
+<<<<<<< HEAD
 from frappe.sessions import get_geo_ip_country
 from frappe.utils import today, nowtime, add_days
 from frappe.utils.data import getdate
+=======
+from frappe.utils import today, nowtime, add_days, get_formatted_email
+>>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 from frappe.utils.file_manager import get_file_path
 from frappe import _, throw
 from frappe.utils.background_jobs import enqueue
@@ -35,17 +39,27 @@ def setup(account_request):
 		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
 		
 		# check if stock site available
+<<<<<<< HEAD
 		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation desc', ignore_permissions=True)
 		if stock_list:
 			stock_site = stock_list[0].get("name")
 			stock_site_doc = frappe.get_doc("Stock Sites", stock_site, ignore_permissions=True)
 			stock_site_doc.status = "Assigned"
+=======
+		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation asc', ignore_permissions=True)
+		stock_site_doc = None
+		if stock_list:
+			stock_site = stock_list[0].get("name")
+			stock_site_doc = frappe.get_doc("Stock Sites", stock_site, ignore_permissions=True)
+			stock_site_doc.status = "Picked"
+>>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 			stock_site_doc.save(ignore_permissions=True)
 			commands = ["mv sites/{} sites/{}".format(stock_site, site_name)]
 			commands.append("bench --site {} set-admin-password {}".format(site_name, admin_password))
 		else:
 			commands = ["bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} {site_name}".format(site_name=site_name,
 			admin_password=admin_password, mysql_password=mysql_password)]
+<<<<<<< HEAD
 
 			# creation of site and install erpnext
 			if saas_settings.install_erpnext:
@@ -90,6 +104,52 @@ def setup(account_request):
 			key=command_key
 		)
 
+=======
+
+			# creation of site and install erpnext
+			if saas_settings.install_erpnext:
+				install_erpnext = "true"
+				commands.append("bench --site {site_name} install-app erpnext journeys".format(site_name=site_name))
+			else:
+				install_erpnext = "false"
+		
+		# # add custom domains
+		if saas_user.domain_type == "Private":
+			custom_domain = saas_user.private_domain
+		elif saas_user.domain_type == "Subdomain":
+			custom_domain = saas_user.subdomain + "." + saas_settings.domain
+			new_subdomain = frappe.new_doc("Saas Domains")
+			new_subdomain.domain = saas_user.subdomain
+			new_subdomain.insert(ignore_permissions=True)	
+		commands.append("bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name))
+
+		# # setup nginx config and reloading the nginx service
+		commands.append("bench setup nginx --yes")
+		commands.append("bench setup reload-nginx")
+		commands.append("bench --site admin_onehash execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(saas_user=saas_user.name)+'"')
+		
+		limit_users = int(saas_settings.default_limit_for_users) 
+		limit_emails = int(saas_settings.default_limit_for_emails)
+		limit_space = int(saas_settings.default_limit_for_space)
+		limit_email_group = int(saas_settings.default_limit_for_email_group)
+		limit_expiry = add_days(today(), int(saas_settings.default_expiry))
+
+		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
+			site_name = site_name,
+			limit_users = limit_users,
+			limit_emails = limit_emails,
+			limit_space = limit_space,
+			limit_email_group = limit_email_group,
+			limit_expiry = limit_expiry
+		))
+		command_key = today() + " " + nowtime()
+		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key
+		)
+
+>>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 		saas_site = frappe.new_doc("Saas Site")
 		saas_site.site_name = site_name
 		saas_site.site_status = "Active"
@@ -98,7 +158,10 @@ def setup(account_request):
 		saas_site.limit_for_space = limit_space
 		saas_site.limit_for_email_group = limit_email_group
 		saas_site.expiry = limit_expiry
+<<<<<<< HEAD
 		saas_site.base_plan = saas_settings.base_plan_india if saas_user.country=="India" else saas_settings.base_plan_international
+=======
+>>>>>>> 4226d2e16cbb61f765ef384ad52c46649c53feaf
 		if frappe.db.exists({'doctype': 'User','name': saas_user.email}):
 			saas_user.user = saas_user.email
 		saas_site.insert(ignore_permissions=True)
@@ -138,6 +201,10 @@ def get_status(account_request):
 		result['status'] = "Wait"
 		return result
 	elif(doc.linked_saas_domain and commandStatus.status=="Success"):
+		#update status of stock site from "Picked" to "Assigned"
+		stock_site = frappe.get_value("Stock Sites", filters={"renamed": doc.linked_saas_site, "status": "Picked"})
+		if stock_site:
+			frappe.db.set_value('Stock Sites', stock_site, 'status', 'Assigned')
 		#create_first_user_on_target_site(doc.name)
 		result['user'] = doc.email
 		result['password'] = doc.password
@@ -236,42 +303,50 @@ def create_user(first_name, last_name, email, password):
 
 @frappe.whitelist()
 def delete_site(site_name):
-	try:
+	try:			
 		saas_settings = frappe.get_doc("Saas Settings")
 		mysql_password = saas_settings.mysql_root_password
 		site = frappe.get_doc("Saas User", {"linked_saas_site": site_name})
 		site.delete()
-		user = frappe.get_doc("User", site.email)
-		user.delete()
 		domain = frappe.get_doc("Saas Domains", site.linked_saas_domain)
 		domain.delete()
 		saas_site = frappe.get_doc("Saas Site", site.linked_saas_site)
-		sub = saas_site.subscription
-		if sub:
-			sub = frappe.get_doc("Subscription", sub)
-			sub.reference_site = ""
-			sub.save(ignore_permissions=True)
+		subs = frappe.get_list("Subscription", filters={"reference_site": site_name})
+		if subs:
+			for sub in subs:
+				sub = frappe.get_doc("Subscription", sub.get("name"))
+				sub.reference_site = ""
+				sub.save(ignore_permissions=True)
 		integ_req = frappe.get_list("Integration Request", {"reference_docname": site_name})
 		if integ_req:
 			for req in integ_req:
 				req_doc = frappe.get_doc("Integration Request", req.name)
 				req_doc.reference_docname = ""
 				req_doc.save(ignore_permissions=True)
+		finrich_list = frappe.get_list("FinRich Archive", filters={"reference_site": site.name})
+		if finrich_list:
+			for fin in finrich_list:
+				fin = frappe.get_doc("FinRich Archive", fin)
+				fin.reference_site = ""
+				fin.save()
+		if frappe.db.exists("Saas Domains", {"domain": site_name}):
+			frappe.get_doc("Saas Domains", {"domain": site_name}).delete()
 		saas_site.delete(ignore_permissions=True)
-		
+		user = frappe.get_doc("User", site.email)
+		user.delete()
 		site_deletion_config = frappe.get_doc("Site Deletion Configuration", "Site Deletion Configuration")
 		if site_deletion_config:
 			template = site_deletion_config.deletion_warning_template
-		data = dict(
-			email=user.email,
-			user_name=user.full_name
-			)
 		if template:
 			email_template = frappe.db.get_value("Email Template", {"name": template})
-		if email_template:
-			email_template = frappe.get_doc("Email Template", email_template)
-			message = frappe.render_template(email_template.response_html, data)
-			frappe.sendmail(user.email, subject=email_template.subject, message=message)
+			if email_template:
+				data = dict(
+							email=user.email,
+							user_name=user.full_name
+						)
+				email_template = frappe.get_doc("Email Template", email_template)
+				message = frappe.render_template(email_template.response_html, data)
+				frappe.sendmail(user.email, subject=email_template.subject, message=message)
 
 		commands = ["bench drop-site {site_name} --root-password {mysql_password}".format(site_name=site_name, mysql_password=mysql_password)]
 		commands.append("bench setup nginx --yes")
