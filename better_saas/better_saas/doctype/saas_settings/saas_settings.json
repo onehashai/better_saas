@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "creation": "2020-03-04 17:50:02.993591",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,12 +12,15 @@
   "management_subdomain",
   "column_break_6",
   "reserved_subdomain",
+  "base_plan_india",
+  "base_plan_international",
   "column_break_4",
   "default_limit_for_users",
   "default_limit_for_emails",
   "default_limit_for_space",
   "default_limit_for_email_group",
   "default_expiry",
+  "ltd_expiry",
   "addons_section",
   "instafinancial_key"
  ],
@@ -109,11 +113,31 @@
    "fieldname": "instafinancial_key",
    "fieldtype": "Data",
    "label": "InstaFinancial Key"
+  },
+  {
+   "fieldname": "base_plan_india",
+   "fieldtype": "Link",
+   "label": "Default Subscripiton Plan India",
+   "options": "Subscription Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "base_plan_international",
+   "fieldtype": "Link",
+   "label": "Default Subscripiton Plan International",
+   "options": "Subscription Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ltd_expiry",
+   "fieldtype": "Date",
+   "label": "LTD Expiry"
   }
  ],
  "issingle": 1,
- "modified": "2021-02-22 12:36:05.747181",
- "modified_by": "narendra@onehash.ai",
+ "links": [],
+ "modified": "2021-07-30 15:59:41.442922",
+ "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Settings",
  "owner": "Administrator",

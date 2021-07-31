@@ -8,7 +8,11 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "is_a_subscription",
+  "minimum_quantity",
   "addon_name",
+  "uom",
+  "per_credit_price",
   "yearly_amount",
   "monthly_amount",
   "addon_type",
@@ -64,11 +68,33 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_a_subscription",
+   "fieldtype": "Check",
+   "label": "is_a_subscription"
+  },
+  {
+   "fieldname": "minimum_quantity",
+   "fieldtype": "Float",
+   "label": "Minimum Quantity"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "per_credit_price",
+   "fieldtype": "Currency",
+   "label": "Per Credit Price"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-13 18:18:12.501308",
+ "modified": "2021-07-31 13:09:05.545502",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas AddOn",
