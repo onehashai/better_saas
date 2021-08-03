@@ -279,12 +279,9 @@ def delete_site(site_name):
 		if template:
 			email_template = frappe.db.get_value("Email Template", {"name": template})
 			if email_template:
-				data = dict(
-							email=user.email,
-							user_name=user.full_name
-						)
+				data = user.as_dict()
 				email_template = frappe.get_doc("Email Template", email_template)
-				message = frappe.render_template(email_template.response_html, data)
+				message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, data)
 				frappe.sendmail(user.email, subject=email_template.subject, message=message)
 
 		commands = ["bench drop-site {site_name} --root-password {mysql_password}".format(site_name=site_name, mysql_password=mysql_password)]
