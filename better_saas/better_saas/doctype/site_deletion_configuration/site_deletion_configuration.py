@@ -108,7 +108,7 @@ def process_list(inter_warning_days, warning_days, site_list=None, limit=20):
                 doc.save()
             elif doc.warning_level == "Intermittent Warning" and getdate(nowdate()) == add_days(doc.warning_date, days=warning_days):
                 #notification set for 3rd mail trigger on warning_level
-                doc.warning_level = "Deletion Queued"
+                doc.warning_level = "Deletion Approved"
                 doc.save()
             elif doc.warning_level == "Deletion Approved":
                 if len(sites_to_delete) <= limit:

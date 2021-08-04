@@ -10,9 +10,7 @@ window.verify = {};
 login.bind_events = function () {
     $(window).on("hashchange", function () {
         var $btn = document.getElementsByClassName("btn btn-sm btn-primary btn-block btn-login")[0];
-        $btn.disabled = true
         var $frgtbtn = document.getElementsByClassName("btn btn-sm btn-primary btn-block btn-forgot")[0];
-        $frgtbtn.disabled = true
         login.route();
     });
 
@@ -453,15 +451,6 @@ function login_fetch(r){
         if(r.message.length == 1){
             document.getElementById("domain_field").style.display = "none"
         }
-        var $btn = document.getElementsByClassName("btn btn-sm btn-primary btn-block btn-login")[0];
-        $btn.disabled = false;
-        // $('#emailValidationMsg').html(``).show();
-
-    }else{
-        var $btn = document.getElementsByClassName("btn btn-sm btn-primary btn-block btn-login")[0];
-        $btn.disabled = true;
-        // $('#emailValidationMsg').html(`<span style=" color:#0E8C4A; font-size: 80%; font-weight: 400; margin-bottom: 0px;">Email not found</span>`).show();
-
     }
 }
 
@@ -483,10 +472,5 @@ function forgot_fetch(r){
         if(r.message.length == 1){
             document.getElementById("domain_field").style.display = "none"
         }
-        var $frgtbtn = document.getElementsByClassName("btn btn-sm btn-primary btn-block btn-forgot")[0];
-        $frgtbtn.disabled = false
-    }else{
-        var $frgtbtn = document.getElementsByClassName("btn btn-sm btn-primary btn-block btn-forgot")[0];
-        $frgtbtn.disabled = true;
     }
 }

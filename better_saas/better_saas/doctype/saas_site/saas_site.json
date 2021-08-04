@@ -180,7 +180,7 @@
    "fieldname": "warning_level",
    "fieldtype": "Select",
    "label": "Warning Level",
-   "options": "\nInitial Warning\nIntermittent Warning\nDeletion Queued\nDeletion Approved"
+   "options": "\nInitial Warning\nIntermittent Warning\nDeletion Approved"
   },
   {
    "fieldname": "warning_date",
@@ -201,7 +201,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-07-31 11:42:58.789073",
+ "modified": "2021-08-04 11:03:37.043816",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",
