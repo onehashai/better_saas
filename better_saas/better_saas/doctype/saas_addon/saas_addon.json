@@ -8,6 +8,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "disabled",
   "is_a_subscription",
   "minimum_quantity",
   "addon_name",
@@ -17,8 +18,7 @@
   "monthly_amount",
   "addon_type",
   "addon_value",
-  "currency",
-  "disabled"
+  "currency"
  ],
  "fields": [
   {
@@ -73,7 +73,7 @@
    "default": "0",
    "fieldname": "is_a_subscription",
    "fieldtype": "Check",
-   "label": "is_a_subscription"
+   "label": "Is A Subscription"
   },
   {
    "fieldname": "minimum_quantity",
@@ -94,7 +94,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-07-31 13:09:05.545502",
+ "modified": "2021-08-04 17:24:56.944085",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas AddOn",
