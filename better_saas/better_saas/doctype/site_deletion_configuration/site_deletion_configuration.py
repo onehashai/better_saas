@@ -111,13 +111,13 @@ def process_list(inter_warning_days, warning_days, site_list=None, limit=20):
                 doc.warning_level = "Deletion Approved"
                 doc.save()
             elif doc.warning_level == "Deletion Approved":
-                if len(sites_to_delete) <= limit:
+                if len(sites_to_delete) < limit:
                     sites_to_delete.append(doc.name)
-            if sites_to_delete:
-                for site in sites_to_delete:
-                    frappe.log_error(site, "Site Deletion Initiated")
-                    frappe.utils.background_jobs.enqueue(delete_site, queue='default', timeout=None, event=None, is_async=True, 
-                                job_name=None, now=False, enqueue_after_commit=False, site_name=site)
+        if sites_to_delete:
+            for site in sites_to_delete:
+                frappe.log_error(site, "Site Deletion Initiated")
+                frappe.utils.background_jobs.enqueue(delete_site, queue='default', timeout=None, event=None, is_async=True, 
+                            job_name=None, now=False, enqueue_after_commit=False, site_name=site)
         frappe.db.commit()
     except:
         frappe.log_error(frappe.get_traceback(), "Site Deletion Error")

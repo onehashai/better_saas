@@ -162,7 +162,7 @@ def get_subscription(**kwargs):
                 data_dic[page] = forms_list
         return data_dic
     except:
-        frappe.log_error(frappe.get_traceback())
+        frappe.log_error("Fetching Facebook Subscription Failed for Domain: {}\n".format(domain) + frappe.get_traceback(), "Facebook Subscription Fetch Error")
         return "error"
 
 @frappe.whitelist(allow_guest=True)
@@ -181,10 +181,11 @@ def unsubscribe(**kwargs):
                 client.save(ignore_permissions=True)
                 return "success"
             else:
-                frappe.log_error(json.loads(resp.text))
+                frappe.log_error(json.loads(resp.text), "Facebook Unsubscribe Error")
                 return "error"
         return "success"
     except:
+        frappe.log_error(frappe.get_traceback(), "Facebook Unsubscribe Error")
         return frappe.get_traceback()
 
 
