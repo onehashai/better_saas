@@ -22,7 +22,8 @@
   "default_expiry",
   "ltd_expiry",
   "addons_section",
-  "instafinancial_key"
+  "instafinancial_key",
+  "deafult_addon_limits"
  ],
  "fields": [
   {
@@ -132,11 +133,17 @@
    "fieldname": "ltd_expiry",
    "fieldtype": "Date",
    "label": "LTD Expiry"
+  },
+  {
+   "fieldname": "deafult_addon_limits",
+   "fieldtype": "Table",
+   "label": "AddOn Limits",
+   "options": "Saas AddOn Default Limit"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2021-07-30 15:59:41.442922",
+ "modified": "2021-08-04 17:29:55.786600",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Settings",

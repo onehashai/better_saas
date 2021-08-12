@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 import frappe
 import json
-import journeys
 from frappe.utils import today, nowtime, add_days
 from frappe.model.document import Document
 from journeys.addon_limits import update_limits
@@ -20,6 +19,60 @@ def update_addon_limits(addon_limits,site_name):
     for limit in json.loads(addon_limits):
         limit_dict[limit["service_name"]]=limit
     return update_limits(limit_dict,site_name=site_name)
+
+def allocate_default_add_on_limits():
+    '''Used in scheduler for auto allocation of the default credits'''
+    saas_settings = frappe.get_doc("Saas Settings")
+    auto_allocation_limit = saas_settings.deafult_addon_limits
+    for service_limit in auto_allocation_limit:
+        eligible_sites = get_credit_eligible_sites(service_limit.allocate_after_days)
+        allocate_credits(eligible_sites,service_limit)
+        pass
+
+def allocate_credits(eligible_sites,service_limit):
+    saas_addon = frappe.get_doc("Saas AddOn",service_limit.saas_addon)
+    try:
+        for site in eligible_sites:
+            doc = frappe.get_doc("Saas Site",site.name)
+            current_limits = doc.addon_limits
+            allocated = False
+            for limit in current_limits:
+                if limit.service_name == service_limit.saas_addon:
+                    limit.available_credits = limit.available_credits + service_limit.credits
+                    allocated = True
+                    break
+            if(not allocated):
+                limits = {}
+                limits["service_name"] = saas_addon.name
+                limits["available_credits"] = service_limit.credits
+                limits["uom"] = saas_addon.uom
+                limits["rate"] = saas_addon.per_credit_price
+                limits["currency"] = saas_addon.currency
+                limits["minimum_quantity"] = saas_addon.minimum_quantity
+                doc.append("addon_limits",limits)
+            doc.save()
+            update_addon_limits(frappe.as_json(doc.addon_limits),doc.name)
+            send_credit_allocation_email(doc,service_limit,saas_addon)
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(),"Credit Allocation Error")
+        pass
+
+def send_credit_allocation_email(saas_site,service_limit,saas_addon):
+    if not service_limit.email_notification_template:
+        return
+    saas_user = frappe.get_list("Saas User",filters={"linked_saas_site":saas_site.name},fields=['*'])[0]
+    saas_site = saas_site.as_dict()
+    service_limit = service_limit.as_dict()
+    saas_addon = saas_addon.as_dict()
+    data = {**saas_user,**saas_site,**service_limit,**saas_addon}
+    email_template = frappe.get_doc("Email Template",service_limit["email_notification_template"])
+    message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, data)
+    frappe.sendmail(saas_user["email"], subject=email_template.subject, message=message)
+    
+def get_credit_eligible_sites(created_before_days):
+    creation_date = add_days(today(), -1*int(created_before_days))
+    eligible_sites = frappe.get_all("Saas Site",filters=[["creation","like",creation_date+"%"]])
+    return eligible_sites
 
 def update_user_to_main_app():
     admin_site_name = "admin_onehash"

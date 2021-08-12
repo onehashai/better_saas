@@ -1,5 +1,7 @@
 {
  "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
  "autoname": "saasuser.#####",
  "creation": "2020-03-04 17:48:56.589222",
  "doctype": "DocType",
@@ -243,7 +245,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-05-20 10:33:45.868197",
+ "modified": "2021-08-11 16:37:34.517488",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas User",
