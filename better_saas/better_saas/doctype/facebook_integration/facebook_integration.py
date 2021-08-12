@@ -74,6 +74,7 @@ def save_subscription(**kwargs):
                 long_page_token = prolong_token(app_secret=get_decrypted_password("Facebook Integration", "Facebook Integration", "app_secret"),
                     short_user_token=user_access_token, user_id=user_id, client_domain=client_domain, app_id=app_id)
                 page_doc.page_access_token = long_page_token
+                page_doc.parent = client
                 page_doc.save(ignore_permissions=True)
                 client_doc = frappe.get_doc("Facebook Clients", client)
                 client_doc.enabled = 1
