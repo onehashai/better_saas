@@ -621,6 +621,7 @@ def apply_promocode(promocode, site_name):
 	## Promocode Consumed
 	try:
 		coupon_code.used = int(coupon_code.used)+1
+		coupon_code.linked_saas_site = saas_site.name
 		coupon_code.save(ignore_permissions=True)
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(),"Copuon exception")
