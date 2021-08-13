@@ -344,7 +344,8 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 		limit_email_group = limit_for_email_group,
 		limit_expiry = expiry
 	)]
-	
+	mute_email_flag = 1 if (not (expiry and expiry>=today())) else 0
+	commands.append("bench --site {site_name} set-config mute_emails {mute_emails}".format(site_name=site_name,mute_emails=mute_email_flag)) 
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
 		doctype="Bench Settings",
