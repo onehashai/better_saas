@@ -623,9 +623,10 @@ def apply_promocode(promocode, site_name):
 	try:
 		coupon_code.used = int(coupon_code.used)+1
 		coupon_code.linked_saas_site = saas_site.name
+		coupon_code.status = "Redeemed"
 		coupon_code.save(ignore_permissions=True)
 	except Exception as e:
-		frappe.log_error(frappe.get_traceback(),"Copuon exception")
+		frappe.log_error(frappe.get_traceback(),"Coupon Code exception")
 
 	update_promocode_on_reference_docs(saas_user[0].name,promocode)
 	success_message = coupon_code.success_message if coupon_code.success_message else _("Promocode has been Applied Successfully.")
