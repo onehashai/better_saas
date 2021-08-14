@@ -5,9 +5,11 @@
 from __future__ import unicode_literals
 import frappe
 import json
+from frappe import _
 from frappe.utils import today, nowtime, add_days
 from frappe.model.document import Document
 from journeys.addon_limits import update_limits
+from werkzeug.exceptions import ExpectationFailed
 
 class SaasSite(Document):
     pass            
@@ -143,6 +145,18 @@ def mute_emails_on_expiry():
     except Exception as e:
         frappe.error_log(str(e),title="Error while muting Email")
         pass
+
+@frappe.whitelist()
+def set_site_config(site_name,key,value):
+    if not site_name:
+        frappe.throw(_("Site name is mandatory",ExpectationFailed))
+    
+    commands = ["bench --site {site_name} set-config {key} {value}".format(site_name = site_name,key=key,value=value)]
+    frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+                commands=commands,
+                doctype="Bench Settings",
+                key=today() + " " + nowtime()
+            )
 
 def get_all_database_config():
     try:
