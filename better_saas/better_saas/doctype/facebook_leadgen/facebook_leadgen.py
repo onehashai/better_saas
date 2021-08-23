@@ -54,7 +54,7 @@ def lead_insertion(doc, client, page_access_token):
 			frappe.log_error("Facebook Form {} not found for leadgen id: {} \n".format(doc.form_id, doc.leadgen_id) + frappe.get_traceback(), "Error: Facebook Form Not Found")
 			return
 
-	lead_doc = {"doctype": "Lead"}
+	lead_doc = {"doctype": "Lead", "source": "Facebook"}
 	if lead_data and lead_data.get("error"):
 		doc.status = "Failed"
 		doc.save()
