@@ -107,7 +107,7 @@ def setup(account_request):
 
 		# Redeem Promocode
 		if saas_user.promocode:
-			promocode = frappe.get_doc("Coupon Code",saas_user.promocode, ignore_permissions=True)
+			promocode = frappe.get_doc("Coupon Code",{"coupon_code":saas_user.promocode}, ignore_permissions=True)
 			promocode.status="Redeemed"
 			promocode.linked_saas_site = saas_site.name
 			promocode.used = int(promocode.used)+1
@@ -126,7 +126,7 @@ def setup(account_request):
 		frappe.log_error(frappe.get_traceback())
 
 def get_site_limits(promocode,saas_settings):	
-	coupon_code = frappe.get_doc("Coupon Code",promocode) if promocode else None
+	coupon_code = frappe.get_doc("Coupon Code",{"coupon_code":promocode}) if promocode else None
 	discounted_users = coupon_code.discounted_users if coupon_code and coupon_code.discounted_users else 0
 	limit_emails = int(coupon_code.limit_for_emails) if coupon_code and int(coupon_code.limit_for_emails) else int(saas_settings.default_limit_for_emails)
 	limit_space = int(coupon_code.limit_for_space) if coupon_code and int(coupon_code.limit_for_space) else int(saas_settings.default_limit_for_space)
