@@ -48,7 +48,7 @@ def buy_ltd(referrer="https://onehash.ai/pricing",site_name=None):
     ltd_checkout.cancel_url = ltd_checkout.cancel_url if ltd_checkout.cancel_url else referrer
     ltd_checkout.gateway_controller = frappe.db.get_value("Payment Gateway", ltd_checkout.payment_gateway, "gateway_controller")
     ltd_checkout.quantity = 1
-    ltd_checkout.success_url = "https://{}/ltd_checkout_success".format(frappe.conf.get("master_site_domain"))
+    ltd_checkout.success_url = "https://{}/checkout_success".format(frappe.conf.get("master_site_domain"))
     ltd_checkout.metadata = {}
     ltd_checkout.site_name = None
     if(site_name):
