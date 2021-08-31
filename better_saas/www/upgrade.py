@@ -23,9 +23,10 @@ from frappe.integrations.doctype.stripe_settings.stripe_settings import get_gate
 from erpnext.crm.doctype.lead.lead import make_customer
 from erpnext.accounts.doctype.payment_request.payment_request import make_payment_entry
 
-
+no_cache = 1
 
 def get_context(context):
+    context.no_cache = 1
     args = frappe.request.args
     context.site = args["site"] if "site" in args else ""
     context.geo_country = get_geo_ip_country(

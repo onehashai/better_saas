@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700&display=swap');
+
 :root {
     --Red: #D13830;
     --Yellow: #E5A403;
@@ -9,11 +11,19 @@ h6 {
     font-weight: 600;
 }
 
-.navbar {
-    /*	background-color: #5e64ff !important;
-        */
+.iti--allow-dropdown input[type=text], .iti--allow-dropdown input[type=tel]{
+  padding-right: unset !important;
 }
-
+.form-group input {
+  background: #fff;
+  border:1px solid #DADCE0;
+}
+.form-group input:focus{
+  background: #fff;
+}
+.iti__country-list--dropup {
+  z-index: 5 !important;
+}
 .form-horizontal-group {
     display: flex;
     justify-content: space-between
@@ -154,12 +164,16 @@ body[data-path="me"]>section.footer-message {
     padding: 15px;
     margin-top: -46px;
     margin-right: -7px;
+    z-index: 5;
+    background: #fff;
 }
 
 .password-strength-message {
     margin-top: 0px;
     margin-bottom: 0px;
     position: absolute;
+    z-index: 5;
+    background: #fff;
 }
 
 .testimonial-text {
@@ -173,4 +187,289 @@ body[data-path="me"]>section.footer-message {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.card {
+    box-shadow: 0px 2px 6px rgba(17, 43, 66, 0.08), 0px 1px 4px rgba(17, 43, 66, 0.1);
+    border-radius: 0.5rem;
+    border-color: transparent;
+    padding: 2rem;
+  }
+
+  .w-500 {
+    max-width: 500px;
+    margin: auto; }
+
+.navbar{
+    display: none !important;
+}
+.input-group-append {
+    display: flex; }
+
+.input-group{
+    align-items:center;
+}
+
+
+[dir=rtl] .floating-label > input + label,
+[dir=rtl] .floating-label > textarea + label {
+  right: 0;
+  left: auto !important;
+}
+[dir=rtl] .floating-label > input:not([placeholder]):not([value]) + label,
+[dir=rtl] .floating-label > textarea:not([placeholder]):empty + label, [dir=rtl] .floating-label > input[placeholder]:not(:placeholder-shown) + label,
+[dir=rtl] .floating-label > textarea[placeholder]:not(:placeholder-shown) + label, [dir=rtl] .floating-label > input:-webkit-autofill + label,
+[dir=rtl] .floating-label > textarea:-webkit-autofill + label, [dir=rtl] .floating-label > input:focus + label,
+[dir=rtl] .floating-label > textarea:focus + label, [dir=rtl] .floating-label > select + label {
+  right: 0.5rem;
+  left: auto !important;
+}
+
+.floating-label {
+  position: relative;
+}
+.floating-label > select + label {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  left: 0.5rem;
+  padding: 0 0.3rem;
+  line-height: 1.25;
+  color: inherit;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+.floating-label > select + label,
+.floating-label > select + label.label-sm {
+  top: -0.65625rem;
+  font-size: 0.755rem;
+}
+.floating-label > select + label.label-md {
+  top: -0.75rem;
+  font-size: .755rem;
+}
+.floating-label > select + label.label-lg {
+  top: -0.9375rem;
+  font-size: .755rem;
+}
+.floating-label > input + label,
+.floating-label > textarea + label {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  top: 1px;
+  left: 1rem;
+  font-size: .875rem;
+  padding: 0.5rem 0.75rem;
+  color: #6c757d;
+  pointer-events: none;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.floating-label > input.form-control-sm + label,
+.floating-label > textarea.form-control-sm + label {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
+.floating-label > input.form-control-lg + label,
+.floating-label > textarea.form-control-lg + label {
+  font-size: 1.25rem;
+  padding: 0.5rem 1rem;
+}
+.floating-label > input::placeholder,
+.floating-label > textarea::placeholder {
+  color: transparent;
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.floating-label > label + input::placeholder,
+.floating-label > label + textarea::placeholder {
+  color: #6c757d;
+}
+.floating-label > input:focus::placeholder,
+.floating-label > textarea:focus::placeholder {
+  color: #6c757d;
+}
+.floating-label > input:focus + label,
+.floating-label > textarea:focus + label {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  left: 1rem;
+  padding: 0 0.3rem;
+  line-height: 1.25;
+  color: inherit;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+.floating-label > input:focus + label,
+.floating-label > input:focus + label.label-sm,
+.floating-label > textarea:focus + label,
+.floating-label > textarea:focus + label.label-sm {
+  top: -0.5rem;
+  font-size: 0.7rem;
+  color:#007EE5;
+}
+.floating-label > input:focus + label.label-md,
+.floating-label > textarea:focus + label.label-md {
+  top: -0.75rem;
+  font-size: .5rem;
+    left: 0.5rem;
+}
+.floating-label > input:focus + label.label-lg,
+.floating-label > textarea:focus + label.label-lg {
+  top: -0.9375rem;
+  font-size: .5rem;
+}
+
+.floating-label > input:-webkit-autofill + label,
+.floating-label > textarea:-webkit-autofill + label {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  left: 0.5rem;
+  padding: 0 0.3rem;
+  line-height: 1.25;
+  color: inherit;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+.floating-label > input:-webkit-autofill + label,
+.floating-label > input:-webkit-autofill + label.label-sm,
+.floating-label > textarea:-webkit-autofill + label,
+.floating-label > textarea:-webkit-autofill + label.label-sm {
+  top: -0.65625rem;
+  font-size: 0.875rem;
+}
+.floating-label > input:-webkit-autofill + label.label-md,
+.floating-label > textarea:-webkit-autofill + label.label-md {
+  top: -0.75rem;
+  font-size: 1rem;
+}
+.floating-label > input:-webkit-autofill + label.label-lg,
+.floating-label > textarea:-webkit-autofill + label.label-lg {
+  top: -0.9375rem;
+  font-size: 1.25rem;
+}
+
+
+.floating-label > input[placeholder]:not(:placeholder-shown) + label,
+.floating-label > textarea[placeholder]:not(:placeholder-shown) + label {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  left: 0.5rem;
+  padding: 0 0.3rem;
+  line-height: 1.25;
+  color: inherit;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+.floating-label > input[placeholder]:not(:placeholder-shown) + label,
+.floating-label > input[placeholder]:not(:placeholder-shown) + label.label-sm,
+.floating-label > textarea[placeholder]:not(:placeholder-shown) + label,
+.floating-label > textarea[placeholder]:not(:placeholder-shown) + label.label-sm {
+  top: -0.65625rem;
+  font-size: 0.7rem;
+  color:#007EE5;
+}
+.floating-label > input[placeholder]:not(:placeholder-shown) + label.label-md,
+.floating-label > textarea[placeholder]:not(:placeholder-shown) + label.label-md {
+  top: -0.75rem;
+  font-size: .7rem;
+  color:#007EE5;
+}
+.floating-label > input[placeholder]:not(:placeholder-shown) + label.label-lg,
+.floating-label > textarea[placeholder]:not(:placeholder-shown) + label.label-lg {
+  top: -0.9375rem;
+  font-size: .7rem;
+  color:#007EE5;
+}
+.floating-label > input:not([placeholder]):not([value]) + label,
+.floating-label > textarea:not([placeholder]):empty + label {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  left: 0.5rem;
+  padding: 0 0.3rem;
+  line-height: 1.25;
+  color: inherit;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+.floating-label > input:not([placeholder]):not([value]) + label,
+.floating-label > input:not([placeholder]):not([value]) + label.label-sm,
+.floating-label > textarea:not([placeholder]):empty + label,
+.floating-label > textarea:not([placeholder]):empty + label.label-sm {
+  top: -0.65625rem;
+  font-size: 0.7rem;
+}
+.floating-label > input:not([placeholder]):not([value]) + label.label-md,
+.floating-label > textarea:not([placeholder]):empty + label.label-md {
+  top: -0.75rem;
+  font-size: .7rem;
+}
+.floating-label > input:not([placeholder]):not([value]) + label.label-lg,
+.floating-label > textarea:not([placeholder]):empty + label.label-lg {
+  top: -0.9375rem;
+  font-size: .7rem;
+}
+
+.input-group > .floating-label {
+  flex: 1;
+}
+.input-group > .floating-label > .form-control,
+.input-group > .floating-label > .form-select {
+  position: relative;
+}
+.input-group > .floating-label > .form-control:focus,
+.input-group > .floating-label > .form-select:focus {
+  z-index: 3;
+}
+.input-group > .floating-label:not(:first-child) > .form-control,
+.input-group > .floating-label:not(:first-child) > .form-select {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.input-group > .floating-label:not(:last-child) > .form-control,
+.input-group > .floating-label:not(:last-child) > .form-select {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.signup-inner {
+    padding:30px 30px;
+    border-radius:10px;
+    font-family:poppins;
+}
+.signup-inner h1 {
+    font-size:21px;
+    padding:5px;
+    font-weight:400;
+    margin-top:15px;
+    color:#333;
+]
+@media screen and (max-width: 728px) {
+.signup-inner {
+padding:10px;
+}
+  .signup-inner h1 {
+  font-size:12px;
+  }
 }

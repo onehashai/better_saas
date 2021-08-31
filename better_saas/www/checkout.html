@@ -1,0 +1,32 @@
+{% extends "templates/web.html" %}
+
+{% block title %} Payment {% endblock %}
+
+{%- block header -%}
+
+{% endblock %}
+{% block script %}
+<script>{% include "templates/includes/ltd_checkout/ltd_checkout.js" %}</script>
+{% endblock %}
+
+{% block style %}
+<style>
+  {% include "templates/includes/signup/signup.css" %}
+</style>
+
+<style>
+	header, footer {
+		display: none;
+	}
+
+</style>
+{% endblock %}
+
+{%- block page_content -%}
+<p class='lead text-center centered'>
+    <span class='razorpay-loading'>You will be redirected to the Payment Gateway.<br>Please do not refresh the page.</span>
+	<span class='razorpay-confirming hidden'>Confirming Payment</span>
+</p>
+{% endblock %}
+
+
