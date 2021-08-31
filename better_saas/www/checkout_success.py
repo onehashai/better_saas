@@ -271,6 +271,11 @@ def get_customer(data):
         
         try:
             cur_user = frappe.session.user
+            if(lead.contact_date and lead.contact_date.strftime("%Y-%m-%d %H:%M:%S.%f") < frappe.utils.now()):
+                lead.contact_date = ""
+                lead.save(ignore_permissions=True)
+
+
             frappe.set_user("Administrator")
             customer = make_customer(lead.name)
             #customer.default_currency = currency
