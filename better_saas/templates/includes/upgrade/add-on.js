@@ -389,11 +389,11 @@ frappe.ready(function () {
         )
     });
     $("#payment-button").off("click").on("click", function () {
-        frappe.call('better_saas.www.add-on.pay', {
-            cart: cart,
-            site_name: site_name,
-            email: email,
-            onehash_partner: onehash_partner
+        frappe.call('better_saas.www.ltd_checkout.pay', {
+            // cart: cart,
+            // site_name: site_name,
+            // email: email,
+            // onehash_partner: onehash_partner
         }).then(r => {
             if (r.message && r.message.redirect_to) {
                 window.location.href = r.message.redirect_to;

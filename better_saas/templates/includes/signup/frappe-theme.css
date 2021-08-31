@@ -1,4 +1,4 @@
-/*!
+/* /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
  */
@@ -3739,7 +3739,7 @@
    font-weight: 400;
    line-height: 1.5;
    color: #4A5568;
-   background-color: #fff;
+   background-color: #f4f5f6;
    background-clip: padding-box;
    border: 1px solid #CBD5E0;
    border-radius: 0.25rem;
@@ -3755,7 +3755,7 @@
      text-shadow: 0 0 0 #4A5568; }
    .form-control:focus {
      color: #4A5568;
-     background-color: #fff;
+     background-color: #f4f5f6;
      border-color: #c5cbec;
      outline: 0;
      box-shadow: 0 0 0 0.2rem rgba(101, 116, 205, 0.25); }
@@ -3768,7 +3768,7 @@
  
  select.form-control:focus::-ms-value {
    color: #4A5568;
-   background-color: #fff; }
+   background-color: #f4f5f6; }
  
  .form-control-file,
  .form-control-range {
@@ -5655,6 +5655,13 @@
      border-bottom-right-radius: 0.25rem;
      border-bottom-left-radius: 0.25rem; }
  
+  .card {
+      box-shadow: 0px 2px 6px rgba(17, 43, 66, 0.08), 0px 1px 4px rgba(17, 43, 66, 0.1);
+      border-radius: 0.5rem;
+      border-color: transparent;
+      padding: 2rem;
+    }
+
  .card-body {
    flex: 1 1 auto;
    min-height: 1px;
@@ -5730,7 +5737,7 @@
  .card-deck .card, .card-deck div[source-type="Generator"][data-doctype="Web Form"] .page-content-wrapper, div[source-type="Generator"][data-doctype="Web Form"] .card-deck .page-content-wrapper {
    margin-bottom: 15px; }
  
- @media (min-width: 576px) {
+@media (min-width: 576px) {
    .card-deck {
      display: flex;
      flex-flow: row wrap;
@@ -10483,4 +10490,4 @@
  
  #alert-container .desk-alert .next-action-container .next-action:last-child {
    border-right: none; }
- 
+  */

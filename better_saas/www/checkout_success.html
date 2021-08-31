@@ -1,0 +1,50 @@
+{% extends "templates/web.html" %}
+
+{% block title %} Payment {% endblock %}
+
+{%- block header -%}
+
+{% endblock %}
+{% block style %}
+<style>
+  {% include "templates/includes/signup/signup.css" %}
+</style>
+
+{% endblock %}
+{% block script %}
+{% endblock %}
+
+{%- block page_content -%}
+<div class="row" >
+    <div class="col-md-3">
+    </div>
+    <div class="col-md-6">
+        <div class="col-md-12 signup-inner" style="border:1px solid #DADCE0;">
+            <img src="https://uploads-ssl.webflow.com/5e53d34464688e6f5960a338/610a36c2792530d601aaf35f_OneHash_Logo.svg" width="110px;" aria-hidden="true">
+            <h1>
+                <i class="fa fa-check-circle text-success">&nbsp;</i> Success
+            </h1>
+            <div class="signup-card">                
+                    <div class="col-12" style="margin-top:30px;">
+							<div class="row">
+								<div class="col-5"><strong>Customer Name</strong></div>
+                                <div class="col-7">{{customer.name}}</div>
+							</div>
+							<div class="row">
+								<div class="col-5"><strong>Payment ID</strong></div>
+                                <div class="col-7">{{session.payment_intent}}</div>
+							</div>
+							<div class="row">
+								<div class="col-5"><strong>Promocode</strong></div>
+                                <div class="col-7">{{promocode}}</div>
+							</div>
+                            <a class="btn btn-primary" href="{{primary_action}}">{{primary_action_label}}</a>
+                    </div>
+            </div>
+        </div>
+        </div>
+    <div class="col-md-1">
+    </div>
+</div>
+
+{% endblock %}

@@ -6,8 +6,24 @@ from frappe.geo.country_info import get_country_timezone_info
 from frappe.utils.data import add_days, getdate, today
 from werkzeug.exceptions import ExpectationFailed
 
+no_cache = 1
+
+form_keys = ('first_name', 'last_name', 'email',
+	'phone_number', 'promocode')
+
 
 def get_context(context):
+    context.no_cache = 1
+    args = frappe.request.args
+    for key in form_keys:
+        if(key in args):
+            value = "" if args[key]=="None" else args[key]
+            context[key] = value
+        else:
+            context[key]=""
+        
+    referral_code = args["referral_code"] if "referral_code" in args else ""
+    context["partner_logo"] = frappe.db.get_value("Sales Partner",{"referral_code":referral_code},"logo")
     pass
 
 @frappe.whitelist(allow_guest=True)

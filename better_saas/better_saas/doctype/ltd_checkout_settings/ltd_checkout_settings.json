@@ -1,0 +1,159 @@
+{
+ "actions": [],
+ "creation": "2021-08-25 12:56:41.113108",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_description",
+  "address_at_checkout",
+  "item_code",
+  "item_name",
+  "image",
+  "rate",
+  "currency",
+  "payment_gateway",
+  "company",
+  "cost_center",
+  "success_url",
+  "cancel_url",
+  "email_template",
+  "invoice_print_format",
+  "code_prefix"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "address_at_checkout",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Address At Checkout",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Rate",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Link",
+   "label": "Payment Gateway",
+   "options": "Payment Gateway",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Linked Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.image",
+   "fieldname": "image",
+   "fieldtype": "Image",
+   "label": "Item Image"
+  },
+  {
+   "fieldname": "success_url",
+   "fieldtype": "Data",
+   "label": "Success URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cancel_url",
+   "fieldtype": "Data",
+   "label": "Cancel URL"
+  },
+  {
+   "fieldname": "email_template",
+   "fieldtype": "Link",
+   "label": "Email Template",
+   "options": "Email Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "invoice_print_format",
+   "fieldtype": "Link",
+   "label": "Invoice Print Format",
+   "options": "Print Format",
+   "reqd": 1
+  },
+  {
+   "default": "OH-",
+   "fieldname": "code_prefix",
+   "fieldtype": "Data",
+   "label": "Promocode Prefix"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2021-08-28 14:37:12.083951",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "LTD Checkout Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "All",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
