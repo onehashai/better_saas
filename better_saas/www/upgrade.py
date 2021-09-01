@@ -476,6 +476,9 @@ def get_redirect_message(title=_("Subscription Updated"),message=_("Your Subscri
 
 @frappe.whitelist(allow_guest=True)
 def verify_system_user(site_name, email):
+    if email in ["None","Administrator"]:
+        return True
+
     try:
         site = frappe.get_doc("Saas Site", site_name, ignore_permissions= True)
         for user in site.user_details:
