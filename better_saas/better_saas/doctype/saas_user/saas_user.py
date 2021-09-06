@@ -399,7 +399,8 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	user_data = (first_name, "", last_name, email, "")
-	country = country if country else (get_geo_ip_country(frappe.local.request_ip)["names"]["en"] if frappe.local.request_ip else None)
+	geo_country = get_geo_ip_country(frappe.local.request_ip) if frappe.local.request_ip else None
+	country = country if country else (geo_country['names']['en'] if geo_country else None)
 	password_test_result = test_password_strength(passphrase,user_data=user_data)
 	if(not password_test_result['feedback']['password_policy_validation_passed']):
 		frappe.throw(password_test_result['feedback']['warning']+"\r\n"+password_test_result['feedback']['suggestions'][0],"ValidationError")
@@ -788,4 +789,13 @@ def refund_promocode(promocode):
 		frappe.db.commit()
 		return {"success":True,"message":success_message}
 
-	
+
+@frappe.whitelist(allow_guest=True)
+def get_promocode_benefits(site_name):
+	saas_user = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
+	if(saas_user.promocode):
+		promocode = saas_user.promocode.split(",")
+		coupon_codes = frappe.get_list("Coupon Code",filters=[["coupon_code","in",promocode],["status","!=","Refunded"]], fields=["name","coupon_code","status","success_message"], ignore_permissions=True)
+	else:
+		coupon_codes = []
+	return coupon_codes
