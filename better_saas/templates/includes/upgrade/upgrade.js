@@ -2,6 +2,7 @@ var site_name;
 var email;
 var onehash_partner;
 var subscription;
+var has_billing_address=false;
 var base_plan;
 var cart = {};
 var addons = {};
@@ -44,14 +45,27 @@ frappe.ready(function () {
 		}).then(r => {
 			if (r.message.status_code !== '404') {
 				$('#address-wrapper').html(r.message.address_display);
-				$('#change-billing-address-text').text("Change Billing Address");
+				$('#change-billing-address-text').text("Update Address");
+				has_billing_address=true;
 			}
 			else {
 				$('#address-wrapper').text("Billing Address not available");
-				$('#change-billing-address-text').text("Add Billing Address");
-				$("#payment-button").prop("disabled",true);
+				$('#change-billing-address-text').text("Add Address");
+				has_billing_address=false;
+				enable_pay_button();
 			}
 		});
+	}
+
+	function enable_pay_button(){
+		$("#payment-button").prop("disabled",!has_billing_address);
+		if(!has_billing_address){
+			$("#pay-message").text("Please, Add Address to proceed.");
+			$("#pay-message").removeClass("hide");
+		}else{
+			$("#pay-message").addClass("hide");
+		}
+		
 	}
 
 	function get_cart_value() {
@@ -88,21 +102,34 @@ frappe.ready(function () {
 			});
 			let total_row = `<div class="row font-weight-bold border-top">
                                 <div class="col-md-5 col-xs-4 py-2 px-3">
-                                    Total
                                 </div>
-                                <div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap"></div>
+                                <div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap">Total</div>
                                 <div class="col-4 py-2 px-3 text-right text-nowrap">
                                     <span>${currency}</span> ${r.message.cart_details.total}
                                 </div>
 								<div class="col-1"></div>
                             </div>
                             ${r.message.cart_details.total_tax > 0 ?
-					`<div class="row font-weight-bold border-top">
-                                <div class="col-11 py-2 px-3 text-right text-nowrap" style="font-size: small;">
-                                    Tax amount to be charged: <span style="font-weight:bolder;">${currency} ${r.message.cart_details.total_tax}</span>
+					`<div class="row border-top">
+					<div class="col-md-5 col-xs-4 py-2 px-3">
+                                </div>
+								<div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap">Tax</div>
+								<div class="col-4 py-2 px-3 text-right text-nowrap">
+                                    <span>${currency}</span> ${r.message.cart_details.total_tax}
                                 </div>
                                 <div class="col-1"></div>
-                            </div>`: ''}`;
+                            </div>
+							<div class="row font-weight-bold border-top">
+							<div class="col-md-5 col-xs-4 py-2 px-3">
+										</div>
+										<div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap">Grand Total</div>
+										<div class="col-4 py-2 px-3 text-right text-nowrap">
+											<span>${currency}</span> ${r.message.cart_details.total+r.message.cart_details.total_tax}
+										</div>
+										<div class="col-1"></div>
+									</div>		
+							
+							`: ''}`;
 			$("#checkout-wrapper").html(checkout_header + row_html + total_row);
 			$(".cart-qty").on("change",(context)=>{
 				let count = 0;
@@ -115,6 +142,7 @@ frappe.ready(function () {
 				if(count>0){
 					get_cart_value();
 					$("#payment-button").prop("disabled",false);
+					enable_pay_button();
 				} else {
 					$("#payment-button").prop("disabled",true);
 					frappe.msgprint("Qty must be greater than Zero.");
@@ -341,7 +369,7 @@ frappe.ready(function () {
 							{
 								label: 'Country',
 								fieldname: 'country',
-								fieldtype: 'autocomplete',
+								fieldtype: 'Autocomplete',
 								options:country_list,
 								default: address.country,
 							},
@@ -353,7 +381,7 @@ frappe.ready(function () {
 							{
 								label: 'GST State',
 								fieldname: 'gst_state',
-								fieldtype: 'autocomplete',
+								fieldtype: 'Autocomplete',
 								mandatory_depends_on: "eval:doc.is_registered == 1",
 								depends_on: "eval: doc.is_registered == 1",
 								default: address.gst_state,
@@ -413,7 +441,10 @@ frappe.ready(function () {
 									}, 5);
 								}
 							});
-						});
+						},
+						"Update Address",
+						"Update Address"
+						);
 					});
 				}
 				else {
@@ -494,7 +525,8 @@ frappe.ready(function () {
 									message: __('Billing Address Updated'),
 									indicator: 'green'
 								}, 5);
-								$("#payment-button").prop("disabled",false);
+								has_billing_address=true;
+								enable_pay_button();
 							}
 							else {
 								frappe.show_alert({
@@ -503,7 +535,9 @@ frappe.ready(function () {
 								}, 5);
 							}
 						});
-					});
+					},
+					"Add Address",
+					"Add Address");
 				}
 			});
 		});
@@ -544,4 +578,34 @@ frappe.ready(function () {
 	});
 	set_query_params();
 	verify_system_user();
+
+	$("#promocode-form").on("submit",function(){
+		let formdata = $(this).serialize();
+		formdata += "&site_name="+site_name;
+		$(".coupon").prop("disabled",true);
+		$.ajax({
+			url:"/api/method/better_saas.better_saas.doctype.saas_user.saas_user.apply_promocode",
+			data: formdata,
+			crossDomain:true,
+			success: function(r) {
+				if(r.message && r.message["success"]){
+					$(".coupon").prop("disabled",false);
+					$("#promo-validation-feedback").removeClass("invalid-feedback");
+					$("#promo-validation-feedback").addClass("valid-feedback");
+					$("#promo-validation-feedback").text(r.message["message"]);
+					$("#promo-validation-feedback").show();
+					$('[name="promocode"]').val("");
+					setTimeout(() => {
+						window.location.reload();	
+					}, 2000);
+				}
+			},
+			error:function(xhr,status,error){
+				$(".coupon").prop("disabled",false);
+				$("#promo-validation-feedback").show();
+				message = JSON.parse(JSON.parse(xhr.responseJSON._server_messages)[0])["message"];
+				$("#promo-validation-feedback").text(message);
+			}
+		});
+	});
 });

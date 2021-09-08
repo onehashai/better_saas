@@ -129,11 +129,11 @@ def get_cart_value(site_details, cart):
     addons = site_data["addons"]
     plan = site_data["plan"]
     for key, addon in addons.items():
-        if (key in cart and cart[key] != 0):
+        if (key in cart and cart[key] != 0 or key=="Users"):
             item_amount = flt(cart[key]*addon["monthly_amount"]/flt(addon["addon_value"]))
     
             ## Check for negetive amount
-            if cart_amount + item_amount <= 0:
+            if cart_amount + item_amount < 0:
                 cart[key] = 0
                 frappe.throw("Total amount must be positive")
 
