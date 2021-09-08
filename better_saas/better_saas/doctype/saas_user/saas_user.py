@@ -614,7 +614,7 @@ def apply_promocode(promocode, site_name):
 	# Calcualte new limits
 	base_plan = coupon_code.base_plan if saas_user_doc.country=="India" else coupon_code.base_plan_international
 
-	if(coupon_code.is_stackable):
+	if(coupon_code.is_stackable and (saas_site.subscription or saas_site.discounted_users>0)):
 		limit_users = saas_site.limit_for_users + coupon_code.limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users
 		discounted_users = saas_site.discounted_users + coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
 		if discounted_users > coupon_code.max_discounted_user_limit:
