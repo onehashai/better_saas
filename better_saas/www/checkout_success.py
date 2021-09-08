@@ -108,7 +108,7 @@ def send_email(ltd_settings,invoice, payment_entry, coupon_code, data):
     combined_data = {**coupon_code,**ltd_settings,**payment_entry,**invoice}
     email_template = frappe.get_doc("Email Template",ltd_settings["email_template"])
     message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, combined_data)
-    frappe.sendmail(data["payer_email"], subject=email_template.subject, message=message,attachments=attachments,with_container=True,now=True)
+    frappe.sendmail(data["payer_email"], subject=email_template.subject, message=message,attachments=attachments,with_container=True,now=True,print_letterhead=True)
         
 
 
