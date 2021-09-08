@@ -1,0 +1,27 @@
+<div style="width: 100%; display: flex; justify-content: center;">
+	<img src="https://{{site_url}/files/payment_received.png">
+</div>
+<br>
+<p>Hey {{ name }},</p>
+<p>{{_("Thanks for choosing OneHash!!")}}</p>
+<br>
+<p>{{_("We are grateful to have you as our valued customer. <br>We are writing to you to inform you that your payment has been successfully received by us for ")}} <a href={{ site_url }} target="_blank">{{ site }}</a>.</p>
+<p>{{_("Feel free to contact us whenever you need any help.")}}</p>
+<br>
+<p>{{_("Below is the summary of your payment:")}}</p>
+<br>
+<strong>{{_("Payment Id")}}</strong>
+<p>{{ payment_id }}</p>
+<br>
+<strong>{{_("Invoice:")}}</strong>
+<p>{{ invoice.name }}</p>
+<br>
+<strong>{{_("Items:")}}</strong>
+{% for item in invoice.items %}
+<p>{{ item.item_name }} x {{ item.qty }}</p>
+{% endfor %}
+<br>
+<p>{{_("We are just a click away to rectify all your issues and queries, just drop us a mail to")}} <a href='mailto:support@onehash.ai' target="_blank">support@onehash.ai</a> {{_("and we’d resolve everything within no time!")}}</p>
+<br>
+<p>{{_("Cheers")}},<br>{{_("Team OneHash")}}</p>
+<br>

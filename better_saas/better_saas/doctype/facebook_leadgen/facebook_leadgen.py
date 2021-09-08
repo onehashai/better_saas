@@ -25,7 +25,7 @@ class FacebookLeadgen(Document):
 				else:
 					self.status = "Failed"
 					self.save()
-					frappe.log_error("Page access token was not found for facebook leadgen: "+self.name, 'No Page Access Token')
+					frappe.log_error("Page access token was not found for facebook leadgen: "+self.name, 'No Facebook Page Access Token')
 			frappe.db.commit()
 
 def lead_insertion(doc, client, page_access_token):
@@ -37,20 +37,29 @@ def lead_insertion(doc, client, page_access_token):
 		doc.status = "Failed"
 		doc.save()
 		frappe.log_error("Error occured while fetching facebook leadgen data for leadgen id: {} ".format(doc.leadgen_id) + frappe.get_traceback(), "Error Facebook Leadgen")
-	
+		return
+
 	#facebook form fields: lead label
 	field_mapping = {}
 
 	if doc.form_id:
-		for fm in frappe.get_doc("Facebook Forms", doc.form_id).get("field_mapping"):
-			if fm.lead_field_label != "Do Not Map":
-				field_mapping[fm.facebook_fieldname] = [fm.lead_fieldname, fm.lead_field_type]
+		try:
+			fm_docs = frappe.get_doc("Facebook Forms", doc.form_id).get("field_mapping")
+			for fm in fm_docs:
+				if fm.lead_field_label != "Do Not Map":
+					field_mapping[fm.facebook_fieldname] = [fm.lead_fieldname, fm.lead_field_type]
+		except:
+			doc.status = "Failed"
+			doc.save()
+			frappe.log_error("Facebook Form {} not found for leadgen id: {} \n".format(doc.form_id, doc.leadgen_id) + frappe.get_traceback(), "Error: Facebook Form Not Found")
+			return
 
-	lead_doc = {"doctype": "Lead"}
+	lead_doc = {"doctype": "Lead", "source": "Facebook"}
 	if lead_data and lead_data.get("error"):
 		doc.status = "Failed"
 		doc.save()
 		frappe.log_error("Facebook leadgen data fetch produced this error: "+str(lead_data.get("error")), "Error Facebook Leadgen")
+		return
 	else:
 		for data in lead_data["field_data"]:
 			if data["name"] in field_mapping:
@@ -85,12 +94,12 @@ def lead_insertion(doc, client, page_access_token):
 			frappe.local.initialised = False
 			frappe.connect(site=master_site)
 			frappe.log_error("Error occured while saving lead into client: {} :".format(client_domain)+frappe.get_traceback(), 
-				"Error Saving Lead")
+				"Error Saving Facebook Lead")
 		if res.get("name"):
 			doc.status = "Success"
 			doc.save()
 		else:
 			doc.status = "Failed"
 			doc.save()
-			frappe.log_error("Saving lead on client's system: {} failed for leadgen id: {}".format(client_domain, doc.leadgen_id), "Lead Creation Failed")
+			frappe.log_error("Saving lead on client's system: {} failed for leadgen id: {}".format(client_domain, doc.leadgen_id), "Facebook Lead Creation Failed")
 

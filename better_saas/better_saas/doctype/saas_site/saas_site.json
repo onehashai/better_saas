@@ -20,6 +20,7 @@
   "user_details",
   "section_break_12",
   "limit_for_users",
+  "discounted_users",
   "limit_for_emails",
   "limit_for_space",
   "column_break_8",
@@ -179,7 +180,7 @@
    "fieldname": "warning_level",
    "fieldtype": "Select",
    "label": "Warning Level",
-   "options": "\nInitial Warning\nIntermittent Warning\nDeletion Queued\nDeletion Approved"
+   "options": "\nInitial Warning\nIntermittent Warning\nDeletion Approved"
   },
   {
    "fieldname": "warning_date",
@@ -191,11 +192,16 @@
    "fieldtype": "Link",
    "label": "User",
    "options": "User"
+  },
+  {
+   "fieldname": "discounted_users",
+   "fieldtype": "Int",
+   "label": "Discounted Users"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-06-28 13:53:43.529351",
+ "modified": "2021-08-04 11:03:37.043816",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",

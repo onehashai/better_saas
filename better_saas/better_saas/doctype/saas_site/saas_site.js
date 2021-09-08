@@ -104,6 +104,47 @@ frappe.ui.form.on('Saas Site', {
 				
 			});
 
+			frm.add_custom_button(__('Add Site Config'), function(){
+				let d = new frappe.ui.Dialog({
+					title: 'Update Site Config',
+					fields: [
+						{
+							label: 'Config Key',
+							fieldname: 'key',
+							fieldtype: 'Data',
+							required:1
+						},
+						{
+							label: 'Config Value',
+							fieldname: 'value',
+							fieldtype: 'Small Text',
+							required:1
+						}
+					],
+					primary_action_label: 'Update Config',
+					primary_action(values) {
+						frappe.call({
+							"method": "better_saas.better_saas.doctype.saas_site.saas_site.set_site_config",
+							args: {
+								"site_name" : frm.doc.name,
+								"key":values.key,
+								"value":values.value
+							},
+							async: false,
+							callback: function (r) {
+								if (!r.exc) {
+									d.hide();
+									frappe.show_alert("Site Config Queued Sucessfully");
+								} else{
+									frappe.show_alert("Site Config cannot be updated.");
+								}
+							}
+						});
+					}
+				});
+				d.show();
+			});
+
 			if (frm.doc.site_status == "Active") {
 				frm.add_custom_button(__('Disable Site'), function(){
 					frappe.confirm(__("This action will disable the site. It can be undone. Are you sure ?"), function() {
@@ -152,27 +193,6 @@ frappe.ui.form.on('Saas Site', {
 					});
 				});
 			}
-			frappe.db.get_single_value("Site Deletion Configuration", "deletion_approval_role").then((role) => {
-				if(frappe.user.has_role(role) && frm.doc.warning_level == "Deletion Queued"){
-					frm.add_custom_button(__('Approve Deletion'), function(){
-						frappe.confirm(__("This action will approve the site for deletion. It can't be undone. Are you sure ?"), function() {
-							frm.doc.warning_level = "Deletion Approved";
-							frm.refresh_field("warning_level");
-							cur_frm.doc.__unsaved = 1
-							frm.save();
-							frappe.show_alert({
-								message: "Success !!",
-								indicator: 'green'
-							});
-						}, function(){
-							frappe.show_alert({
-								message: "Cancelled !!",
-								indicator: 'red'
-							});
-						});
-					});
-				}
-			})
 		}
 
 	}

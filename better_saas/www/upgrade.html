@@ -11,6 +11,10 @@
 <!-- {{ for_test }} -->
 <div class="container">
     <div class="py-5" style="min-height: 650px;">
+        <button class="btn btn-link btn-sm float-right"
+            style="background-color: #f4f5f6; color: #16161785; border: 1px #dce3e894 solid;" id="cancel-button">
+            Cancel Subscription
+        </button>
         <h4 class="mb-3" style="line-height: 1.5;">Manage subscription for <mark>{{ site }}</mark></h4>
         <div>
             <div role="alert" class="alert alert-secondary" id="site_info">
@@ -43,12 +47,18 @@
                                     </span>
                                 </h6>
                                 <div class="row">
-                                    <div class="col-6 col-md-12 text-dark text-nowrap"><span><span
-                                                style="font-size: 1.5em;" class="currency-symbol"></span> <span class="display-4 subscription-amount"
-                                                style="font-size: 2.5rem;"></span><span
-                                                class="text-muted billing-frequency">/month</span> <br> <span
-                                                class="display-4 ml-4 text-muted"
-                                                style="font-size: 1.6rem;"><s class="non-discounted-subscription-amount"></s></span></span></div>
+                                    <div class="col-6 col-md-12 text-dark text-nowrap">
+                                        <span>
+                                            <span style="font-size: 1.5em;" class="currency-symbol"></span>
+                                            <span class="display-4 subscription-amount"
+                                                style="font-size: 2.5rem;"></span>
+                                            <span class="text-muted billing-frequency">/month</span>
+                                            <br>
+                                            <span class="display-4 ml-4 text-muted" style="font-size: 1.6rem;">
+                                                <span class="non-discounted-subscription-amount"></span>
+                                            </span>
+                                        </span>
+                                    </div>
                                     <div class="col-6 col-md-12 small mt-md-2">
                                         <div class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg"
                                                 width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -58,7 +68,7 @@
                                             </svg>
                                             <span class="subscribed-users"></span>
                                         </div>
-                                        <!-- div class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg"
+                                        <!-- <div class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg"
                                                 width="16" height="16" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round" class="feather feather-check mr-2 mt-1">
@@ -73,7 +83,7 @@
                                                 <polyline points="20 6 9 17 4 12"></polyline>
                                             </svg>
                                             <span class="subscribed-emails"></span>
-                                        </div -->
+                                        </div> -->
                                     </div>
                                 </div>
                             </div>
@@ -81,12 +91,12 @@
                     </div>
                 </div>
             </div>
-            <div class="my-5">
+            <!-- <div class="my-5">
                 <h5>Add-Ons</h5>
-                <div class="row" id="saas-addons">
+                <div class="row flex-wrap" id="saas-addons">
                     No Active Addons
                 </div>
-            </div>
+            </div> -->
             <div>
                 <div>
                     <h5>Checkout</h5>
@@ -94,12 +104,39 @@
                         Loading... Subscription Details
                     </div>
                     <div class="mt-3 row">
-                        <div class="col-6"><span><a href="" class="text-primary text-muted">Change Billing
-                                    Address</a></span></div>
-                        <div class="col-5 text-nowrap"><span class="float-right"><a href="" class="text-primary"></a></span></div>
-                        <div class="col-1"></div>
+                        <div class="card border col-md-6">
+                            <div class="card-body">
+                        <div class="" style="font-size: smaller;">
+                            <h6>Billing Address &nbsp; <button class="btn btn-outline-primary btn-sm pull-right" 
+                                id="change-billing-address-link"><i class="fa fa-address-card">&nbsp;</i>
+                                <span style="white-space: nowrap;" id="change-billing-address-text"></span>
+                            </button></h6>
+                            <div id="address-wrapper">
+                                Loading... Billing Address
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-3"><button class="btn btn-primary" id="payment-button">Pay Now</button></div>
+                    </div>
+                        <div class="offset-md-1 col-md-4 card border">
+                            <div class="card-body">
+                                    <form id="promocode-form" action="javascript:;" >
+                                        <div class="form-group"> <label><h6>Have PromoCode?</h6></label>
+                                            <div class="input-group"> <input type="text" class="form-control coupon" name="promocode" required placeholder="Enter code" > 
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-apply btn-outline-primary coupon">Apply</button>
+                                                </span>
+                                            </div>
+                                            <div class="invalid-feedback" id="promo-validation-feedback"></div>
+                                        </div>
+                                    </form>
+                                </div>
+                        </div>
+                        <div class="col-md-1"></div>
+                    </div>
+                    <div class="mt-3 col-md-4 offset-md-7 text-center">
+                        <div class="alert alert-info hide" id="pay-message"></div>
+                        <button class="btn btn-primary" id="payment-button"></button>
+                    </div>
                     <!---->
                     <!---->
                     <!---->

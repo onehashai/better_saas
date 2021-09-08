@@ -1,5 +1,5 @@
 frappe.ready(function () {
-    let $page = $('#page-signup, #page-signup-1');
+    let $page = $('#page-signup, #page-signup-1, #page-signup_ltd');
     let minimum = {
         'P-Pro-2020': 1,
         'P-Standard-2020': 1
@@ -21,6 +21,7 @@ frappe.ready(function () {
 
     // Define the signup stages
     setup_signup($('#page-signup'));
+    setup_signup($('#page-signup_ltd'));
 
     //  Check for valid email
     $page.find('input[name="email"]').on('change load', function () {
@@ -41,8 +42,8 @@ frappe.ready(function () {
                     $(this).closest('.form-group').addClass('invalid');
                 } else {
                     $(this).closest('.form-group').removeClass('invalid');
-                    $('#emailValidationMsg').html(`<span style="color:#0E8C4A;">Email is available 👍</span>`).show();
-                    $('input[name="email"]').css('border-color','#0E8C4A');
+                    $('#emailValidationMsg').html(`<span style="color:#0E8C4A;">Email is available</span>`).show();
+                    $('input[name="email"]').css('border-color', '#0E8C4A');
                 }
             });
         }
@@ -61,17 +62,18 @@ frappe.ready(function () {
 
         if (promocode != '') {
             $(this).closest('.form-group').removeClass('invalid');
-            frappe.call('better_saas.www.signup.is_valid_promocode', {
-                promocode: promocode
+            frappe.call('better_saas.better_saas.doctype.saas_user.saas_user.is_valid_promocode', {
+                promocode: promocode,
+                is_new_user:1
             }).then(r => {
-                if (!r.message) {
+                if (!r.message || !r.message[0]) {
                     $(this).closest('.form-group').addClass('invalid');
                     $(this).css('border-color', '#D13830');
                     $(this).next().text("Please enter a valid promocode").css('color', '#D13830');
                 } else {
                     $(this).closest('.form-group').removeClass('invalid');
                     $(this).css('border-color', '#0E8C4A');
-                    $(this).next().text("Promocode applied successfully").css('color', '#0E8C4A').show();
+                    $(this).next().text("Promocode is valid").css('color', '#0E8C4A').show();
                 }
             });
         }
@@ -107,7 +109,7 @@ setup_signup = function (page) {
     // button for signup event
     if (!page) {
         // fallback
-        var page = $('#page-signup,#page-signup-1');
+        var page = $('#page-signup,#page-signup-1,#page-signup_ltd');
     }
     let minimum = {
         'P-Standard-2020': '5',
@@ -203,7 +205,7 @@ setup_signup = function (page) {
 
     // change help description based on subdomain change
     $('[name="subdomain"]').on("keyup", function () {
-        $('.subdomain-help').text($(this).val() || window.erpnext_signup.subdomain_placeholder);
+        $('.subdomain-help').text($(this).val() || "");
     });
 
     // distribution
@@ -275,8 +277,8 @@ setup_signup = function (page) {
     if (query_params.domain) {
         let domain = frappe.utils.escape_html(query_params.domain);
         let subdomain = domain
-        if (subdomain.indexOf(".erpnext.com")) {
-            subdomain = subdomain.replace(".erpnext.com", "");
+        if (subdomain.indexOf(".onehash.ai")) {
+            subdomain = subdomain.replace(".onehash.ai", "");
         }
         $('[name="subdomain"]').val(subdomain);
 
@@ -338,13 +340,13 @@ setup_signup = function (page) {
             feedback.help_msg = "<br>" + "Suggestions: Include symbols, numbers and at least one capital letter";
             strength_message.attr('style', `color: #377DE2 !important; 
                                             border: 1px #377ce2 solid; 
-                                            border-radius: 14px; 
-                                            border-start-end-radius: 0pc;
                                             padding: 0px 2px 1px 6px;
                                             margin-top: 4px;
                                             margin-right: 14px;
-                                            z-index: 2;
-                                            background: white;`);
+                                            z-index: 5;
+                                            font-size:10px;
+                                            border-radius:8px;
+                                            background: #fff;`);
             $('#passphrase').css('border-color', '#377DE2');
         }
         if (feedback) {
@@ -379,7 +381,7 @@ function setup_account_request($page) {
                 !$page.find('input[name="subdomain"]').val() ||
                 !$page.find('input[name="email"]').val() ||
                 !$page.find('input[name="phone_number"]').val() ||
-                !$page.find('input[name="passphrase"]').val()) {
+                !$page.find('input[name="passphrase"]').val() || !$page.find('input[name="company_name"]').val()) {
 
                 frappe.msgprint("All fields are necessary. Please try again.");
                 return false;
@@ -404,8 +406,12 @@ function setup_account_request($page) {
                 frappe.msgprint("Please enter Phone Number.");
                 return false;
 
+            } else if ($page.find('input[name="company_name"]').parent().hasClass('invalid')) {
+                frappe.msgprint("Please enter Company Name.");
+                return false;
+
             } else {
-                var args = Array.from($page.find('.signup-card form input'))
+                var args = Array.from($page.find('.signup-state-details input'))
                     .reduce(
                         (acc, input) => {
                             acc[$(input).attr('name')] = $(input).val();
@@ -414,7 +420,7 @@ function setup_account_request($page) {
 
                 // Update Phone Number with Country Code 
                 args.phone_number = localStorage.getItem('phoneNum');
-
+                console.log("Form Data",args)
                 // validate inputs
                 const validations = Array.from($page.find('.form-group.invalid'))
                     .map(form_group => $(form_group).find('.validation-message').html());
@@ -435,11 +441,12 @@ function setup_account_request($page) {
                 var res = frappe.utils.get_url_arg('res');
                 if (res) args.partner = res;
 
-                // args.distribution = window.erpnext_signup.distribution;
-
+                
                 var $btn = $page.find('.get-started-button');
                 var btn_html = $btn.html();
-                $btn.prop("disabled", true).html("Sending OTP");
+                $btn.prop("disabled", true).html("OTP Sent");
+                $page.find('input[name="otp"]').parent().removeClass('hide');
+                
 
                 // Lock Form Fields
                 let inputArray = Array.from($page.find('.signup-card form input'));
@@ -449,7 +456,7 @@ function setup_account_request($page) {
                     $(inputArray[input]).prop('readonly', true);
                 }
                 $("input[name*='agree-checkbox']").prop('disabled', true);
-
+                $page.find('input[name="otp"]').prop('readonly',false);
                 //goog_report_conversion(); // eslint-disable-line
 
                 let locationParams = localStorage.getItem('urlKeywordParams')
@@ -579,10 +586,7 @@ function resend_otp($page) {
     });
 }
 
-window.erpnext_signup = {
-    subdomain_placeholder: 'mycompany',
-    distribution: 'erpnext'
-}
+
 
 function toggle_button(event) {
     let button = $(".get-started-button");

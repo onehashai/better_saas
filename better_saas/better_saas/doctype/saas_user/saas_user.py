@@ -6,14 +6,18 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from bench_manager.bench_manager.doctype.site.site import create_site
+from frappe.sessions import get_geo_ip_country
+from frappe.utils import today, nowtime, add_days
+from frappe.utils.data import getdate
 from frappe.utils import today, nowtime, add_days, get_formatted_email
 from frappe.utils.file_manager import get_file_path
-import pathlib
+from frappe import _, throw
 from frappe.utils.background_jobs import enqueue
 import requests
 import math, random, re, time
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.core.doctype.user.user import test_password_strength
+from werkzeug.exceptions import ExpectationFailed
 
 class SaasUser(Document):
 	pass
@@ -32,7 +36,7 @@ def setup(account_request):
 		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
 		
 		# check if stock site available
-		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation desc', ignore_permissions=True)
+		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation asc', ignore_permissions=True)
 		stock_site_doc = None
 		if stock_list:
 			stock_site = stock_list[0].get("name")
@@ -66,13 +70,7 @@ def setup(account_request):
 		commands.append("bench setup nginx --yes")
 		commands.append("bench setup reload-nginx")
 		commands.append("bench --site admin_onehash execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(saas_user=saas_user.name)+'"')
-		
-		limit_users = int(saas_settings.default_limit_for_users) 
-		limit_emails = int(saas_settings.default_limit_for_emails)
-		limit_space = int(saas_settings.default_limit_for_space)
-		limit_email_group = int(saas_settings.default_limit_for_email_group)
-		limit_expiry = add_days(today(), int(saas_settings.default_expiry))
-
+		limit_users,limit_emails, limit_space, limit_email_group,limit_expiry,discounted_users,customer = get_site_limits(saas_user.promocode,saas_settings)
 		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
 			site_name = site_name,
 			limit_users = limit_users,
@@ -87,15 +85,18 @@ def setup(account_request):
 			doctype="Bench Settings",
 			key=command_key
 		)
-
+		
 		saas_site = frappe.new_doc("Saas Site")
 		saas_site.site_name = site_name
 		saas_site.site_status = "Active"
+		saas_site.discounted_users = discounted_users
 		saas_site.limit_for_users = limit_users
 		saas_site.limit_for_emails = limit_emails
 		saas_site.limit_for_space = limit_space
 		saas_site.limit_for_email_group = limit_email_group
+		saas_site.customer = customer
 		saas_site.expiry = limit_expiry
+		saas_site.base_plan = saas_settings.base_plan_india if saas_user.country=="India" else saas_settings.base_plan_international
 		if frappe.db.exists({'doctype': 'User','name': saas_user.email}):
 			saas_user.user = saas_user.email
 		saas_site.insert(ignore_permissions=True)
@@ -104,12 +105,40 @@ def setup(account_request):
 		saas_user.key = command_key
 		saas_user.save()
 
+		# Redeem Promocode
+		if saas_user.promocode:
+			promocode = frappe.get_doc("Coupon Code",{"coupon_code":saas_user.promocode}, ignore_permissions=True)
+			promocode.status="Redeemed"
+			promocode.linked_saas_site = saas_site.name
+			promocode.used = int(promocode.used)+1
+			promocode.save(ignore_permissions=True)
+
+		# link site with Lead
+		doc = frappe.get_doc("Lead",{"email_id":saas_user.email})
+		doc.linked_saas_site = saas_site.name
+		doc.save(ignore_permissions=True)
+
 		if stock_site_doc:
 			stock_site_doc.assigned_to = saas_user.name
 			stock_site_doc.renamed = site_name
 			stock_site_doc.save(ignore_permissions=True)
 	except:
 		frappe.log_error(frappe.get_traceback())
+
+def get_site_limits(promocode,saas_settings):	
+	coupon_code = frappe.get_doc("Coupon Code",{"coupon_code":promocode}) if promocode else None
+	discounted_users = coupon_code.discounted_users if coupon_code and coupon_code.discounted_users else 0
+	limit_emails = int(coupon_code.limit_for_emails) if coupon_code and int(coupon_code.limit_for_emails) else int(saas_settings.default_limit_for_emails)
+	limit_space = int(coupon_code.limit_for_space) if coupon_code and int(coupon_code.limit_for_space) else int(saas_settings.default_limit_for_space)
+	limit_email_group = int(coupon_code.limit_for_email_group) if coupon_code and int(coupon_code.limit_for_email_group) else int(saas_settings.default_limit_for_email_group)
+	limit_users =  0 if coupon_code and coupon_code.unlimited_users else (int(coupon_code.limit_for_users) if coupon_code and coupon_code.limit_for_users else int(saas_settings.default_limit_for_users) ) ## Applying Users count from promocode
+	customer = coupon_code.customer if coupon_code else ""
+	if coupon_code and coupon_code.no_expiry == 1:
+		limit_expiry = saas_settings.ltd_expiry
+	else:
+		limit_expiry = add_days(today(), int(coupon_code.expiry)) if coupon_code and coupon_code.expiry > 0 else add_days(today(), int(saas_settings.default_expiry))
+
+	return limit_users,limit_emails, limit_space, limit_email_group,limit_expiry,discounted_users,customer
 
 @frappe.whitelist(allow_guest=True)
 def get_status(account_request):
@@ -274,12 +303,9 @@ def delete_site(site_name):
 		if template:
 			email_template = frappe.db.get_value("Email Template", {"name": template})
 			if email_template:
-				data = dict(
-							email=user.email,
-							user_name=user.full_name
-						)
+				data = user.as_dict()
 				email_template = frappe.get_doc("Email Template", email_template)
-				message = frappe.render_template(email_template.response_html, data)
+				message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, data)
 				frappe.sendmail(user.email, subject=email_template.subject, message=message)
 
 		commands = ["bench drop-site {site_name} --root-password {mysql_password}".format(site_name=site_name, mysql_password=mysql_password)]
@@ -342,7 +368,8 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 		limit_email_group = limit_for_email_group,
 		limit_expiry = expiry
 	)]
-	
+	mute_email_flag = 1 if (not (expiry and expiry>=today())) else 0
+	commands.append("bench --site {site_name} set-config mute_emails {mute_emails}".format(site_name=site_name,mute_emails=mute_email_flag)) 
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
 		doctype="Bench Settings",
@@ -368,10 +395,12 @@ def check_password_strength(passphrase,first_name,last_name,email):
 	return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
-def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
+def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_name=None,country=None,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	user_data = (first_name, "", last_name, email, "")
+	geo_country = get_geo_ip_country(frappe.local.request_ip) if frappe.local.request_ip else None
+	country = country if country else (geo_country['names']['en'] if geo_country else None)
 	password_test_result = test_password_strength(passphrase,user_data=user_data)
 	if(not password_test_result['feedback']['password_policy_validation_passed']):
 		frappe.throw(password_test_result['feedback']['warning']+"\r\n"+password_test_result['feedback']['suggestions'][0],"ValidationError")
@@ -385,7 +414,10 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 		saas_user.last_name = last_name
 		saas_user.subdomain = subdomain.lower()
 		saas_user.password = passphrase
+		saas_user.confirm_password = passphrase
 		saas_user.promocode = promocode
+		saas_user.company_name = company_name
+		saas_user.country = country
 		saas_user.otp = generate_otp()
 		saas_user.flags.ignore_permissions=True
 		result = saas_user.save()
@@ -406,6 +438,8 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 				"utm_medium":utm_medium,
 				"utm_content":utm_content,
 				"utm_term":utm_term,
+				"country":country,
+				"company_name":company_name,
 				"utm_campaign":utm_campaign
 			})
 		#sass_user.flags.ignore_permissions = True
@@ -426,9 +460,14 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,promocod
 
 def create_lead(saas_user):
 	frappe.set_user("Administrator")
-	existing_lead = frappe.get_list("Lead",filters={"email_id":saas_user.email})
-	if(len(existing_lead)>0):
-		lead_doc = frappe.get_doc("Lead",existing_lead[0].name)
+	existing_lead = frappe.get_value("Lead",filters={"email_id":saas_user.email})
+	if(saas_user.promocode):
+		customer = frappe.get_value("Coupon Code",{"coupon_code":saas_user.promocode},"customer")
+		if customer and not existing_lead:
+			existing_lead = frappe.get_value("Customer",customer,"lead_name")
+			
+	if(existing_lead):
+		lead_doc = frappe.get_doc("Lead",existing_lead)
 		if(lead_doc.contact_date and lead_doc.contact_date.strftime("%Y-%m-%d %H:%M:%S.%f") < frappe.utils.now()):
 			lead_doc.contact_date = ""
 
@@ -458,7 +497,7 @@ def create_lead(saas_user):
 			})
 		lead.lead_name = saas_user.first_name+" "+saas_user.last_name
 		lead.source = "Walk In"
-		return lead.insert(ignore_permissions=True)	
+		return lead.save(ignore_permissions=True)	
 
 
 @frappe.whitelist(allow_guest=True)
@@ -483,13 +522,6 @@ def verify_account_request(id,otp):
 		return 'Invalid OTP'
 	else:
 		return 'OTP Verified'
-
-@frappe.whitelist(allow_guest=True)
-def validate_promocode(promocode):
-	pass
-
-
-
 
 @frappe.whitelist(allow_guest=True)
 def update_account_request(id,country=None,industry_type=None,currency=None,language=None,timezone=None,domain=None):
@@ -561,3 +593,209 @@ def send_otp_email(site_user):
 			template=template, args=args, header=[subject, "green"],
 			delayed=False)
 	return True
+
+@frappe.whitelist(allow_guest=True)
+def apply_promocode(promocode, site_name):
+	# return True
+	saas_user = frappe.get_list("Saas User",filters={"linked_saas_site":site_name},ignore_permissions=True)
+	if(len(saas_user)==0):
+		frappe.throw("Invalid Request")
+		return
+	saas_site = frappe.get_doc("Saas Site",site_name,ignore_permissions=True)
+	is_new_user = False if saas_site.customer else True
+	validResult = is_valid_promocode(promocode,is_new_user)
+	if(not validResult[0]):
+		frappe.throw(_("Please enter a valid code."))
+	
+	coupon_name = frappe.get_list("Coupon Code", filters={'coupon_code': promocode}, ignore_permissions=True)[0].name
+	coupon_code  = frappe.get_doc("Coupon Code", coupon_name, ignore_permissions=True)
+	
+	saas_user_doc = frappe.get_doc("Saas User",saas_user[0].name)
+	# Calcualte new limits
+	base_plan = coupon_code.base_plan if saas_user_doc.country=="India" else coupon_code.base_plan_international
+
+	if(coupon_code.is_stackable):
+		limit_users = saas_site.limit_for_users + coupon_code.limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users
+		discounted_users = saas_site.discounted_users + coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
+		if discounted_users > coupon_code.max_discounted_user_limit:
+			throw(_("Maximum allowed stack user limit is "+str(coupon_code.max_discounted_user_limit)))
+			return False
+
+		limit_emails = saas_site.limit_for_emails + int(coupon_code.limit_for_emails) if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
+		limit_space = saas_site.limit_for_space + int(coupon_code.limit_for_space) if int(coupon_code.limit_for_space) else saas_site.limit_for_space
+		limit_email_group = saas_site.limit_for_email_group + int(coupon_code.limit_for_email_group) if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
+	else:
+		discounted_users = coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
+		limit_emails = int(coupon_code.limit_for_emails) if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
+		limit_space = int(coupon_code.limit_for_space) if int(coupon_code.limit_for_space) else saas_site.limit_for_space
+		limit_email_group = int(coupon_code.limit_for_email_group) if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
+		limit_users =  0 if coupon_code.unlimited_users else (int(coupon_code.limit_for_users) if coupon_code.limit_for_users else saas_site.limit_for_users) ## Applying Users count from promocode
+		
+	## Check for Life-Time Deals (i.e. for 100 years)
+	if coupon_code.no_expiry == 1:
+		saas_settings = frappe.get_doc("Saas Settings")
+		limit_expiry = saas_settings.ltd_expiry
+	else:
+		limit_expiry = add_days(today(), int(coupon_code.expiry)) if coupon_code.expiry > 0 else saas_site.expiry
+	
+	saas_site.customer = coupon_code.customer if coupon_code.customer and not saas_site.customer else saas_site.customer
+
+	saas_site.limit_for_users = limit_users
+	saas_site.limit_for_emails = limit_emails
+	saas_site.limit_for_space = limit_space
+	saas_site.limit_for_email_group = limit_email_group
+	saas_site.expiry = limit_expiry
+	saas_site.discounted_users = discounted_users
+	saas_site.base_plan = base_plan if base_plan else saas_site.base_plan
+	saas_site.save(ignore_permissions=True)
+	
+	apply_new_limits(limit_users,limit_emails,limit_space,limit_email_group,limit_expiry,site_name)
+
+	## Promocode Consumed
+	try:
+		coupon_code.used = int(coupon_code.used)+1
+		coupon_code.linked_saas_site = saas_site.name
+		coupon_code.status = "Redeemed"
+		coupon_code.save(ignore_permissions=True)
+	except Exception as e:
+		frappe.log_error(frappe.get_traceback(),"Coupon Code exception")
+
+	
+	if saas_site.subscription:
+		# Cancel Subscription coupon is lifetime and for unlimited users
+		if((coupon_code.unlimited_users or (int(saas_site.limit_for_users)-int(saas_site.discounted_users)<=0)) and coupon_code.no_expiry):
+			from better_saas.www.upgrade import cancel
+			cancel(saas_site.name)
+
+	update_promocode_on_reference_docs(saas_user[0].name,promocode)
+	success_message = coupon_code.success_message if coupon_code.success_message else _("Promocode has been Applied Successfully.")
+	frappe.db.commit()
+	return {"success":True,"message":success_message}
+
+def update_promocode_on_reference_docs(saas_user,promocode):
+	saas_user = frappe.get_doc("Saas User",saas_user)
+	saas_user.promocode = promocode if not saas_user.promocode else saas_user.promocode+","+promocode
+	saas_user.save(ignore_permissions=True)
+
+	lead = frappe.get_list("Lead",filters={"email_id":saas_user.email},ignore_permissions=True)
+	if(len(lead)>0):
+		lead_doc = frappe.get_doc("Lead",lead[0].name,ignore_permissions=True)
+		lead_doc.promocode = saas_user.promocode
+		lead_doc.save(ignore_permissions=True)
+
+
+def validate_coupon_code(coupon_name):
+	is_valid=True
+	error_message=""
+	coupon = frappe.get_doc("Coupon Code", coupon_name)
+	if coupon.valid_from and coupon.valid_from > getdate(today()):
+		is_valid = False
+		error_message = _("Sorry, this coupon code's validity has not started")
+	elif coupon.valid_upto and coupon.valid_upto < getdate(today()):
+		is_valid = False
+		error_message = _("Sorry, this coupon code's validity has expired")
+	elif coupon.used >= coupon.maximum_use:
+		is_valid = False
+		error_message = _("Sorry, this coupon code is no longer valid")
+	return is_valid,error_message
+
+@frappe.whitelist(allow_guest=True)
+def is_valid_promocode(promocode,is_new_user=False):
+	filters = {'is_signup_scheme':1, 'coupon_code': promocode }
+	if not is_new_user:
+		filters["for_new_users"]=0
+
+	code = frappe.get_list("Coupon Code", filters=filters, ignore_permissions=True)
+	if(len(code)==0):
+		return False,_("Please Enter a valid code")
+    # # Check for Promocode Validation
+	return validate_coupon_code(code[0].name)
+
+
+@frappe.whitelist(allow_guest=True)
+def refund_promocode(promocode):
+	# return True
+	coupon_name = frappe.get_list("Coupon Code", filters={'coupon_code': promocode}, ignore_permissions=True)[0].name
+	coupon_code  = frappe.get_doc("Coupon Code", coupon_name, ignore_permissions=True)
+	
+	if(not coupon_code):
+		return {"success":False,"message":_("Invalid Promocode")}
+	if(coupon_code.status=="Available" or coupon_code.status=="Sold"):
+		coupon_code.status="Refunded"
+		coupon_code.save(ignore_permissions=True)
+		success_message =  _("Promocode has been Refunded Successfully.")
+		frappe.db.commit()
+		return {"success":True,"message":success_message}
+	elif coupon_code.status=="Refunded":
+		success_message =  _("Promocode Already Refunded.")
+		return {"success":False,"message":success_message}
+	else:
+		site_name = coupon_code.linked_saas_site
+		saas_user = frappe.get_list("Saas User",filters={"linked_saas_site":site_name},ignore_permissions=True)
+		if(len(saas_user)==0):
+			frappe.throw("Invalid Request")
+			return
+		saas_site = frappe.get_doc("Saas Site",site_name,ignore_permissions=True)
+		is_new_user = False if saas_site.customer else True
+		
+		saas_user_doc = frappe.get_doc("Saas User",saas_user[0].name)
+		saas_settings = frappe.get_doc("Saas Settings")
+		# Calcualte new limits
+		base_plan = coupon_code.base_plan if saas_user_doc.country=="India" else coupon_code.base_plan_international
+
+		if(coupon_code.is_stackable):
+			limit_users = saas_site.limit_for_users - coupon_code.limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users
+			discounted_users = saas_site.discounted_users - coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
+			
+			limit_emails = saas_site.limit_for_emails - int(coupon_code.limit_for_emails) if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
+			limit_space = saas_site.limit_for_space - int(coupon_code.limit_for_space) if int(coupon_code.limit_for_space) else saas_site.limit_for_space
+			limit_email_group = saas_site.limit_for_email_group - int(coupon_code.limit_for_email_group) if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
+		else:
+			discounted_users = 0 if coupon_code.discounted_users else saas_site.discounted_users
+			limit_emails = saas_settings.default_limit_for_emails if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
+			limit_space = saas_settings.default_limit_for_space if int(coupon_code.limit_for_space) else saas_site.limit_for_space
+			limit_email_group = saas_settings.default_limit_for_email_group if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
+			limit_users =  saas_settings.default_limit_for_users if coupon_code.unlimited_users else saas_settings.default_limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users ## Applying Users count from promocode
+			
+		## Check for Life-Time Deals (i.e. for 100 years)
+		if coupon_code.no_expiry == 1:
+			limit_expiry = saas_settings.ltd_expiry
+			limit_expiry = today()
+		else:
+			limit_expiry = add_days(saas_site.expiry, -1*int(coupon_code.expiry)) if coupon_code.expiry > 0 else saas_site.expiry
+		
+		saas_site.limit_for_users = limit_users
+		saas_site.limit_for_emails = limit_emails
+		saas_site.limit_for_space = limit_space
+		saas_site.limit_for_email_group = limit_email_group
+		saas_site.expiry = limit_expiry
+		saas_site.discounted_users = discounted_users
+		saas_site.base_plan = base_plan if base_plan else saas_site.base_plan
+		saas_site.save(ignore_permissions=True)
+		
+		apply_new_limits(limit_users,limit_emails,limit_space,limit_email_group,limit_expiry,site_name)
+
+		## Promocode Consumed
+		try:
+			#coupon_code.used = int(coupon_code.used)+1
+			coupon_code.linked_saas_site = saas_site.name
+			coupon_code.status = "Refunded"
+			coupon_code.save(ignore_permissions=True)
+		except Exception as e:
+			frappe.log_error(frappe.get_traceback(),"Coupon Code exception")
+
+		#update_promocode_on_reference_docs(saas_user[0].name,promocode)
+		success_message =  _("Promocode has been Refunded Successfully.")
+		frappe.db.commit()
+		return {"success":True,"message":success_message}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_promocode_benefits(site_name):
+	saas_user = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
+	if(saas_user.promocode):
+		promocode = saas_user.promocode.split(",")
+		coupon_codes = frappe.get_list("Coupon Code",filters=[["coupon_code","in",promocode],["status","!=","Refunded"]], fields=["name","coupon_code","status","success_message","no_expiry"], ignore_permissions=True)	
+	else:
+		coupon_codes = []
+	return coupon_codes
