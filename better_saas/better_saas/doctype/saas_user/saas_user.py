@@ -795,7 +795,7 @@ def get_promocode_benefits(site_name):
 	saas_user = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
 	if(saas_user.promocode):
 		promocode = saas_user.promocode.split(",")
-		coupon_codes = frappe.get_list("Coupon Code",filters=[["coupon_code","in",promocode],["status","!=","Refunded"]], fields=["name","coupon_code","status","success_message"], ignore_permissions=True)
+		coupon_codes = frappe.get_list("Coupon Code",filters=[["coupon_code","in",promocode],["status","!=","Refunded"]], fields=["name","coupon_code","status","success_message","no_expiry"], ignore_permissions=True)	
 	else:
 		coupon_codes = []
 	return coupon_codes
