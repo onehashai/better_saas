@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "creation": "2021-08-04 17:29:38.727605",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "saas_addon",
+  "credits",
+  "allocate_after_days",
+  "email_notification_template"
+ ],
+ "fields": [
+  {
+   "fieldname": "saas_addon",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "SaaS AddOn",
+   "options": "Saas AddOn",
+   "reqd": 1
+  },
+  {
+   "fieldname": "credits",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Credits",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "allocate_after_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Allocate After Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "email_notification_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Email Notification Template",
+   "options": "Email Template"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2021-09-10 12:24:03.139955",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Saas AddOn Default Limit",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
