@@ -158,6 +158,7 @@ def get_cart_value(site_details, cart):
 
     cart_details["total"] = cart_amount
     cart_details["total_tax"] = tax_amount
+    cart_details["grand_total"] = cart_amount+tax_amount
     cart_details["subscribed_users"] = site_data["site"].limit_for_users
     cart_details["discounted_users"] = site_data["site"].discounted_users
     cart_details["total_to_display"] = frappe.format_value(cart_amount, {"fieldtype": "Currency", "currency": plan.currency})
@@ -343,13 +344,13 @@ def pay(site_name, email, onehash_partner, cart):
     if 'Stripe' in controller.name:
         try:
             plan_id = cart["plan"].payment_plan_id if cart["plan"] else None
-
+            currency = cart["plan"].currency
             if not plan_id:
                 frappe.throw(_("Please setup Plan ID"))
 
             if not subscription:
                 payment_details = {
-                    "amount": cart["cart_details"]["total"],
+                    "amount": cart["cart_details"]["grand_total"],
                     "title": "OneHash",
                     "description": "Subscription Fee",
                     "reference_doctype": "Saas Site",
@@ -359,7 +360,7 @@ def pay(site_name, email, onehash_partner, cart):
                     "order_id": "",
                     "plan_id": plan_id,
                     "quantity": cart["cart_details"]["subscribed_users"] - cart["cart_details"]["discounted_users"],
-                    "currency": "USD",
+                    "currency": currency,
                     "redirect_to": frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/")
                 }
 
@@ -434,7 +435,7 @@ def pay(site_name, email, onehash_partner, cart):
 
                 subscription = controller.setup_subscription(settings, **args)
                 payment_details = {
-                    "amount": cart["cart_details"]["total"],
+                    "amount": cart["cart_details"]["grand_total"],
                     "title": "OneHash",
                     "description": "Subscription Fee",
                     "reference_doctype": "Saas Site",
