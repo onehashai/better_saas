@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from codecs import ignore_errors
+from os import error
 from re import sub
 from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
 from erpnext.controllers.accounts_controller import get_tax_rate
@@ -349,27 +350,36 @@ def pay(site_name, email, onehash_partner, cart):
                 frappe.throw(_("Please setup Plan ID"))
 
             if not subscription:
-                payment_details = {
-                    "amount": cart["cart_details"]["grand_total"],
-                    "title": "OneHash",
-                    "description": "Subscription Fee",
-                    "reference_doctype": "Saas Site",
-                    "reference_docname": site_name,
-                    "payer_email": cart["site_data"]["billing_email"],
-                    "payer_name": cart["site_data"]["billing_company_name"],
-                    "order_id": "",
-                    "plan_id": plan_id,
-                    "quantity": cart["cart_details"]["subscribed_users"] - cart["cart_details"]["discounted_users"],
-                    "currency": currency,
-                    "redirect_to": frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/")
-                }
-
+                line_items = []
                 for cart_item in cart["cart_details"]["cart"]:
                     if cart_item["upgrade_type"] == "Users":
-                        payment_details["quantity"] = cart_item["value"]
-
+                        line_items.append(
+                            {
+                                'price':plan_id,
+                                'quantity': cart_item["value"]
+                            }
+                        )
+                data = {
+                    "metadata":{"site_name":site_name},
+                    "customer":{
+                        "name":cart["site_data"]["billing_company_name"],
+                        "email":cart["site_data"]["billing_email"],
+                        "metadata":{"site_name":site_name}
+                    },
+                    "customer_email":cart["site_data"]["billing_email"],
+                    "success_url": frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/"),
+                    "cancel_url": frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/"),
+                    "mode":"subscription",
+                    "gateway_controller":frappe.db.get_value("Payment Gateway",gateway_controller, "gateway_controller"),
+                    "line_items":line_items,
+                    "payment_intent_data":{
+                        "setup_future_usage":"off_session",
+                        "metadata":{"site_name":site_name}
+                    }
+                }
+                session = create_checkout_session_stripe(data)
                 # Redirect the user to this url
-                return {"redirect_to": controller.get_payment_url(**payment_details)}
+                return {"redirect_to": session.url}
             else:
                 # Stripe Subscription Update
                 subscription = frappe.get_doc(
@@ -401,8 +411,9 @@ def pay(site_name, email, onehash_partner, cart):
                 # Redirect the user to this url
                 redirect_url = "https://{0}/app/usage-info".format(site_name)
                 return get_redirect_message(_('Subscription Updated'),_('Your Subscription has been successfully updated.'),primary_label="Continue",primary_action=redirect_url)
-        except:
+        except Exception as e:
             frappe.log_error(frappe.get_traceback())
+            frappe.throw(e)
             return
 
     # For Razorpay
@@ -473,6 +484,25 @@ def get_redirect_message(title=_("Subscription Updated"),message=_("Your Subscri
 	})
 </script>'''
     return {"redirect_to": frappe.redirect_to_message(_(title), _(message+redirect_html),context={"primary_action":primary_action,"primary_label":primary_label,"title":title})}
+
+
+def create_checkout_session_stripe(data):
+    import stripe
+    stripe_controller = frappe.get_doc("Stripe Settings",data.get("gateway_controller"))
+    stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
+    checkout_session = stripe.checkout.Session.create(
+      success_url="{}".format(data.get("success_url") or "https://staging.onehash.ai/signup")+"?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url=data.get("cancel_url"),
+      payment_method_types=["card"],
+      billing_address_collection='required' if data.get("address_at_checkout") else 'auto',
+      line_items=data.get("line_items") or [],
+      mode=data.get("mode") or "payment",
+      metadata = data.get("metadata"),
+      subscription_data = {"metadata":data.get("metadata")},
+      customer_email = data.get("customer_email")
+    )
+    return checkout_session
+
 
 
 @frappe.whitelist(allow_guest=True)
