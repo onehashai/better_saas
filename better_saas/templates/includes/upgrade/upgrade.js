@@ -160,6 +160,9 @@ frappe.ready(function () {
 			let site_details = r.message.site;
 			base_plan = r.message.plan;
 			subscription = site_details.subscription;
+			if(subscription){
+				checkout()
+			}
 			addons = r.message.addons;
 			cart["plan"] = base_plan.name;
 			let formatted_expiry = r.message.formatted_expiry;
@@ -194,7 +197,7 @@ frappe.ready(function () {
 			}
 
 			if (subscription) {
-				$("#cancel-button").show();
+				//$("#cancel-button").show();
 				$("#payment-button").text("Update Subscription");
 			}
 			else {
@@ -265,6 +268,9 @@ frappe.ready(function () {
 		});
 	}
 	function checkout() {
+		if(subscription){
+			frappe.msgprint("Redirecting to Payment Gatway.");
+		}
 		frappe.call('better_saas.www.upgrade.pay', {
 			cart: cart,
 			site_name: site_name,
@@ -276,6 +282,7 @@ frappe.ready(function () {
 			}
 		});
 	}
+
 	$("#change-billing-address-link").off("click").on("click", function () {
 		console.log("here");
 		let country_list = [];

@@ -385,32 +385,35 @@ def pay(site_name, email, onehash_partner, cart):
                 subscription = frappe.get_doc(
                     'Subscription', subscription, ignore_permissions=True)
                 subscription_id = subscription.subscription_id
-                for plan in subscription.plans:
-                    if plan.plan == site.base_plan:
-                        subscription_item_id = plan.subscription_item_id
+                gateway_controller = frappe.db.get_value("Payment Gateway",gateway_controller, "gateway_controller")
+                redirect_url = frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/")
+                customer_session_url = create_customer_portal_session(subscription_id,gateway_controller,redirect_url)
+                # for plan in subscription.plans:
+                #     if plan.plan == site.base_plan:
+                #         subscription_item_id = plan.subscription_item_id
 
-                subscription_details = frappe._dict({
-                    "site_name": site_name,
-                    "reference_doctype": "Saas Site",
-                    "reference_docname": site_name,
-                    "subscription_id": subscription_id,
-                    "subscription_item_id": subscription_item_id,
-                    "plan_id": plan_id,
-                    "quantity": cart["cart_details"]["subscribed_users"] - cart["cart_details"]["discounted_users"],
-                })
+                # subscription_details = frappe._dict({
+                #     "site_name": site_name,
+                #     "reference_doctype": "Saas Site",
+                #     "reference_docname": site_name,
+                #     "subscription_id": subscription_id,
+                #     "subscription_item_id": subscription_item_id,
+                #     "plan_id": plan_id,
+                #     "quantity": cart["cart_details"]["subscribed_users"] - cart["cart_details"]["discounted_users"],
+                # })
 
-                for cart_item in cart["cart_details"]["cart"]:
-                    if cart_item["upgrade_type"] == "Users":
-                        subscription_details["quantity"] = cart_item["value"]
+                # for cart_item in cart["cart_details"]["cart"]:
+                #     if cart_item["upgrade_type"] == "Users":
+                #         subscription_details["quantity"] = cart_item["value"]
 
-                gateway_controller = get_gateway_controller(
-                    subscription_details["reference_doctype"], subscription_details["reference_docname"])
-                stripe_update_subscription(
-                    gateway_controller, subscription_details)
+                # gateway_controller = get_gateway_controller(
+                #     subscription_details["reference_doctype"], subscription_details["reference_docname"])
+                # stripe_update_subscription(
+                #     gateway_controller, subscription_details)
 
                 # Redirect the user to this url
-                redirect_url = "https://{0}/app/usage-info".format(site_name)
-                return get_redirect_message(_('Subscription Updated'),_('Your Subscription has been successfully updated.'),primary_label="Continue",primary_action=redirect_url)
+                # redirect_url = "https://{0}/app/usage-info".format(site_name)
+                return {"redirect_to":customer_session_url}
         except Exception as e:
             frappe.log_error(frappe.get_traceback())
             frappe.throw(e)
@@ -485,6 +488,17 @@ def get_redirect_message(title=_("Subscription Updated"),message=_("Your Subscri
 </script>'''
     return {"redirect_to": frappe.redirect_to_message(_(title), _(message+redirect_html),context={"primary_action":primary_action,"primary_label":primary_label,"title":title})}
 
+def create_customer_portal_session(subscription_id,gateway_controller,redirect_url):
+    import stripe
+    stripe_controller = frappe.get_doc("Stripe Settings",gateway_controller)
+    stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
+    subscription  = stripe.Subscription.retrieve(subscription_id)
+
+    session = stripe.billing_portal.Session.create(
+        customer=subscription.customer,
+        return_url=redirect_url or 'https://onehash.ai'
+    )
+    return session.url
 
 def create_checkout_session_stripe(data):
     import stripe
