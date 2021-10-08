@@ -36,7 +36,10 @@
   "base_plan",
   "column_break_23",
   "customer",
-  "subscription"
+  "subscription",
+  "custom_domain",
+  "domain_status",
+  "command_key"
  ],
  "fields": [
   {
@@ -197,11 +200,35 @@
    "fieldname": "discounted_users",
    "fieldtype": "Int",
    "label": "Discounted Users"
+  },
+  {
+   "fieldname": "custom_domain",
+   "fieldtype": "Data",
+   "label": "Custom Domain",
+   "read_only": 1
+  },
+  {
+   "fieldname": "domain_status",
+   "fieldtype": "Select",
+   "label": "Domain Status",
+   "options": "\nUnverified\nVerified\nIn Process"
+  },
+  {
+   "fieldname": "command_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Command key",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2021-08-04 11:03:37.043816",
+ "links": [
+  {
+   "link_doctype": "Saas User",
+   "link_fieldname": "linked_saas_site"
+  }
+ ],
+ "modified": "2021-10-07 18:39:27.175694",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",
