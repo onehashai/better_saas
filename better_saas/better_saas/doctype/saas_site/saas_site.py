@@ -180,3 +180,76 @@ def get_all_database_config():
         print("-- Error: Could not connect with site "+current_site_name)
         print(e)
         pass
+
+@frappe.whitelist(allow_guest=True)
+def add_custom_domain(site_name,custom_domain,user):
+    if(not site_name):
+        frappe.throw(_("Site Name is Required"))
+    if(not custom_domain):
+        frappe.throw(_("Site Name is Required"))
+    
+    commands = ["bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name)]
+    command_key = today() + " " + nowtime()
+    frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key,
+            now=True
+		)
+    
+    saas_site = frappe.get_doc("Saas Site",site_name)
+    saas_site.custom_domain = custom_domain
+    saas_site.command_key = command_key
+    saas_site.domain_status = 'Unverified'
+    saas_site.save(ignore_permissions=True)
+    return True
+
+@frappe.whitelist(allow_guest=True)
+def remove_custom_domain(site_name,custom_domain,user):
+    if(not site_name):
+        frappe.throw(_("Site Name is Required"))
+    if(not custom_domain):
+        frappe.throw(_("Domain Name is Required"))
+    
+    commands = ["bench setup remove-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain,site_name=site_name)]
+    commands.append("bench setup nginx --yes")
+    commands.append("bench setup reload-nginx")
+    command_key = today() + " " + nowtime()
+    frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key,
+            is_async=False
+		)
+    saas_site = frappe.get_doc("Saas Site",site_name)
+    saas_site.custom_domain = ""
+    saas_site.domain_status = ""
+    saas_site.save(ignore_permissions=True)
+    return True
+
+@frappe.whitelist(allow_guest=True)
+def verify_domain(site_name,custom_domain,user):
+    if(not site_name):
+        frappe.throw(_("Site Name is Required"))
+    if(not custom_domain):
+        frappe.throw(_("Site Name is Required"))
+    import socket
+    custom_domain_ip = socket.gethostbyname(custom_domain)
+    onehash_site_ip = socket.gethostbyname(site_name)
+    if(onehash_site_ip!=custom_domain_ip):
+        return False
+    
+    commands = []
+    commands.append("sudo -H bench setup lets-encrypt {site_name} -n --custom-domain {custom_domain}".format(site_name=site_name, custom_domain=custom_domain))
+    command_key = today() + " " + nowtime()
+    frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key,now=True,
+            job_name=site_name+custom_domain
+		)
+    saas_site = frappe.get_doc("Saas Site",site_name)
+    saas_site.custom_domain = custom_domain
+    saas_site.domain_status = "Verified"
+    saas_site.save(ignore_permissions=True)
+    return True
