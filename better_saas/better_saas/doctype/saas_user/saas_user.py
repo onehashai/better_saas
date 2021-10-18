@@ -80,12 +80,7 @@ def setup(account_request):
 			limit_expiry = limit_expiry
 		))
 		command_key = today() + " " + nowtime()
-		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
-			commands=commands,
-			doctype="Bench Settings",
-			key=command_key,
-			now=True
-		)
+		
 		
 		saas_site = frappe.new_doc("Saas Site")
 		saas_site.site_name = site_name
@@ -106,6 +101,12 @@ def setup(account_request):
 		saas_user.key = command_key
 		saas_user.save()
 
+		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key,
+			now=True
+		)
 		# Redeem Promocode
 		if saas_user.promocode:
 			promocode = frappe.get_doc("Coupon Code",{"coupon_code":saas_user.promocode}, ignore_permissions=True)
