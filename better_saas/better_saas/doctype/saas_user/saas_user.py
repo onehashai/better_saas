@@ -392,16 +392,17 @@ def get_users_list(site_name):
 @frappe.whitelist(allow_guest=True)
 def check_password_strength(passphrase,first_name,last_name,email):
 	user_data = (first_name, "", last_name, email, "")
+	if("'" in passphrase or '"' in passphrase):
+		return {"feedback":{"password_policy_validation_passed":False,"suggestions":["Password should not contain ' or \""]}}
 	return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_name=None,country=None,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
-	user_data = (first_name, "", last_name, email, "")
 	geo_country = get_geo_ip_country(frappe.local.request_ip) if frappe.local.request_ip else None
 	country = country if country else (geo_country['names']['en'] if geo_country else None)
-	password_test_result = test_password_strength(passphrase,user_data=user_data)
+	password_test_result = check_password_strength(passphrase,first_name,last_name,email)
 	if(not password_test_result['feedback']['password_policy_validation_passed']):
 		frappe.throw(password_test_result['feedback']['warning']+"\r\n"+password_test_result['feedback']['suggestions'][0],"ValidationError")
 	
