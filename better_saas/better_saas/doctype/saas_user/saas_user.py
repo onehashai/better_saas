@@ -83,7 +83,8 @@ def setup(account_request):
 		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 			commands=commands,
 			doctype="Bench Settings",
-			key=command_key
+			key=command_key,
+			now=True
 		)
 		
 		saas_site = frappe.new_doc("Saas Site")
