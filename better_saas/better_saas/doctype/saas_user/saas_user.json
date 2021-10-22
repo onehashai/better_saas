@@ -150,6 +150,7 @@
    "fieldname": "mobile",
    "fieldtype": "Data",
    "label": "Mobile",
+   "options": "Phone",
    "reqd": 1
   },
   {
@@ -249,7 +250,7 @@
    "link_fieldname": "linked_saas_site"
   }
  ],
- "modified": "2021-10-14 14:48:26.120503",
+ "modified": "2021-10-22 18:26:39.181046",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas User",
