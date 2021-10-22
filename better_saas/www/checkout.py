@@ -19,10 +19,10 @@ expected_keys = ('amount', 'title', 'description',
 def get_context(context):
     context.no_cache = 1
     try:
-        args = frappe.request.args
+        args = frappe.request.args or {}
         site_name = args["site_name"] if "site_name" in args else None
         context.site_name = site_name
-        context.ltd_link = buy_ltd(site_name=site_name)
+        context.ltd_link = buy_ltd(site_name=site_name,args=args)
     except Exception as e:
         frappe.redirect_to_message(_('Some information is missing'),
         		_(frappe.get_traceback()))
@@ -43,18 +43,23 @@ def get_header_image(doc, gateway_controller):
 	return header_image
 
 @frappe.whitelist(allow_guest=True)
-def buy_ltd(referrer="https://onehash.ai/pricing",site_name=None):
+def buy_ltd(referrer="https://onehash.ai/pricing",site_name=None,args={}):
     ltd_checkout = frappe.get_doc("LTD Checkout Settings")
     ltd_checkout.cancel_url = ltd_checkout.cancel_url if ltd_checkout.cancel_url else referrer
     ltd_checkout.gateway_controller = frappe.db.get_value("Payment Gateway", ltd_checkout.payment_gateway, "gateway_controller")
     ltd_checkout.quantity = 1
-    ltd_checkout.success_url = "https://{}/checkout_success".format(frappe.conf.get("master_site_domain"))
     ltd_checkout.metadata = {}
     ltd_checkout.site_name = None
     if(site_name):
         ltd_checkout.site_name = site_name
         ltd_checkout.metadata["site_name"]=site_name
-
+    utm_string=""
+    if(args):
+        for key,value in args.items():
+            ltd_checkout.metadata[key] = value
+            utm_string = utm_string+"&"+key+"="+value
+    
+    ltd_checkout.success_url = "https://{}/checkout_success".format(frappe.conf.get("master_site_domain"))+"?session_id={CHECKOUT_SESSION_ID}"+utm_string
     checkout_session = create_checkout_session_stripe(ltd_checkout)
     return {"redirect_to":checkout_session.url}
 
@@ -63,7 +68,7 @@ def create_checkout_session_stripe(data):
     stripe_controller = frappe.get_doc("Stripe Settings",data.gateway_controller)
     stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
     checkout_session = stripe.checkout.Session.create(
-      success_url="{}".format(data.success_url or "https://staging.onehash.ai/signup")+"?session_id={CHECKOUT_SESSION_ID}",
+      success_url="{}".format(data.success_url or "https://staging.onehash.ai/signup?"),
       cancel_url=data.cancel_url,
       payment_method_types=["card"],
       billing_address_collection='required' if data.address_at_checkout else 'auto',
