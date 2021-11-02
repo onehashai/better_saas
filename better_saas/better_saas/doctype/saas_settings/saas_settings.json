@@ -14,6 +14,9 @@
   "reserved_subdomain",
   "base_plan_india",
   "base_plan_international",
+  "default_payment_gateway_india",
+  "default_payment_gateway_international",
+  "default_tax_rate_id_stripe",
   "column_break_4",
   "default_limit_for_users",
   "default_limit_for_emails",
@@ -139,11 +142,28 @@
    "fieldtype": "Table",
    "label": "AddOn Limits",
    "options": "Saas AddOn Default Limit"
+  },
+  {
+   "fieldname": "default_payment_gateway_india",
+   "fieldtype": "Link",
+   "label": "Default Payment Gateway India",
+   "options": "Payment Gateway"
+  },
+  {
+   "fieldname": "default_payment_gateway_international",
+   "fieldtype": "Link",
+   "label": "Default Payment Gateway International",
+   "options": "Payment Gateway"
+  },
+  {
+   "fieldname": "default_tax_rate_id_stripe",
+   "fieldtype": "Data",
+   "label": "Default Tax Rate ID Stripe"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2021-08-04 17:29:55.786600",
+ "modified": "2021-10-28 16:39:09.232170",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Settings",
