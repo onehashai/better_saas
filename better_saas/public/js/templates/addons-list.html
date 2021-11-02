@@ -11,10 +11,10 @@
                 </h5>
                 <p class="card-text">{{addon.item_description}}<br>
                 {% if currency=="INR" %}
-                    {{ format_currency(addon.inr_price, "INR", 2) }}/&nbsp;{{addon.uom}}(s)
+                    {{ format_currency(addon.inr_price, "INR", 2) }}/&nbsp;{{addon.uom}}
                     
                 {% else %}
-                    {{ format_currency(addon.usd_price, "USD", 2) }}/&nbsp;{{addon.uom}}(s)
+                    {{ format_currency(addon.usd_price, "USD", 2) }}/&nbsp;{{addon.uom}}
                     
                 {% endif %}
                 </p>
