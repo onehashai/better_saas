@@ -1,0 +1,49 @@
+<div class="row border-bottom">
+    <div class="col-md-5 col-xs-4 py-2 px-3 text-left" >
+        <strong>{{ frappe._("Item")}}</strong>
+    </div>
+    <div class="col-md-2 col-xs-2 py-2 px-3 text-right" >
+        {{ frappe._("Quantity")}}
+    </div>
+    <div class="col-md-2 col-xs-3 py-2 px-3 text-right" >
+       {{ frappe._("Rate") }}
+    </div>
+    <div class="col-md-3 col-xs-3 py-2 px-3 text-right" >
+       {{ frappe._("Total") }}
+    </div>
+</div>
+{% for item in cart %}
+{% if item.qty>0 %}
+<div class="row border-bottom">
+            <div class="col-md-5 col-xs-4 py-2 px-3 text-left" >
+                <strong>{{item.name}}</strong>
+            </div>
+            <div class="col-md-2 col-xs-2 py-2 px-3 text-right" >
+                {{item.qty}}
+            </div>
+            <div class="col-md-2 col-xs-3 py-2 px-3 text-right" >
+                {{item.rate}}
+            </div>
+            <div class="col-md-3 col-xs-3 py-2 px-3 text-right" >
+                {{item.formatted_total}}
+            </div>
+        </div>
+        {% endif %}
+{% endfor %}
+
+{% if total %}
+        <div class="row">
+            <div class="col-md-5 col-xs-4 py-2 px-3 text-left" >
+                
+            </div>
+            <div class="col-md-2 col-xs-2 py-2 px-3 text-right" >
+                
+            </div>
+            <div class="col-md-2 col-xs-3 py-2 px-3 text-right" >
+                <strong>{{ frappe._("Total") }}</strong>
+            </div>
+            <div class="col-md-3 col-xs-3 py-2 px-3 text-right" >
+                {{total}}<span style="font-size: xx-small;">+ Taxes</span>
+            </div>
+        </div>
+{% endif %}

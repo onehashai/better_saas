@@ -1,12 +1,15 @@
 var site_name;
 var email;
+var currency;
+var has_billing_address=false;
 var onehash_partner;
 var base_plan;
-var cart = {};
+let total=0;
+var final_cart=[];
 var addons = {};
-
+frappe.flags.cart={};
 frappe.ready(function () {
-    let $page = $('#page-upgrade');
+    let $page = $('#page-add-on');
     let minimum = {
         'P-Pro-2020': 1,
         'P-Standard-2020': 1
@@ -16,6 +19,11 @@ frappe.ready(function () {
         site_name = frappe.utils.get_url_arg('site');
         site_name = frappe.utils.escape_html(site_name);
         email = frappe.utils.get_url_arg('email');
+        currency = frappe.utils.get_url_arg('currency');
+        // if(typeof frappe.boot.sysdefaults ==='undefined'){
+        //     frappe.boot.sysdefaults={};
+        // }
+        // frappe.boot.sysdefaults["currency"]=currency;
         email = frappe.utils.escape_html(email);
         onehash_partner = frappe.utils.get_url_arg('onehash_partner');
         onehash_partner = frappe.utils.escape_html('onehash_partner');
@@ -33,23 +41,23 @@ frappe.ready(function () {
     }
 
     function get_billing_address() {
-        frappe.call('better_saas.www.upgrade.get_billing_address', {
-            site_name: site_name
-        }).then(r => {
-            if (r.message.status_code !== '404') {
-                frappe.call('frappe.contacts.doctype.address.address.get_address_display', {
-                    address_dict: r.message
-                }).then(r => {
-                    $('#address-wrapper').html(r.message);
-                    $('#change-billing-address-text').text("Change Billing Address");
-                });
-            }
-            else {
-                $('#address-wrapper').text("Billing Address not available");
-                $('#change-billing-address-text').text("Add Billing Address");
-            }
-        });
-    }
+		frappe.call('better_saas.www.upgrade.get_billing_address', {
+			site_name: site_name
+		}).then(r => {
+			if (r.message.status_code !== '404') {
+				$('#address-wrapper').html(r.message.address_display);
+				$('#change-billing-address-text').text("Update Address");
+				has_billing_address=true;
+			}
+			else {
+				$('#address-wrapper').text("Billing Address not available");
+				$('#change-billing-address-text').text("Add Address");
+				has_billing_address=false;
+				enable_pay_button();
+			}
+		});
+        enable_pay_button();
+	}
 
     function get_cart_value() {
         frappe.call('better_saas.www.add-on.get_cart_details', {
@@ -107,300 +115,419 @@ frappe.ready(function () {
         });
     }
 
-    function get_site_details() {
-        frappe.call('better_saas.www.add-on.get_site_details', {
-            site_name: site_name,
-            email: email,
-            onehash_partner: onehash_partner
-        }).then(r => {
-            let site_details = r.message.site;
-            base_plan = r.message.plan;
-            addons = r.message.addons;
-            cart["plan"] = base_plan.name;
-            let formatted_expiry = r.message.formatted_expiry;
-            //let expiry_date = site_details.expiry;
-            let currency = base_plan.currency && base_plan.currency == "INR" ? "&#8377;" : "$";
-            let subscribed_users = site_details.limit_for_users;
-            let subscription_value = r.message.subscription_value;
-            let site_usages = `<div><span>
-            Your subscription expires on <b> ${formatted_expiry} </b></span>
-        <!---->
-        </div>
-        <div>
-        Number of users in current subscription: <b> ${subscribed_users} </b></div>`
-            $("#site_info").html(site_usages);
-            $(".subscribed-users").text(subscribed_users + " Users");
-            //$("#discount").text(+" Off");
-            $(".subscribed-storage").text(site_details.limit_for_space + "GB Of Storage");
-            $(".subscribed-emails").text(site_details.limit_for_emails + " emails per month");
-            $(".currency-symbol").html(currency);
-            $(".subscription-amount").html(subscription_value);
-
-
-            /* Subscripiton Plans */
-
-            /*let { site, plans, addons, address, legacy_plan, pending_downgrades, formatted_expiry, site_users, plan_wise_discount } = r.message;
-            this.site = site;
-            this.plans = plans;
-            this.address = address;
-            this.legacy_plan = legacy_plan;
-            this.pending_downgrades = pending_downgrades;
-            this.formatted_expiry = formatted_expiry;
-            this.addons = addons;
-            this.cart.plan = this.site.base_plan;
-            this.cart.billing_cycle = this.site.subscription_type;
-            this.site_users = site_users;
-            this.plan_wise_discount = plan_wise_discount;*/
-            let addon_html = "";
-            for (addon in addons) {
-                addon = addons[addon];
-                let addon_type = addon.addon_type;
-                let addon_value = addon.addon_value;
-                if (addon_type !== "Users") {
-
-                    block_html = `
-                                    <div class="card h-100" style="border: 1px solid black; 
-                                                                    min-width: 23%;
-                                                                    width: fit-content;
-                                                                    padding-bottom: 10px;
-                                                                    padding-right: 10px;
-                                                                    margin: 10px;">
-                                        <div class="card-body">
-                                            <h6 class="card-title text-uppercase ">${addon.addon_type}</h6>
-                                            <div><span>${currency}</span> <span>${addon.per_credit_price}</span> <span>/ ${addon.addon_value}
-                                                    ${(addon.addon_type == "Space") ? `GB` : ''} ${addon.addon_type}</span></div>
-                                            <div class="mt-3">
-                                                <div><a href="" class="text-dark add-on" data-addon-name="${addon_type}" data-addon-value="${addon_value}" data-addon-type="Add">+ Add
-                                                        ${addon_type}</a></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                    addon_html += block_html;
-                }
-            }
-            $("#saas-addons").html(addon_html);
-            $(".add-on").off("click").on("click", function (e) {
-                e.preventDefault();
-                let addon_type = $(this).data('addon-type');
-                let addon_name = $(this).data('addon-name');
-                let min_purchase_value = $(this).data('addon-value');
-                let multiplier = (addon_type == "Remove") ? -1 : 1;
-                frappe.prompt({
-                    label: "Enter No of " + addon_name,
-                    fieldtype: "Int",
-                    fieldname: addon_name
-                },
-                    (values) => {
-                        for (value in values) {
-                            cart[addon_name] = values[value] * min_purchase_value * multiplier;
-                        }
-                        get_cart_value();
-                    },
-                    addon_type + " " + addon_name,
-                    addon_type + " " + addon_name
-                );
-            });
-            get_billing_address();
-            get_cart_value();
+    function render_cart(){
+        total = 0.00;
+        final_cart=[];
+        $.each(frappe.flags.cart,(key,value)=>{
+            total = parseFloat(total)+parseFloat(value.total);
+            value.formatted_total = format_currency(value.total,currency,2);
+            value.currency = currency;
+            final_cart.push(value);
         });
+        $page.find("#checkout-wrapper").html(frappe.render_template("addon-cart",{cart:final_cart,total:format_currency(total,currency,2)}));
+        enable_pay_button();
+    }
+
+    function get_site_details() {
+        
     }
     $("#change-billing-address-link").off("click").on("click", function () {
-        frappe.call("better_saas.www.upgrade.get_billing_address", {
-            site_name: site_name
-        }).then(r => {
-            if (r.message.status_code !== '404') {
-                frappe.call('better_saas.www.upgrade.get_address', {
-                    address: r.message,
-                }).then(r => {
-                    let address = r.message;
+		console.log("here");
+		let country_list = [];
+		let indian_states = [
+			'Andaman and Nicobar Islands',
+			'Andhra Pradesh',
+			'Arunachal Pradesh',
+			'Assam',
+			'Bihar',
+			'Chandigarh',
+			'Chhattisgarh',
+			'Dadra and Nagar Haveli and Daman and Diu',
+			'Delhi',
+			'Goa',
+			'Gujarat',
+			'Haryana',
+			'Himachal Pradesh',
+			'Jammu and Kashmir',
+			'Jharkhand',
+			'Karnataka',
+			'Kerala',
+			'Ladakh',
+			'Lakshadweep Islands',
+			'Madhya Pradesh',
+			'Maharashtra',
+			'Manipur',
+			'Meghalaya',
+			'Mizoram',
+			'Nagaland',
+			'Odisha',
+			'Other Territory',
+			'Pondicherry',
+			'Punjab',
+			'Rajasthan',
+			'Sikkim',
+			'Tamil Nadu',
+			'Telangana',
+			'Tripura',
+			'Uttar Pradesh',
+			'Uttarakhand',
+			'West Bengal'
+		];
+		frappe.call("better_saas.www.upgrade.get_country_list").then(r=>{
+			if(r.message){
+				country_list = r.message
+			}
+			frappe.call("better_saas.www.upgrade.get_billing_address", {
+				site_name: site_name
+			}).then(r => {
+				if (r.message.status_code !== '404') {
+					frappe.call('better_saas.www.upgrade.get_address', {
+						address: r.message.address_object,
+					}).then(r => {
+						let address = r.message;
+						console.log(indian_states,country_list)
+						frappe.prompt([
+							{
+								label: 'Address Line 1',
+								fieldname: 'address_line1',
+								fieldtype: 'Data',
+								reqd: 1,
+								default: address.address_line1,
+							},
+							{
+								label: 'Address Line 2',
+								fieldname: 'address_line2',
+								fieldtype: 'Data',
+								default: address.address_line2,
+							},
+							{
+								label: 'City/Town',
+								fieldname: 'city',
+								fieldtype: 'Data',
+								reqd: 1,
+								default: address.city,
+							},
+							{
+								label: 'Postal Code',
+								fieldname: 'pincode',
+								fieldtype: 'Data',
+								reqd: 1,
+								default: address.pincode,
+							},
+							{
+								label: 'State/Province',
+								fieldname: 'state',
+								fieldtype: 'Data',
+								default: address.state,
+								depends_on: "eval: this.country != 'India'",
+							},
+							{
+								label: 'Country',
+								fieldname: 'country',
+								fieldtype: 'Autocomplete',
+								options:country_list,
+								default: address.country,
+							},
+							{
+								label: 'Are you registered for GSTIN?',
+								fieldname: 'is_registered',
+								fieldtype: 'Check',
+							},
+							{
+								label: 'GST State',
+								fieldname: 'gst_state',
+								fieldtype: 'Autocomplete',
+								mandatory_depends_on: "eval:doc.is_registered == 1",
+								depends_on: "eval: doc.is_registered == 1",
+								default: address.gst_state,
+								options: indian_states,
+							},
+							{
+								label: "GSTIN",
+								fieldname: "gstin",
+								fieldtype: 'Data',
+								mandatory_depends_on: "eval:doc.is_registered == 1",
+								depends_on: "eval:doc.is_registered == 1",
+							},
+							{
+								label: 'Address Name',
+								fieldname: 'address_name',
+								fieldtype: 'Data',
+								read_only: 1,
+								hidden: 1,
+								default: address.name,
+							},
+							{
+								label: 'Address Type',
+								fieldname: 'address_type',
+								fieldtype: 'Data',
+								read_only: 1,
+								hidden: 1,
+								default: "Billing",
+							},
+							{
+								label: 'Email (optional)',
+								fieldname: 'email_id',
+								fieldtype: 'Data',
+								default: address.email_id,
+							},
+							{
+								label: 'Phone (optional)',
+								fieldname: 'phone',
+								fieldtype: 'Data',
+								default: address.phone,
+							},
+						], (values) => {
+							frappe.call('better_saas.www.upgrade.update_billing_address', {
+								values: values,
+							}).then(r => {
+								get_billing_address();
+								console.log("Billig Address Update Response",r);
+								if (r.message == 'success') {
+									frappe.show_alert({
+										message: __('Billing Address Updated'),
+										indicator: 'green'
+									}, 5);
+								}
+								else {
+									frappe.show_alert({
+										message: __('Billing Address Not Updated'),
+										indicator: 'red'
+									}, 5);
+								}
+							});
+						},
+						"Update Address",
+						"Update Address"
+						);
+					});
+				}
+				else {
                     frappe.prompt([
-                        {
-                            label: 'Address Title',
-                            fieldname: 'address_title',
-                            fieldtype: 'Data',
-                            read_only: 1,
-                            default: address.address_title,
-                        },
-                        {
-                            label: 'Address Type',
-                            fieldname: 'address_type',
-                            fieldtype: 'Data',
-                            read_only: 1,
-                            default: "Billing",
-                        },
-                        {
-                            label: 'Email',
-                            fieldname: 'email_id',
-                            fieldtype: 'Data',
-                            default: address.email_id,
-                        },
-                        {
-                            label: 'Phone',
-                            fieldname: 'phone',
-                            fieldtype: 'Data',
-                            default: address.phone,
-                        },
-                        {
-                            label: 'Address Line 1',
-                            fieldname: 'address_line1',
-                            fieldtype: 'Data',
-                            reqd: 1,
-                            default: address.address_line1,
-                        },
-                        {
-                            label: 'Address Line 2',
-                            fieldname: 'address_line2',
-                            fieldtype: 'Data',
-                            default: address.address_line2,
-                        },
-                        {
-                            label: 'City/Town',
-                            fieldname: 'city',
-                            fieldtype: 'Data',
-                            reqd: 1,
-                            default: address.city,
-                        },
-                        {
-                            label: 'State/Province',
-                            fieldname: 'state',
-                            fieldtype: 'Data',
-                            default: address.state,
-                            depends_on: "eval: this.country != 'India'",
-                        },
-                        {
-                            label: 'Country',
-                            fieldname: 'country',
-                            fieldtype: 'Data',
-                            default: address.country,
-                        },
-                    ], (values) => {
-                        frappe.call('better_saas.www.upgrade.update_billing_address', {
-                            values: values,
-                        }).then(r => {
-                            get_billing_address();
-                            if (r.message == 'success') {
-                                frappe.show_alert({
-                                    message: __('Billing Address Updated'),
-                                    indicator: 'green'
-                                }, 5);
-                            }
-                            else {
-                                frappe.show_alert({
-                                    message: __('Billing Address Not Updated'),
-                                    indicator: 'red'
-                                }, 5);
-                            }
-                        });
-                    });
-                });
-            }
-            else {
-                frappe.prompt([
-                    {
-                        label: 'Address Title',
-                        fieldname: 'address_title',
-                        fieldtype: 'Data',
-                        reqd: 1,
-                    },
-                    {
-                        label: 'Address Type',
-                        fieldname: 'address_type',
-                        fieldtype: 'Data',
-                        read_only: 1,
-                        default: "Billing",
-                    },
-                    {
-                        label: 'Email',
-                        fieldname: 'email_id',
-                        fieldtype: 'Data',
-                    },
-                    {
-                        label: 'Phone',
-                        fieldname: 'phone',
-                        fieldtype: 'Data',
-                    },
-                    {
-                        label: 'Address Line 1',
-                        fieldname: 'address_line1',
-                        fieldtype: 'Data',
-                        reqd: 1,
-                    },
-                    {
-                        label: 'Address Line 2',
-                        fieldname: 'address_line2',
-                        fieldtype: 'Data',
-                    },
-                    {
-                        label: 'City/Town',
-                        fieldname: 'city',
-                        fieldtype: 'Data',
-                        reqd: 1,
-                    },
-                    {
-                        label: 'State/Province',
-                        fieldname: 'state',
-                        fieldtype: 'Data',
-                        depends_on: "eval: this.country != 'India'",
-                    },
-                    {
-                        label: 'Country',
-                        fieldname: 'country',
-                        fieldtype: 'Data',
-                    },
-                ], (values) => {
-                    frappe.call('better_saas.www.upgrade.create_billing_address', {
-                        site_name: site_name,
-                        values: values,
-                    }).then(r => {
-                        get_billing_address();
-                        if (r.message == 'success') {
-                            frappe.show_alert({
-                                message: __('Billing Address Updated'),
-                                indicator: 'green'
-                            }, 5);
-                        }
-                        else {
-                            frappe.show_alert({
-                                message: __('Billing Address Not Updated'),
-                                indicator: 'red'
-                            }, 5);
-                        }
-                    });
-                });
-            }
-        });
-    });
-    $("#cancel-button").off("click").on("click", function () {
-        frappe.warn('Are you sure you want to proceed?',
-            'Your account will get deactivated, if you cancel this subscription.',
-            () => {
-                // action to perform if Continue is selected
-                frappe.call('better_saas.www.upgrade.cancel', {
-                    site_name: site_name
-                }).then(r => {
-                    if (r.message && r.message.redirect_to) {
-                        window.location.href = r.message.redirect_to;
-                    }
-                });
-            },
-            'Continue',
-            false // Sets dialog as minimizable
-        )
-    });
+						{
+							label: 'Address Line 1',
+							fieldname: 'address_line1',
+							fieldtype: 'Data',
+							reqd: 1,
+						},
+						{
+							label: 'Address Line 2',
+							fieldname: 'address_line2',
+							fieldtype: 'Data',
+						},
+						{
+							label: 'City/Town',
+							fieldname: 'city',
+							fieldtype: 'Data',
+							reqd: 1,
+						},
+						{
+							label: 'Postal Code',
+							fieldname: 'pincode',
+							fieldtype: 'Data',
+							reqd: 1,
+						},
+						{
+							label: 'State/Province',
+							fieldname: 'state',
+							fieldtype: 'Data',
+							depends_on: "eval: this.country != 'India'",
+						},
+						{
+							label: 'Country',
+							fieldname: 'country',
+							fieldtype: 'Autocomplete',
+							options:country_list
+						},
+						{
+							label: 'Are you registered for GSTIN?',
+							fieldname: 'is_registered',
+							fieldtype: 'Check',
+						},
+						{
+							label: 'GST State',
+							fieldname: 'gst_state',
+							fieldtype: 'Autocomplete',
+							mandatory_depends_on: "eval:doc.is_registered == 1",
+							depends_on: "eval: doc.is_registered == 1",
+							options: indian_states
+						},
+						{
+							label: "GSTIN",
+							fieldname: "gstin",
+							fieldtype: 'Data',
+							mandatory_depends_on: "eval:doc.is_registered == 1",
+							depends_on: "eval:doc.is_registered == 1",
+						},
+						{
+							label: 'Email (Optional)',
+							fieldname: 'email_id',
+							fieldtype: 'Data',
+						},
+						{
+							label: 'Phone',
+							fieldname: 'phone',
+							fieldtype: 'Data',
+						},
+					], (values) => {
+						frappe.call('better_saas.www.upgrade.create_billing_address', {
+							site_name: site_name,
+							values: values,
+						}).then(r => {
+							get_billing_address();
+							if (r.message == 'success') {
+								frappe.show_alert({
+									message: __('Billing Address Updated'),
+									indicator: 'green'
+								}, 5);
+								has_billing_address=true;
+								enable_pay_button();
+							}
+							else {
+								frappe.show_alert({
+									message: __('Billing Address Not Updated'),
+									indicator: 'red'
+								}, 5);
+							}
+						});
+					},
+					"Add Address",
+					"Add Address");
+				}
+			});
+		});
+		
+	});
     $("#payment-button").off("click").on("click", function () {
-        frappe.call('better_saas.www.ltd_checkout.pay', {
-            // cart: cart,
-            // site_name: site_name,
-            // email: email,
-            // onehash_partner: onehash_partner
-        }).then(r => {
+        frappe.call({
+            "method":"better_saas.www.add-on.buy", 
+            args:{
+                "cart":final_cart,
+                "currency":currency,
+                "site_name": site_name,
+                "cancel_url":window.location.href
+        },
+        callback:(r)=>{
             if (r.message && r.message.redirect_to) {
                 window.location.href = r.message.redirect_to;
             }
+            }
         });
     });
+
+    function enable_pay_button(){
+        $("#payment-button").prop("disabled",(!has_billing_address && total==0));
+		if(!has_billing_address){
+			$("#pay-message").text("Please, Add Address to proceed.");
+			$("#pay-message").removeClass("hide");
+		}else{
+			$("#pay-message").addClass("hide");
+		}
+		
+	}
+
+    function get_addons(){
+        let formdata = "site_name="+frappe.boot.sitename;
+        console.log(currency);
+        frappe.call({
+            method:"better_saas.www.add-on.get_addon",
+            args:{
+                "currency":currency
+            },
+            callback:function(r){
+                if(!r.exc){
+                    $page.find("#saas-addons").html(frappe.render_template("addons-list",{addon_list:r.message,addon_limits:{}, currency:currency}));
+                }
+                $('.btn-number').click(function(e){
+                    e.preventDefault();
+                    let fieldName = $(this).attr('data-field');
+                    let type      = $(this).attr('data-type');
+                    let input = $("input[name='"+fieldName+"']");
+                    let currentVal = parseInt(input.val());
+                    let step = parseInt(input.attr('step'));
+                    if (!isNaN(currentVal)) {
+                        if(type == 'minus') {
+                            if(currentVal > input.attr('min')) {
+                                input.val(parseInt(currentVal) - step).change();
+                            } 
+                            if(parseInt(input.val()) == input.attr('min')) {
+                                $(this).attr('disabled', true);
+                            }
+                            if(parseInt(input.val())==0){
+                                $(this).hide();
+                                $(input).hide();
+                                $(input).next().children("button").text("+ Add");
+                            }
+                        } else if(type == 'plus') {
+                            $(input).prev().children("button").show();
+                            $(input).show();
+                            $(this).text("+");
+                            input.val(parseInt(currentVal) + step).change();
+                            
+                        }
+                        frappe.flags.cart[fieldName]={"qty":parseInt(input.val()),"name":fieldName,"rate":parseFloat(input.data("rate")).toFixed(2),"total":(parseFloat(input.data("rate")).toFixed(2)*parseInt(input.val())).toFixed(2)}
+                        render_cart();
+                    } else {
+                        input.val(0);
+                    }
+                });
+                $('.input-number').focusin(function(){
+                   $(this).data('oldValue', $(this).val());
+                });
+                $('.input-number').change(function() {
+                    
+                    minValue =  parseInt($(this).attr('min'));
+                    maxValue =  parseInt($(this).attr('max'));
+                    valueCurrent = parseInt($(this).val());
+                    let input = $(this);
+                    let name = $(this).attr('name');
+                    if(valueCurrent >= minValue) {
+                        $(".btn-number[data-type='minus'][data-field='"+name+"']").removeAttr('disabled');
+						frappe.flags.cart[name]={"qty":parseInt(input.val()),"name":name,"rate":parseFloat(input.data("rate")).toFixed(2),"total":(parseFloat(input.data("rate")).toFixed(2)*parseInt(input.val())).toFixed(2)}
+                        render_cart();
+                    } else {
+                        alert('Sorry, the minimum value was reached');
+                        $(this).val($(this).data('oldValue'));
+                    }
+                });
+                
+                $(".input-number").keydown(function (e) {
+                    // Allow: backspace, delete, tab, escape, enter and .
+                    if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
+                         // Allow: Ctrl+A
+                        (e.keyCode == 65 && e.ctrlKey === true) || 
+                         // Allow: home, end, left, right
+                        (e.keyCode >= 35 && e.keyCode <= 39)) {
+                             // let it happen, don't do anything
+                             return;
+                    }
+                    // Ensure that it is a number and stop the keypress
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault();
+                    }
+                });     
+            }
+        });
+			// $.ajax({
+			// 	url:"https://"+master_domain+"/api/method/better_saas.www.add-on.get_addon",
+			// 	data: {"currency":frappe.boot.sysdefaults.currency},
+			// 	crossDomain:true,
+			// 	success: function(r) {
+			// 		if(r.message){
+			// 			$(page.main).find("#saas-addon").html(frappe.render_template("addons",{addon_list:r.message,addon_limits:addon_limits,master_domain:master_domain,site_name:site_name,currency:frappe.boot.sysdefaults.currency}));
+			// 		}
+			// 	},
+			// 	error:function(xhr,status,error){
+			// 		$(page.main).find("#saas-addon").html("Sorry, Could not load Addon.");
+			// 	}
+			// });
+
+    }
     set_query_params();
-    verify_system_user();
-    get_site_details();
+    get_addons();
+    get_billing_address();
+    // load_cart();
+    
+    // verify_system_user();
+    // get_site_details();
 });

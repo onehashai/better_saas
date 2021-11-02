@@ -270,7 +270,6 @@ def get_billing_address(site_name):
             primary_address = frappe.get_list("Address", filters={"link_name": lead[0].name, 'is_primary_address': 1}, ignore_permissions=True)[0].name
         return {"address_object":primary_address,"address_display":get_address_display(primary_address)}
     except Exception as e:
-        frappe.log_error(e,"Billing Address")
         return {'message': "Unable to fetch billing address", 'status_code': '404' }
 
 
@@ -708,7 +707,7 @@ def stripe_mid_upgrade_handler(*args, **kwargs):
             payment_currency = (invoice.get("currency")).upper()
             subscription_id = invoice.get("subscription")
             payment_id = invoice.get("charge")
-            if(billing_reason =="subscription_update"):
+            if(billing_reason =="subscription_update" or billing_reason=="subscription_cycle"):
                 subscription = get_subscription_by_pg_subscription_id(subscription_id)
                 if not subscription:
                     frappe.throw(_("Subscription is mandatory was generating invoice."))

@@ -8,6 +8,7 @@ from frappe import _, throw
 from frappe.utils import cint, fmt_money
 from frappe.utils import today
 import json
+import stripe
 from frappe.integrations.doctype.stripe_settings.stripe_settings import get_gateway_controller
 from erpnext.erpnext_integrations.stripe_integration import create_stripe_subscription, create_stripe_charge
 from frappe.utils.data import flt
@@ -20,79 +21,145 @@ expected_keys = ('amount', 'title', 'description',
 
 def get_context(context):
     context.no_cache = 1
-    import stripe
     try:
-        ltd_checkout = frappe.get_doc("LTD Checkout Settings")
-        ltd_checkout.gateway_controller = frappe.db.get_value("Payment Gateway", ltd_checkout.payment_gateway, "gateway_controller")
-        stripe_controller = frappe.get_doc("Stripe Settings",ltd_checkout.gateway_controller)
-        stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
-        session = stripe.checkout.Session.retrieve(frappe.request.args.get('session_id'))
-        customer = stripe.Customer.retrieve(session.customer)
-        site_name = session.get("metadata").get("site_name")
-        context.session = session
-        context.customer = customer
-        context.site_name = site_name
-        payment_entry = frappe.get_value("Payment Entry",{"reference_no":session.get("payment_intent"),"docstatus":1},"name")
-        context.payment_entry = payment_entry
-        if(payment_entry):
-            frappe.throw("Invalid Request",ExpectationFailed)
-            return
-        promocode  = retrive_code(ltd_checkout.code_prefix)
-        context.promocode = promocode.coupon_code
-        data={
-            "payment_gateway":ltd_checkout.payment_gateway,
-            "company":ltd_checkout.company,
-            "items":[{
-                "item_code":ltd_checkout.item_code,
-                "qty":1,
-                "rate":ltd_checkout.rate,
-                "cost_center":ltd_checkout.cost_center
-            }],
-            "currency":ltd_checkout.currency,
-            "payment_id":session.get("payment_intent"),
-            "payer_email":customer.get("email"),
-            "payer_name":customer.get("name"),
-            "phone_number":customer.get("phone"),
-            "promocode":promocode.coupon_code,
-            "address":customer.get("address",{}),
-            "source":"Website"
-        }
-        cur_user = frappe.session.user
-        frappe.set_user("Administrator")
-        invoice =create_invoice(data)
-        pe = create_payment_entry(invoice,data)
-        
-        # Link Customer to the Promocode
-        promocode.customer = invoice.customer
-        promocode.save(ignore_permissions = True)
-
-        send_email(ltd_checkout, invoice, pe, promocode,data)
-        frappe.db.commit()
-        if site_name:
-            context.apply_promocode_result = apply_promocode(promocode.coupon_code,site_name)
-            context.primary_action = "https://{}/app/usage-info".format(site_name)
-            context.primary_action_label = "Continue"
+        args  = frappe.request.args
+        is_addon_checkout = args.get("type",None)
+        if is_addon_checkout:
+            addon_checkout_handler(context)
         else:
-            name = data.get("payer_name").split(" ",1)
-            redirect_params = {
-                "master_site_domain":frappe.conf.get("master_site_domain"), 
-                "first_name":name[0],
-                "last_name":name[1] if len(name)>1 else "",
-                "email":data.get("payer_email"),
-                "phone_number":data.get("phone_number"),
-                "promocode":data.get("promocode"),
-                "source": data.get("source"),
-                "campaign":data.get("campaign")
+            ltd_checkout = frappe.get_doc("LTD Checkout Settings")
+            ltd_checkout.gateway_controller = frappe.db.get_value("Payment Gateway", ltd_checkout.payment_gateway, "gateway_controller")
+            stripe_controller = frappe.get_doc("Stripe Settings",ltd_checkout.gateway_controller)
+            stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
+            session = stripe.checkout.Session.retrieve(frappe.request.args.get('session_id'))
+            customer = stripe.Customer.retrieve(session.customer)
+            site_name = session.get("metadata").get("site_name")
+            context.session = session
+            context.customer = customer
+            context.site_name = site_name
+            payment_entry = frappe.get_value("Payment Entry",{"reference_no":session.get("payment_intent"),"docstatus":1},"name")
+            context.payment_entry = payment_entry
+            if(payment_entry):
+                frappe.throw("Invalid Request",ExpectationFailed)
+                return
+            promocode  = retrive_code(ltd_checkout.code_prefix)
+            context.promocode = promocode.coupon_code
+            data={
+                "payment_gateway":ltd_checkout.payment_gateway,
+                "company":ltd_checkout.company,
+                "items":[{
+                    "item_code":ltd_checkout.item_code,
+                    "qty":1,
+                    "rate":ltd_checkout.rate,
+                    "cost_center":ltd_checkout.cost_center
+                }],
+                "currency":ltd_checkout.currency,
+                "payment_id":session.get("payment_intent"),
+                "payer_email":customer.get("email"),
+                "payer_name":customer.get("name"),
+                "phone_number":customer.get("phone"),
+                "promocode":promocode.coupon_code,
+                "address":customer.get("address",{}),
+                "source":"Website"
             }
-            context.primary_action = "https://{master_site_domain}/signup?first_name={first_name}&last_name={last_name}&email={email}&phone_number={phone_number}&promocode={promocode}&utm_source={source}&utm_campaign={campaign}".format(**redirect_params)
-            context.primary_action_label = "Redeem Code"
-        frappe.set_user(cur_user)
+            cur_user = frappe.session.user
+            frappe.set_user("Administrator")
+            invoice =create_invoice(data)
+            pe = create_payment_entry(invoice,data)
+            
+            # Link Customer to the Promocode
+            promocode.customer = invoice.customer
+            promocode.save(ignore_permissions = True)
+
+            send_email(ltd_checkout, invoice, pe, promocode,data)
+            frappe.db.commit()
+            if site_name:
+                context.apply_promocode_result = apply_promocode(promocode.coupon_code,site_name)
+                context.primary_action = "https://{}/app/usage-info".format(site_name)
+                context.primary_action_label = "Continue"
+            else:
+                name = data.get("payer_name").split(" ",1)
+                redirect_params = {
+                    "master_site_domain":frappe.conf.get("master_site_domain"), 
+                    "first_name":name[0],
+                    "last_name":name[1] if len(name)>1 else "",
+                    "email":data.get("payer_email"),
+                    "phone_number":data.get("phone_number"),
+                    "promocode":data.get("promocode"),
+                    "source": data.get("source"),
+                    "campaign":data.get("campaign")
+                }
+                context.primary_action = "https://{master_site_domain}/signup?first_name={first_name}&last_name={last_name}&email={email}&phone_number={phone_number}&promocode={promocode}&utm_source={source}&utm_campaign={campaign}".format(**redirect_params)
+                context.primary_action_label = "Redeem Code"
+            frappe.set_user(cur_user)
 
     except Exception as e:
         frappe.redirect_to_message(_('Error'),
         		_(frappe.get_traceback()),indicator_color='red',http_status_code=417)
         frappe.local.flags.redirect_location = frappe.local.response.location
         raise frappe.Redirect
+
+def addon_checkout_handler(context):
+    saas_settings = frappe.get_doc("Saas Settings")
+    currency = frappe.request.args.get("currency", "USD")
+    data = frappe._dict({})
+    data.payment_gateway = saas_settings.default_payment_gateway_india if currency=="INR" else saas_settings.default_payment_gateway_international
+    data.company = "OneHash Technologies Limited" if currency=="INR" else "OneHash, Inc."
+    data.cost_center = "Main - OTL" if currency=="INR" else "Main - OI"
+    data.gateway_controller = frappe.db.get_value("Payment Gateway", data.payment_gateway, "gateway_controller")
+    stripe_controller = frappe.get_doc("Stripe Settings",data.gateway_controller)
+    stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
+    session = stripe.checkout.Session.retrieve(frappe.request.args.get('session_id'))
+    line_items = stripe.checkout.Session.list_line_items(frappe.request.args.get('session_id'))
+    items=[]
+    for item in line_items.get("data"):
+        items.append({
+            "item_code":item.get("description"),
+            "qty":item.get("quantity"),
+            "rate":item.get("price").get("unit_amount",0)/100,
+            "cost_center":data.cost_center
+        })
+
+    customer = stripe.Customer.retrieve(session.customer)
+    site_name = session.get("metadata").get("site_name")
+    context.session = session
+    context.customer = customer
+    context.site_name = site_name
+    payment_entry = frappe.get_value("Payment Entry",{"reference_no":session.get("payment_intent"),"docstatus":1},"name")
+    context.payment_entry = payment_entry
+    
+    
+    if(payment_entry):
+        frappe.throw("Invalid Request",ExpectationFailed)
+        return
+    payment_data={
+        "payment_gateway":data.payment_gateway,
+        "company":data.company,
+        "items":items,
+        "currency":data.currency,
+        "payment_id":session.get("payment_intent"),
+        "payer_email":customer.get("email"),
+        "payer_name":customer.get("name"),
+        "phone_number":customer.get("phone"),
+        "address":customer.get("address",{}),
+    }
+    cur_user = frappe.session.user
+    frappe.set_user("Administrator")
+    invoice =create_invoice(payment_data)
+    pe = create_payment_entry(invoice,payment_data)
+    update_addon_limits(site_name,items)
+    frappe.db.commit()
+    if site_name:
+        context.primary_action = "https://{}/app/usage-info".format(site_name)
+        context.primary_action_label = "Continue"
+    frappe.set_user(cur_user)
+
+def update_addon_limits(site_name,items):
+    from journeys.addon_limits import topup_credit
+    for item in items:
+        if(item.get("item_code")):
+            topup_credit(item.get("item_code"),item.get("qty",0),site_name)
+    pass
 
 def send_email(ltd_settings,invoice, payment_entry, coupon_code, data):
     if not ltd_settings.email_template:
@@ -109,9 +176,8 @@ def send_email(ltd_settings,invoice, payment_entry, coupon_code, data):
     email_template = frappe.get_doc("Email Template",ltd_settings["email_template"])
     message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, combined_data)
     frappe.sendmail(data["payer_email"], subject=email_template.subject, message=message,attachments=attachments,with_container=True,now=True,print_letterhead=True)
-        
-
-
+    
+    
 def get_api_key(doc, gateway_controller):
 	publishable_key = frappe.db.get_value("Stripe Settings", gateway_controller, "publishable_key")
 	if cint(frappe.form_dict.get("use_sandbox")):
@@ -134,40 +200,6 @@ def get_header_image(doc, gateway_controller):
 	header_image = frappe.db.get_value("Stripe Settings", gateway_controller, "header_img")
 	return header_image
 
-@frappe.whitelist(allow_guest=True)
-def buy_ltd(referrer="https://onehash.ai/pricing"):
-    ltd_checkout = frappe.get_doc("LTD Checkout Settings")
-    ltd_checkout.cancel_url = ltd_checkout.cancel_url if ltd_checkout.cancel_url else referrer
-    ltd_checkout.gateway_controller = frappe.db.get_value("Payment Gateway", ltd_checkout.payment_gateway, "gateway_controller")
-    ltd_checkout.quantity = 1
-    checkout_session = create_checkout_session_stripe(ltd_checkout)
-    return {"redirect_to":checkout_session.url}
-
-def create_checkout_session_stripe(data):
-    import stripe
-    stripe_controller = frappe.get_doc("Stripe Settings",data.gateway_controller)
-    stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
-    checkout_session = stripe.checkout.Session.create(
-      success_url="{}".format(data.success_url or "https://staging.onehash.ai/signup")+"?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url=data.cancel_url,
-      payment_method_types=["card"],
-      billing_address_collection='required' if data.address_at_checkout else 'auto',
-      line_items=[
-        {
-          'price_data': {
-            'currency': data.currency,
-            'product_data': {
-              'name': data.item_name,
-              'description': data.item_description
-            },
-            'unit_amount': cint(flt(data.rate)*100),
-          },
-          'quantity': data.quantity
-        }
-      ],
-      mode="payment"
-    )
-    return checkout_session
 
 
 def create_invoice(data):
@@ -247,7 +279,6 @@ def get_customer(data):
         address["country"] = country
         address["doctype"] = "Customer"
         address["name"] = customer_name
-        frappe.log_error(address,"Address")
         from erpnext.selling.doctype.customer.customer import make_address
         make_address(address)
     else:
@@ -285,6 +316,3 @@ def get_customer(data):
         except:
             frappe.log_error(frappe.get_traceback(), 'Make Customer Error')
     return customer_name
-
-
-    

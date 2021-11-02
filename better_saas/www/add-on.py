@@ -5,7 +5,7 @@ import datetime
 from six import string_types
 from frappe import _
 from frappe.utils import format_date, flt
-from frappe.utils.data import (global_date_format, getdate, nowdate, add_days, add_to_date, add_months, date_diff, flt, get_date_str, get_first_day, get_last_day)
+from frappe.utils.data import (cint, global_date_format, getdate, nowdate, add_days, add_to_date, add_months, date_diff, flt, get_date_str, get_first_day, get_last_day)
 from frappe.sessions import get_geo_ip_country
 from frappe.geo.country_info import get_country_timezone_info
 from frappe.integrations.utils import get_payment_gateway_controller
@@ -31,6 +31,59 @@ def get_country():
         frappe.local.request_ip) if frappe.local.request_ip else None
     return geo_country
 
+@frappe.whitelist(allow_guest=True)
+def get_addon():
+    return frappe.get_all("Saas AddOn", filters={"disabled": 0, "is_a_subscription": 0}, fields=['*'])
+    
+
+@frappe.whitelist(allow_guest=True)
+def buy(site_name=None,cart=[],currency="USD",**kwargs):
+    saas_settings = frappe.get_doc("Saas Settings")
+    tax_rates = [saas_settings.default_tax_rate_id_stripe] if currency=="INR" and saas_settings.default_tax_rate_id_stripe else []
+    payment_gateway = saas_settings.default_payment_gateway_india if currency=="INR" else saas_settings.default_payment_gateway_international
+    data = {}
+    data["cancel_url"] = kwargs["cancel_url"] if "cancel_url" in kwargs else "https://onehash.ai"
+    data["gateway_controller"] = frappe.db.get_value("Payment Gateway", payment_gateway, "gateway_controller")
+    data["line_items"]=[]
+    for item in json.loads(cart):
+        data["line_items"].append({
+          'price_data': {
+            'currency': item["currency"],
+            'product_data': {
+              'name': item["name"],
+              'description': item["name"]
+            },
+            'unit_amount': cint(flt(item["rate"])*100),
+          },
+          'quantity': item["qty"],
+          'tax_rates': tax_rates
+        })
+    data["site_name"] = None
+    data["metadata"]={}
+    if(site_name):
+        data["site_name"] = site_name
+        data["metadata"]["site_name"]=site_name
+    data["address_at_checkout"] = "auto"
+    data["success_url"] = "https://{}/checkout_success".format(frappe.conf.get("master_site_domain"))+"?session_id={CHECKOUT_SESSION_ID}&type=add-on&currency="+currency
+    checkout_session = create_checkout_session_stripe(frappe._dict(data))
+    return {"redirect_to":checkout_session.url}
+
+def create_checkout_session_stripe(data):
+    import stripe
+    stripe_controller = frappe.get_doc("Stripe Settings",data.gateway_controller)
+    stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
+    checkout_session = stripe.checkout.Session.create(
+      success_url=data["success_url"],
+      cancel_url=data["cancel_url"],
+      payment_method_types=["card"],
+      billing_address_collection='required' if data["address_at_checkout"] else 'auto',
+      line_items=data["line_items"],
+      mode="payment",
+      metadata = data["metadata"],
+      payment_intent_data = {"metadata":data["metadata"]}
+      
+    )
+    return checkout_session
 
 @frappe.whitelist(allow_guest=True)
 def get_site_details(site_name, email, onehash_partner):
