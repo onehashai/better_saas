@@ -13,7 +13,7 @@ from six import string_types
 from frappe import _
 from frappe.utils import format_date, flt
 from frappe.utils.data import (ceil, global_date_format, nowdate, getdate, add_days, add_to_date,
-                               add_months, date_diff, flt, get_date_str, get_first_day, get_last_day)
+                               add_months, date_diff, flt, get_date_str, get_first_day, get_last_day, today)
 from frappe.sessions import get_geo_ip_country
 from frappe.geo.country_info import get_country_timezone_info
 from frappe.integrations.utils import get_payment_gateway_controller
@@ -1182,13 +1182,11 @@ def update_stripe_subscription(data):
         
         subscription.cancel_at_period_end = True
         subscription.save(ignore_permissions=True)
-        
-        site.subscription = ''
-        site.save(ignore_permissions=True)
-        
+        site_data = frappe._dict({})
+        site_data["limit_for_users"] = site.limit_for_users
+        site_data["expiry"] = today()
+        update_saas_site(site, site_data, "")
         subscription.cancel_subscription()
-        disable_enable_site(site.name, site.site_status)
-
 
 def get_stripe_subscription_data(data):
     subscription = frappe._dict(data.get("data", {}).get("object", {}))

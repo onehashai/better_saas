@@ -77,7 +77,7 @@ def get_credit_eligible_sites(created_before_days):
     return eligible_sites
 
 def update_user_to_main_app():
-    admin_site_name = "admin_onehash"
+    admin_site_name = frappe.conf.get("master_site_name") or "admin_onehash"
     frappe.destroy()
     frappe.init(site=admin_site_name)
     frappe.connect()
@@ -160,7 +160,7 @@ def set_site_config(site_name,key,value):
 
 def get_all_database_config():
     try:
-        admin_site_name = "admin_onehash"
+        admin_site_name = frappe.conf.get("master_site_name") or "admin_onehash"
         frappe.destroy()
         frappe.init(site=admin_site_name)
         frappe.connect()
