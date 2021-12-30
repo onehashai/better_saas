@@ -59,17 +59,18 @@ def setup(account_request):
 		# # add custom domains
 		if saas_user.domain_type == "Private":
 			custom_domain = saas_user.private_domain
+			commands.append("bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name))
 		elif saas_user.domain_type == "Subdomain":
 			custom_domain = saas_user.subdomain + "." + saas_settings.domain
 			new_subdomain = frappe.new_doc("Saas Domains")
 			new_subdomain.domain = saas_user.subdomain
 			new_subdomain.insert(ignore_permissions=True)	
-		commands.append("bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name))
 
 		# # setup nginx config and reloading the nginx service
+		master_site_name = frappe.conf.get("master_site_name") or "admin_onehash"
 		commands.append("bench setup nginx --yes")
 		commands.append("bench setup reload-nginx")
-		commands.append("bench --site admin_onehash execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(saas_user=saas_user.name)+'"')
+		commands.append("bench --site {master_site_name} execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(master_site_name=master_site_name,saas_user=saas_user.name)+'"')
 		limit_users,limit_emails, limit_space, limit_email_group,limit_expiry,discounted_users,customer = get_site_limits(saas_user.promocode,saas_settings)
 		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
 			site_name = site_name,
@@ -370,7 +371,7 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 		limit_email_group = limit_for_email_group,
 		limit_expiry = expiry
 	)]
-	mute_email_flag = 1 if (not (expiry and expiry>=today())) else 0
+	mute_email_flag = 1 if (not (expiry and str(expiry)>=today())) else 0
 	commands.append("bench --site {site_name} set-config mute_emails {mute_emails}".format(site_name=site_name,mute_emails=mute_email_flag)) 
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
