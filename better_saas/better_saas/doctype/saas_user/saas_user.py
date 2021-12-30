@@ -70,7 +70,7 @@ def setup(account_request):
 		master_site_name = frappe.conf.get("master_site_name") or "admin_onehash"
 		commands.append("bench setup nginx --yes")
 		commands.append("bench setup reload-nginx")
-		commands.append("bench --site {master_site_name} execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(master_site_name=master_site_name,saas_user=saas_user.name)+'"')
+		commands.append("bench --site "+master_site_name+" execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(master_site_name=master_site_name,saas_user=saas_user.name)+'"')
 		limit_users,limit_emails, limit_space, limit_email_group,limit_expiry,discounted_users,customer = get_site_limits(saas_user.promocode,saas_settings)
 		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
 			site_name = site_name,
