@@ -13,7 +13,7 @@ from six import string_types
 from frappe import _
 from frappe.utils import format_date, flt
 from frappe.utils.data import (ceil, global_date_format, nowdate, getdate, add_days, add_to_date,
-                               add_months, date_diff, flt, get_date_str, get_first_day, get_last_day)
+                               add_months, date_diff, flt, get_date_str, get_first_day, get_last_day, today)
 from frappe.sessions import get_geo_ip_country
 from frappe.geo.country_info import get_country_timezone_info
 from frappe.integrations.utils import get_payment_gateway_controller
@@ -270,7 +270,6 @@ def get_billing_address(site_name):
             primary_address = frappe.get_list("Address", filters={"link_name": lead[0].name, 'is_primary_address': 1}, ignore_permissions=True)[0].name
         return {"address_object":primary_address,"address_display":get_address_display(primary_address)}
     except Exception as e:
-        frappe.log_error(e,"Billing Address")
         return {'message': "Unable to fetch billing address", 'status_code': '404' }
 
 
@@ -708,7 +707,7 @@ def stripe_mid_upgrade_handler(*args, **kwargs):
             payment_currency = (invoice.get("currency")).upper()
             subscription_id = invoice.get("subscription")
             payment_id = invoice.get("charge")
-            if(billing_reason =="subscription_update"):
+            if(billing_reason =="subscription_update" or billing_reason=="subscription_cycle"):
                 subscription = get_subscription_by_pg_subscription_id(subscription_id)
                 if not subscription:
                     frappe.throw(_("Subscription is mandatory was generating invoice."))
@@ -1183,13 +1182,11 @@ def update_stripe_subscription(data):
         
         subscription.cancel_at_period_end = True
         subscription.save(ignore_permissions=True)
-        
-        site.subscription = ''
-        site.save(ignore_permissions=True)
-        
+        site_data = frappe._dict({})
+        site_data["limit_for_users"] = site.limit_for_users
+        site_data["expiry"] = today()
+        update_saas_site(site, site_data, "")
         subscription.cancel_subscription()
-        disable_enable_site(site.name, site.site_status)
-
 
 def get_stripe_subscription_data(data):
     subscription = frappe._dict(data.get("data", {}).get("object", {}))

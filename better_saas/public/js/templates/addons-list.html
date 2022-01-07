@@ -1,0 +1,41 @@
+<div class="card-body">
+    <div class="row">
+        {% for addon in addon_list %}
+        <div class="col-sm-4 mb-3">
+            <div class="card mb-3 h-100" >
+                <div class="card-body">
+                <h5 class="card-title">{{ addon.item_name }}
+                {% if addon.name in addon_limits %}
+                    <span class="indicator-pill whitespace-nowrap green pull-right"><span>{{addon_limits[addon.name]["available_credits"]}}&nbsp;Credits Left</span></span>
+                {% endif %}
+                </h5>
+                <p class="card-text">{{addon.item_description}}<br>
+                {% if currency=="INR" %}
+                    {{ format_currency(addon.inr_price, "INR", 2) }}/&nbsp;{{addon.uom}}
+                    
+                {% else %}
+                    {{ format_currency(addon.usd_price, "USD", 2) }}/&nbsp;{{addon.uom}}
+                    
+                {% endif %}
+                </p>
+                <div class="input-group number-widget">
+                    <span class="input-group-prepend">
+                        <button type="button" class="btn btn-outline-primary btn-number btn-xs" style="display: none;" disabled="disabled" data-type="minus" data-field="{{addon.name}}">-</button>
+                    </span>
+                    <input type="text" name="{{addon.name}}" class="form-control input-number text-center" style="display: none;" value="0" min="0" data-currency="{{currency}}"  
+                     {% if currency=="INR" %}
+                        data-rate="{{ addon.inr_price }}"
+                    {% else %}
+                        data-rate="{{ addon.usd_price }}"
+                    {% endif %}
+                 step="{{addon.minimum_quantity}}">
+                    <span class="input-group-append">
+                        <button type="button" class="btn btn-outline-primary btn-number btn-xs" data-type="plus" data-field="{{addon.name}}">+ Add</button>
+                    </span>
+                </div>
+                </div>
+            </div>
+        </div>
+{% endfor %}
+</div>
+</div>

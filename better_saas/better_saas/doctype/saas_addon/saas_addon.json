@@ -18,7 +18,13 @@
   "monthly_amount",
   "addon_type",
   "addon_value",
-  "currency"
+  "currency",
+  "item_code",
+  "item_name",
+  "item_description",
+  "help_link",
+  "usd_price",
+  "inr_price"
  ],
  "fields": [
   {
@@ -90,11 +96,46 @@
    "fieldname": "per_credit_price",
    "fieldtype": "Currency",
    "label": "Per Credit Price"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_description",
+   "fieldtype": "Data",
+   "label": "Item Description"
+  },
+  {
+   "fieldname": "help_link",
+   "fieldtype": "Data",
+   "label": "Help Link"
+  },
+  {
+   "fieldname": "usd_price",
+   "fieldtype": "Currency",
+   "label": "USD Price",
+   "options": "USD"
+  },
+  {
+   "fieldname": "inr_price",
+   "fieldtype": "Currency",
+   "label": "INR Price",
+   "options": "INR"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-08-04 17:24:56.944085",
+ "modified": "2021-10-22 10:34:57.651324",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas AddOn",

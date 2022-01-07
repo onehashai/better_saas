@@ -20,7 +20,7 @@ app_license = "MIT"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/better_saas/css/better_saas.css"
-# web_include_js = "/assets/better_saas/js/better_saas.js"
+web_include_js = "/assets/js/better-saas-web.min.js"
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}

@@ -59,17 +59,18 @@ def setup(account_request):
 		# # add custom domains
 		if saas_user.domain_type == "Private":
 			custom_domain = saas_user.private_domain
+			commands.append("bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name))
 		elif saas_user.domain_type == "Subdomain":
 			custom_domain = saas_user.subdomain + "." + saas_settings.domain
 			new_subdomain = frappe.new_doc("Saas Domains")
 			new_subdomain.domain = saas_user.subdomain
 			new_subdomain.insert(ignore_permissions=True)	
-		commands.append("bench setup add-domain {custom_domain} --site {site_name}".format(custom_domain=custom_domain, site_name=site_name))
 
 		# # setup nginx config and reloading the nginx service
+		master_site_name = frappe.conf.get("master_site_name") or "admin_onehash"
 		commands.append("bench setup nginx --yes")
 		commands.append("bench setup reload-nginx")
-		commands.append("bench --site admin_onehash execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(saas_user=saas_user.name)+'"')
+		commands.append("bench --site "+master_site_name+" execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(master_site_name=master_site_name,saas_user=saas_user.name)+'"')
 		limit_users,limit_emails, limit_space, limit_email_group,limit_expiry,discounted_users,customer = get_site_limits(saas_user.promocode,saas_settings)
 		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
 			site_name = site_name,
@@ -80,11 +81,7 @@ def setup(account_request):
 			limit_expiry = limit_expiry
 		))
 		command_key = today() + " " + nowtime()
-		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
-			commands=commands,
-			doctype="Bench Settings",
-			key=command_key
-		)
+		
 		
 		saas_site = frappe.new_doc("Saas Site")
 		saas_site.site_name = site_name
@@ -105,6 +102,12 @@ def setup(account_request):
 		saas_user.key = command_key
 		saas_user.save()
 
+		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key,
+			now=True
+		)
 		# Redeem Promocode
 		if saas_user.promocode:
 			promocode = frappe.get_doc("Coupon Code",{"coupon_code":saas_user.promocode}, ignore_permissions=True)
@@ -368,7 +371,7 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 		limit_email_group = limit_for_email_group,
 		limit_expiry = expiry
 	)]
-	mute_email_flag = 1 if (not (expiry and expiry>=today())) else 0
+	mute_email_flag = 1 if (not (expiry and str(expiry)>=today())) else 0
 	commands.append("bench --site {site_name} set-config mute_emails {mute_emails}".format(site_name=site_name,mute_emails=mute_email_flag)) 
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
@@ -392,16 +395,17 @@ def get_users_list(site_name):
 @frappe.whitelist(allow_guest=True)
 def check_password_strength(passphrase,first_name,last_name,email):
 	user_data = (first_name, "", last_name, email, "")
+	if("'" in passphrase or '"' in passphrase):
+		return {"feedback":{"password_policy_validation_passed":False,"suggestions":["Password should not contain ' or \""]}}
 	return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_name=None,country=None,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
-	user_data = (first_name, "", last_name, email, "")
 	geo_country = get_geo_ip_country(frappe.local.request_ip) if frappe.local.request_ip else None
 	country = country if country else (geo_country['names']['en'] if geo_country else None)
-	password_test_result = test_password_strength(passphrase,user_data=user_data)
+	password_test_result = check_password_strength(passphrase,first_name,last_name,email)
 	if(not password_test_result['feedback']['password_policy_validation_passed']):
 		frappe.throw(password_test_result['feedback']['warning']+"\r\n"+password_test_result['feedback']['suggestions'][0],"ValidationError")
 	
