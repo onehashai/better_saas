@@ -19,7 +19,10 @@ expected_keys = ('amount', 'title', 'description',
 def get_context(context):
     context.no_cache = 1
     try:
-        args = frappe.request.args or {}
+        args = frappe.request.args.to_dict() or {}
+        tid = frappe.request.cookies.get("_fprom_tid",None)
+        if tid:
+            args["fp_tid"]=tid
         site_name = args["site_name"] if "site_name" in args else None
         context.site_name = site_name
         context.ltd_link = buy_ltd(site_name=site_name,args=args)
