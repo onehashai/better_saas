@@ -1,4 +1,4 @@
-Metadata-Version: 1.0
+Metadata-Version: 2.1
 Name: better-saas
 Version: 0.0.1
 Summary: App for Deploying a Saas based version of onehash.
@@ -6,5 +6,7 @@ Home-page: UNKNOWN
 Author: Vigneshwaran Arumainayagam
 Author-email: vignesh.this@gmail.com
 License: UNKNOWN
-Description: UNKNOWN
 Platform: UNKNOWN
+
+UNKNOWN
+
