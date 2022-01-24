@@ -22,6 +22,7 @@ frappe.ready(function () {
     // Define the signup stages
     setup_signup($('#page-signup'));
     setup_signup($('#page-signup_ltd'));
+    setup_signup($('#page-appsumo'));
 
     //  Check for valid email
     $page.find('input[name="email"]').on('change load', function () {
