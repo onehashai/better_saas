@@ -44,7 +44,7 @@ def setup(account_request):
 			stock_site_doc.status = "Picked"
 			stock_site_doc.save(ignore_permissions=True)
 			commands = ["mv sites/{} sites/{}".format(stock_site, site_name)]
-			commands.append("bench --site {} set-admin-password {}".format(site_name, admin_password))
+			commands.append("bench --site {} set-admin-password '{}'".format(site_name, admin_password))
 		else:
 			commands = ["bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} {site_name}".format(site_name=site_name,
 			admin_password=admin_password, mysql_password=mysql_password)]

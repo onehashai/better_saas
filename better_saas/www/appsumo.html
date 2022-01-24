@@ -1,0 +1,136 @@
+{% extends "templates/web.html" %} {% block style %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+<style>
+    
+    {% include "templates/includes/signup/signup.css" %}
+</style>
+{% endblock %} {% block page_content %}
+<!-- {{ for_test }} -->
+
+
+<div class="row" >
+    <div class="col-md-1">
+    </div>
+    <div class="col-md-10">
+        <div class="col-md-12 signup-inner" style="border:1px solid #DADCE0;">
+            <img src="https://uploads-ssl.webflow.com/5e53d34464688e6f5960a338/610a36c2792530d601aaf35f_OneHash_Logo.svg" width="110px;" aria-hidden="true">
+            {% if partner_logo %}
+            |
+            <img src="{{partner_logo}}" aria-hidden="true" width="110px;">
+            {% endif %}
+            <h1>
+                Create an Account
+            </h1>
+            <div class="signup-card ">
+                <form class="signup-state-details" action="javascript:;" role="form">
+                    <div class="col-md-12" style="margin-top:30px;">
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="row">
+                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                            <input id="first_name" name="first_name" class="form-control" placeholder=" " value="{{first_name}}"/>
+                                            <label for="first_name">First Name</label>
+                                            <p class="validation-message"></p>
+                                        </div>
+                                        
+                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                            <input id="last_name" name="last_name" class="form-control" placeholder=" " value="{{last_name}}" />
+                                            <label for="last_name">Last Name</label>
+                                            <p class="validation-message"></p>
+                                        </div>
+                                        
+                                        <div class="form-group col-md-12" style="margin-top:10px;">
+                                            <div class="input-group floating-label">
+                                            <input id="input-group-append" name="subdomain" class="form-control" placeholder=" " />
+                                            <label for="input-group-append" style="left:5px;">Your Sitename</label>
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">.onehash.ai</span>
+                                            </div>
+                                            </div>
+                                            <div class="availability" style="font-size: 80%; font-weight: 400;">
+                                                <span class="availability-status text-success" style="height: 21px;"><span></span></span>
+                                                <span class="availability-spinner small text-muted hidden">checking...</span>
+                                            </div>
+                                            <p class="validation-message small"></p>
+                                        </div>
+                                        
+                                        <div class="form-group floating-label col-md-12" style="margin-top:10px;">
+                                            <input id="companyname" name="company_name" class="form-control" placeholder=" " />
+                                            <label for="companyname">Company Name</label>
+                                        </div>
+                                        
+                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                            <input id="email" name="email" class="form-control" placeholder="jane_doe@example.com" value="{{email}}"/>
+                                            <label for="email">Email</label>
+                                            <p class="validation-message" id="emailValidationMsg">Please enter a valid email address</p>
+                                        </div>
+                                        
+                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                            <input type="password" id="passphrase" name="passphrase" class="form-control" placeholder=" " />
+                                            <label for="password">Password</label>
+                                            <span class="password-strength-indicator indicator"></span>
+                                            <p class="password-strength-message text-muted small hidden"></p>
+                                        </div>
+                                        
+                                            <div class="form-group floating-label col-md-6" style="margin-top:10px; ">
+                                            <input id="tphone" name="phone_number" type="text" min=0 class="form-control" placeholder="Mobile"  value="{{phone_number}}" style="width:100% !important; "/>
+                                            <label for="tphone"></label>
+                                        </div>
+                                        
+                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                            <input id="promocode" name="promocode" class="form-control" placeholder="AppSumo Promocode" value="{{promocode}}"/>
+                                            <label for="promocode">AppSumo Promocode</label>
+                                            <p class="validation-message" style="font-weight: 400;font-size: small;"></p>
+                                        </div>
+                                        <div class="form-group floating-label col-md-6 .verify-otp hide" style="margin-top:10px;">
+                                            <input id="enterOTP" name="otp" class="form-control" placeholder=" " />
+                                            <label for="enterOTP">Enter OTP</label>
+                                            <p class="validation-message"></p>
+                                        </div>
+                                        <div class="form-check col-md-12" style="margin-left:10px;">
+                                            <label class="form-check-label" style="font-size:12px;">
+                                                <input type="checkbox" class="form-check-input" value="" style="font-size:12px;">
+                                                
+                                                I have read and agree to the <a href="https://onehash.ai/terms-of-use" target="_blank">Terms of Use</a> and <a href="https://onehash.ai/privacy" target="_blank">Privacy Policy</a>
+                                                
+                                            </label>
+                                            </div>
+                                        <div class="form-group floating-label col-md-4" style="margin-top:20px;">
+                                        <button class="btn btn-primary get-started-button btn-block"style="width:100%;">Get OTP</button>
+                                        </div>
+                                        <div class="form-group floating-label col-md-6" style="margin-top:20px; padding:8px; font-size:12px;">
+                                            <a href="/login" style="text-decoration:none !important; color:#007EE5; padding:10px;">Already Registered?</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5 text-center">
+                                <div style="padding:0 50px;">
+                                <p>
+                                    All of this can be yours in just OneClick
+                                </p>
+                                    <img src="https://uploads-ssl.webflow.com/5e53d34464688e6f5960a338/612768909db25502848f8062_Signup-image.svg" width="100%">
+                                </div>
+                            </div>
+                            </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+    <div class="col-md-1">
+    </div>
+</div>
+
+
+{% endblock %} {% block script %}
+
+
+
+<script src="https://kit.fontawesome.com/b597afc600.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+<script>{% include "templates/includes/signup/signup.js" %}</script>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="3375d605-22a8-4347-8a1e-6e30ce39c15b";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+<script src="https://www.google.com/recaptcha/api.js?render=6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q"></script>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9HWLSJ"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+{% endblock %} {% block sidebar %}{% endblock %}
