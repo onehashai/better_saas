@@ -1,5 +1,5 @@
 frappe.ready(function () {
-    let $page = $('#page-signup, #page-signup-1, #page-signup_ltd');
+    let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
     let minimum = {
         'P-Pro-2020': 1,
         'P-Standard-2020': 1
