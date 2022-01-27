@@ -615,32 +615,49 @@ def apply_promocode(promocode, site_name):
 	coupon_code  = frappe.get_doc("Coupon Code", coupon_name, ignore_permissions=True)
 	
 	saas_user_doc = frappe.get_doc("Saas User",saas_user[0].name)
+	is_no_expiry = coupon_code.no_expiry
+	expiry_days = coupon_code.expiry
+	is_unlimited_users = coupon_code.unlimited_users
 	# Calcualte new limits
 	base_plan = coupon_code.base_plan if saas_user_doc.country=="India" else coupon_code.base_plan_international
-
 	if(coupon_code.is_stackable and (saas_site.subscription or saas_site.discounted_users>0)):
-		limit_users = saas_site.limit_for_users + coupon_code.limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users
-		discounted_users = saas_site.discounted_users + coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
-		if coupon_code.max_discounted_user_limit and discounted_users > coupon_code.max_discounted_user_limit:
-			throw(_("Maximum allowed stack user limit is "+str(coupon_code.max_discounted_user_limit)))
+		stack_count = frappe.db.count("Coupon Code", {"status": "Redeemed","linked_saas_site":site_name,"deal_code":coupon_code.deal_code})
+		if stack_count>=coupon_code.max_stack_limit:
+			throw(_("Maximum stack limit "+str(coupon_code.max_stack_limit)+" reached."))
 			return False
+		coupon_limit_for_users = coupon_code.stack_limits[stack_count].limit_for_users
+		coupon_discounted_users = coupon_code.stack_limits[stack_count].discounted_users
+		# coupon_max_discounted_user_limit = coupon_code.stack_limits[stack_count].max_discounted_user_limit
+		limit_users =  saas_site.limit_for_users + coupon_limit_for_users if coupon_limit_for_users else saas_site.limit_for_users
+		discounted_users =  saas_site.discounted_users + coupon_discounted_users if coupon_discounted_users else saas_site.discounted_users
+		
+		coupon_limit_for_emails = coupon_code.stack_limits[stack_count].limit_for_emails
+		coupon_limit_for_space = coupon_code.stack_limits[stack_count].limit_for_space
+		coupon_limit_for_email_group = coupon_code.stack_limits[stack_count].limit_for_email_group
+		is_no_expiry = coupon_code.stack_limits[stack_count].no_expiry
+		expiry_days = coupon_code.stack_limits[stack_count].expiry
+		is_unlimited_users = coupon_code.stack_limits[stack_count].unlimited_users
+	
+		# if coupon_max_discounted_user_limit and discounted_users > coupon_max_discounted_user_limit:
+		# 	throw(_("Maximum allowed stack user limit is "+str(coupon_max_discounted_user_limit)))
+		# 	return False
 
-		limit_emails = saas_site.limit_for_emails + int(coupon_code.limit_for_emails) if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
-		limit_space = saas_site.limit_for_space + int(coupon_code.limit_for_space) if int(coupon_code.limit_for_space) else saas_site.limit_for_space
-		limit_email_group = saas_site.limit_for_email_group + int(coupon_code.limit_for_email_group) if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
+		limit_emails =  saas_site.limit_for_emails + int(coupon_limit_for_emails) if int(coupon_limit_for_emails) else saas_site.limit_for_emails
+		limit_space =  saas_site.limit_for_space + int(coupon_limit_for_space) if int(coupon_limit_for_space) else saas_site.limit_for_space
+		limit_email_group =  saas_site.limit_for_email_group + int(coupon_limit_for_email_group) if int(coupon_limit_for_email_group) else saas_site.limit_for_email_group
 	else:
 		discounted_users = coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
 		limit_emails = int(coupon_code.limit_for_emails) if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
 		limit_space = int(coupon_code.limit_for_space) if int(coupon_code.limit_for_space) else saas_site.limit_for_space
 		limit_email_group = int(coupon_code.limit_for_email_group) if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
-		limit_users =  0 if coupon_code.unlimited_users else (int(coupon_code.limit_for_users) if coupon_code.limit_for_users else saas_site.limit_for_users) ## Applying Users count from promocode
+		limit_users =  0 if is_unlimited_users else (int(coupon_code.limit_for_users) if coupon_code.limit_for_users else saas_site.limit_for_users) ## Applying Users count from promocode
 		
 	## Check for Life-Time Deals (i.e. for 100 years)
-	if coupon_code.no_expiry == 1:
+	if is_no_expiry:
 		saas_settings = frappe.get_doc("Saas Settings")
 		limit_expiry = saas_settings.ltd_expiry
 	else:
-		limit_expiry = add_days(today(), int(coupon_code.expiry)) if coupon_code.expiry > 0 else saas_site.expiry
+		limit_expiry = add_days(today(), int(expiry_days)) if expiry_days > 0 else saas_site.expiry
 	
 	saas_site.customer = coupon_code.customer if coupon_code.customer and not saas_site.customer else saas_site.customer
 
@@ -667,7 +684,7 @@ def apply_promocode(promocode, site_name):
 	
 	if saas_site.subscription:
 		# Cancel Subscription coupon is lifetime and for unlimited users
-		if((coupon_code.unlimited_users or (int(saas_site.limit_for_users)-int(saas_site.discounted_users)<=0)) and coupon_code.no_expiry):
+		if((is_unlimited_users or (int(saas_site.limit_for_users)-int(saas_site.discounted_users)<=0)) and is_no_expiry):
 			from better_saas.www.upgrade import cancel
 			cancel(saas_site.name)
 
@@ -746,27 +763,42 @@ def refund_promocode(promocode):
 		saas_settings = frappe.get_doc("Saas Settings")
 		# Calcualte new limits
 		base_plan = coupon_code.base_plan if saas_user_doc.country=="India" else coupon_code.base_plan_international
-
+		is_no_expiry = coupon_code.no_expiry
+		expiry_days = coupon_code.expiry
+		is_unlimited_users = coupon_code.unlimited_users
+		stack_count=0
 		if(coupon_code.is_stackable):
-			limit_users = saas_site.limit_for_users - coupon_code.limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users
-			discounted_users = saas_site.discounted_users - coupon_code.discounted_users if coupon_code.discounted_users else saas_site.discounted_users
-			
-			limit_emails = saas_site.limit_for_emails - int(coupon_code.limit_for_emails) if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
-			limit_space = saas_site.limit_for_space - int(coupon_code.limit_for_space) if int(coupon_code.limit_for_space) else saas_site.limit_for_space
-			limit_email_group = saas_site.limit_for_email_group - int(coupon_code.limit_for_email_group) if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
+			stack_count = frappe.db.count("Coupon Code", {"status": "Redeemed","linked_saas_site":site_name,"deal_code":coupon_code.deal_code})
+			stack_limits = coupon_code.stack_limits[stack_count-1]
+			coupon_limit_for_users = stack_limits.limit_for_users
+			coupon_discounted_users = stack_limits.discounted_users
+			# coupon_max_discounted_user_limit = coupon_code.stack_limits[stack_count].max_discounted_user_limit
+			limit_users =  saas_site.limit_for_users - coupon_limit_for_users if coupon_limit_for_users else saas_site.limit_for_users
+			discounted_users =  saas_site.discounted_users - coupon_discounted_users if coupon_discounted_users else saas_site.discounted_users
+			coupon_limit_for_emails = stack_limits.limit_for_emails
+			coupon_limit_for_space = stack_limits.limit_for_space
+			coupon_limit_for_email_group = stack_limits.limit_for_email_group
+			is_no_expiry = stack_limits.no_expiry
+			expiry_days = stack_limits.expiry
+			is_unlimited_users = stack_limits.unlimited_users
+
+			limit_emails =  saas_site.limit_for_emails - int(coupon_limit_for_emails) if int(coupon_limit_for_emails) else saas_site.limit_for_emails
+			limit_space =  saas_site.limit_for_space - int(coupon_limit_for_space) if int(coupon_limit_for_space) else saas_site.limit_for_space
+			limit_email_group =  saas_site.limit_for_email_group - int(coupon_limit_for_email_group) if int(coupon_limit_for_email_group) else saas_site.limit_for_email_group
+			# limit_expiry = add_days(today(), int(expiry_days)) if expiry_days > 0 else saas_site.expiry
 		else:
 			discounted_users = 0 if coupon_code.discounted_users else saas_site.discounted_users
 			limit_emails = saas_settings.default_limit_for_emails if int(coupon_code.limit_for_emails) else saas_site.limit_for_emails
 			limit_space = saas_settings.default_limit_for_space if int(coupon_code.limit_for_space) else saas_site.limit_for_space
 			limit_email_group = saas_settings.default_limit_for_email_group if int(coupon_code.limit_for_email_group) else saas_site.limit_for_email_group
 			limit_users =  saas_settings.default_limit_for_users if coupon_code.unlimited_users else saas_settings.default_limit_for_users if coupon_code.limit_for_users else saas_site.limit_for_users ## Applying Users count from promocode
+			# limit_expiry = add_days(saas_site.expiry, -1*int(coupon_code.expiry)) if coupon_code.expiry > 0 else saas_site.expiry
 			
 		## Check for Life-Time Deals (i.e. for 100 years)
-		if coupon_code.no_expiry == 1:
-			limit_expiry = saas_settings.ltd_expiry
-			limit_expiry = today()
+		if is_no_expiry:
+			limit_expiry = saas_settings.ltd_expiry if stack_count>0 else today()
 		else:
-			limit_expiry = add_days(saas_site.expiry, -1*int(coupon_code.expiry)) if coupon_code.expiry > 0 else saas_site.expiry
+			limit_expiry = add_days(saas_site.expiry, -1*int(expiry_days)) if expiry_days > 0 else saas_site.expiry
 		
 		saas_site.limit_for_users = limit_users
 		saas_site.limit_for_emails = limit_emails
