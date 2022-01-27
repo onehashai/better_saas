@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2022-01-25 11:47:04.795993",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "unlimited_users",
+  "limit_for_users",
+  "discounted_users",
+  "no_expiry",
+  "expiry",
+  "limit_for_emails",
+  "limit_for_space",
+  "limit_for_email_group",
+  "base_plan",
+  "base_plan_international"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "unlimited_users",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Unlimited Users"
+  },
+  {
+   "fieldname": "limit_for_users",
+   "fieldtype": "Int",
+   "label": "Limit For Users"
+  },
+  {
+   "fieldname": "discounted_users",
+   "fieldtype": "Int",
+   "label": "Discounted Users"
+  },
+  {
+   "default": "0",
+   "fieldname": "no_expiry",
+   "fieldtype": "Check",
+   "label": "No Expiry"
+  },
+  {
+   "depends_on": "eval:doc.no_expiry==0",
+   "fieldname": "expiry",
+   "fieldtype": "Int",
+   "label": "Expiry (In Days)"
+  },
+  {
+   "fieldname": "limit_for_emails",
+   "fieldtype": "Int",
+   "label": "Limit For Emails"
+  },
+  {
+   "fieldname": "limit_for_space",
+   "fieldtype": "Int",
+   "label": "Limit For Space"
+  },
+  {
+   "fieldname": "limit_for_email_group",
+   "fieldtype": "Int",
+   "label": "Limit For Email Group"
+  },
+  {
+   "fieldname": "base_plan",
+   "fieldtype": "Link",
+   "label": "Base Plan India",
+   "options": "Subscription Plan"
+  },
+  {
+   "fieldname": "base_plan_international",
+   "fieldtype": "Link",
+   "label": "Base Plan International",
+   "options": "Subscription Plan"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-01-27 22:53:07.161117",
+ "modified_by": "Administrator",
+ "module": "Better Saas",
+ "name": "Coupon Code Stack Limit",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
