@@ -6,6 +6,7 @@ frappe.ready(function () {
     };
 
     // Get Country Codes
+    const hide_phonenumber = "{{hide_phonenumber}}";
     const phoneInputField = document.querySelector("#tphone");
     const phoneInput = window.intlTelInput(phoneInputField, {
         initialCountry: "auto",
@@ -377,11 +378,12 @@ function setup_account_request($page) {
     grecaptcha.ready(function () {
         grecaptcha.execute('6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q', { action: 'submit' }).then(function (token) {
             // Add your logic to submit to your backend server here.
+            hide_phonenumber = "{{hide_phonenumber}}";
             if (!$page.find('input[name="first_name"]').val() ||
                 !$page.find('input[name="last_name"]').val() ||
                 !$page.find('input[name="subdomain"]').val() ||
                 !$page.find('input[name="email"]').val() ||
-                !$page.find('input[name="phone_number"]').val() ||
+                (hide_phonenumber!=1 && !$page.find('input[name="phone_number"]').val()) ||
                 !$page.find('input[name="passphrase"]').val() || !$page.find('input[name="company_name"]').val()) {
 
                 frappe.msgprint("All fields are necessary. Please try again.");
