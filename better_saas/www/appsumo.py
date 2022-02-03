@@ -25,6 +25,7 @@ def get_context(context):
         
     referral_code = args["referral_code"] if "referral_code" in args else "APPSUMO"
     context["partner_logo"] = frappe.db.get_value("Sales Partner",{"referral_code":referral_code},"logo")
+    context["hide_phonenumber"] = 1
     pass
 
 @frappe.whitelist(allow_guest=True)

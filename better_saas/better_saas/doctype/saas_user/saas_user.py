@@ -317,7 +317,8 @@ def delete_site(site_name):
 		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 			commands=commands,
 			doctype="Bench Settings",
-			key=today() + " " + nowtime()
+			key=today() + " " + nowtime(),
+			now = True
 		)
 	except:
 		frappe.log_error(frappe.get_traceback())
@@ -332,7 +333,8 @@ def disable_enable_site(site_name, status):
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
 		doctype="Bench Settings",
-		key=today() + " " + nowtime()
+		key=today() + " " + nowtime(),
+		now = True
 	)
 
 @frappe.whitelist(allow_guest=True)
@@ -376,7 +378,8 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 	frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 		commands=commands,
 		doctype="Bench Settings",
-		key=today() + " " + nowtime()
+		key=today() + " " + nowtime(),
+		now = True
 	)
 
 @frappe.whitelist()
@@ -577,6 +580,8 @@ def generate_otp():
     return OTP
 
 def send_otp_sms(number,otp):
+	if not number:
+		return
 	receiver_list = []
 	receiver_list.append(number)
 	message = otp+" is OTP to verify your account request for OneHash."
@@ -831,7 +836,7 @@ def get_promocode_benefits(site_name):
 	saas_user = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
 	if(saas_user.promocode):
 		promocode = saas_user.promocode.split(",")
-		coupon_codes = frappe.get_list("Coupon Code",filters=[["coupon_code","in",promocode],["status","!=","Refunded"]], fields=["name","coupon_code","status","success_message","no_expiry"], ignore_permissions=True)	
+		coupon_codes = frappe.get_list("Coupon Code",filters=[["coupon_code","in",promocode],["status","!=","Refunded"]], fields=["name","coupon_code","status","success_message","no_expiry","sales_partner"], ignore_permissions=True)	
 	else:
 		coupon_codes = []
 	return coupon_codes
