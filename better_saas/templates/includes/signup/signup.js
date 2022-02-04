@@ -7,6 +7,9 @@ frappe.ready(function () {
 
     // Get Country Codes
     const hide_phonenumber = "{{hide_phonenumber}}";
+    if(hide_phonenumber==1){
+        $("#tphone").parent().hide();
+    }
     const phoneInputField = document.querySelector("#tphone");
     const phoneInput = window.intlTelInput(phoneInputField, {
         initialCountry: "auto",
