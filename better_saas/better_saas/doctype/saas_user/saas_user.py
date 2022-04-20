@@ -235,23 +235,30 @@ def create_first_user_on_target_site(saas_user):
 		user['roles'].append({"role":role['name']})
 	conn.update(user)
 
-	if(is_new_user):
+	if(True):
 		STANDARD_USERS = ("Guest", "Administrator")
 		subject="Welcome to OneHash"
-		template="welcome_email"
-		args = {
-				'first_name': site_user.first_name or site_user.last_name or "user",
-				'user': site_user.email,
-				'title': subject,
-				'login_url': "https://"+site_user.linked_saas_site,
-				'site_url': "https://"+site_user.linked_saas_site,
-				'help_url':"https://help.onehash.ai",
-				'user_fullname': site_user.first_name+" "+site_user.last_name
-			}
+		email_template="OneHash CRM Welcome Email"
+		# args = {
+		# 		'first_name': site_user.first_name or site_user.last_name or "user",
+		# 		'user': site_user.email,
+		# 		'title': subject,
+		# 		'login_url': "https://"+site_user.linked_saas_site,
+		# 		'site_url': "https://"+site_user.linked_saas_site,
+		# 		'help_url':"https://help.onehash.ai",
+		# 		'user_fullname': site_user.first_name+" "+site_user.last_name
+		# 	}
 		sender = frappe.session.user not in STANDARD_USERS and get_formatted_email(frappe.session.user) or None
-		frappe.sendmail(recipients=site_user.email, sender=sender, subject=subject,
-				template=template, args=args, header=[subject, "green"],
-				delayed=False)
+		sender = None
+		
+		data = site_user.as_dict()
+		email_template = frappe.get_doc("Email Template", email_template,ignore_permissions=True)
+		message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, data)
+		frappe.sendmail(site_user.email,sender=sender, subject=email_template.subject, message=message,delayed=False)
+
+		# frappe.sendmail(recipients=site_user.email, sender=sender, subject=subject,
+		# 		template=template, args=args, header=[subject, "green"],
+		# 		delayed=False)
 	return True
 	
 def create_user(first_name, last_name, email, password):
@@ -590,7 +597,7 @@ def send_otp_sms(number,otp):
 def send_otp_email(site_user):
 	STANDARD_USERS = ("Guest", "Administrator")
 	subject="Please confirm this email address for OneHash"
-	template="signup_otp_email"
+	email_template="Signup OTP verification"
 	args = {
 			'first_name': site_user.first_name or site_user.last_name or "user",
 			'last_name': site_user.last_name,
@@ -598,9 +605,14 @@ def send_otp_email(site_user):
 			'otp':site_user.otp
 			}
 	sender = None
-	frappe.sendmail(recipients=site_user.email, sender=sender, subject=subject, bcc=["anand@onehash.ai"],
-			template=template, args=args, header=[subject, "green"],
-			delayed=False)
+	data = site_user.as_dict()
+	email_template = frappe.get_doc("Email Template", email_template,ignore_permissions=True)
+	message = frappe.render_template(email_template.response_html if email_template.use_html else email_template.response, data)
+	frappe.sendmail(site_user.email,sender=sender, subject=email_template.subject,bcc=["anand@onehash.ai"], message=message,delayed=False)
+
+	# frappe.sendmail(recipients=site_user.email, sender=sender, subject=subject, bcc=["anand@onehash.ai"],
+	# 		template=template, args=args, header=[subject, "green"],
+	# 		delayed=False)
 	return True
 
 @frappe.whitelist(allow_guest=True)

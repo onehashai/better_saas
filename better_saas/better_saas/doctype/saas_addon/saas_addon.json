@@ -10,12 +10,14 @@
  "field_order": [
   "disabled",
   "is_a_subscription",
+  "billing_interval",
   "minimum_quantity",
   "addon_name",
   "uom",
   "per_credit_price",
   "yearly_amount",
   "monthly_amount",
+  "pg_price_id",
   "addon_type",
   "addon_value",
   "currency",
@@ -36,18 +38,19 @@
    "unique": 1
   },
   {
+   "depends_on": "eval:doc.is_subscription",
    "fieldname": "yearly_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Yearly Amount",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.is_subscription"
   },
   {
    "fieldname": "monthly_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Monthly Amount",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.is_subscription"
   },
   {
    "fieldname": "addon_type",
@@ -131,11 +134,24 @@
    "fieldtype": "Currency",
    "label": "INR Price",
    "options": "INR"
+  },
+  {
+   "default": "Monthly",
+   "fieldname": "billing_interval",
+   "fieldtype": "Select",
+   "label": "Billing Interval",
+   "mandatory_depends_on": "eval:doc.is_subscription",
+   "options": "\nMonthly\nYearly"
+  },
+  {
+   "fieldname": "pg_price_id",
+   "fieldtype": "Data",
+   "label": "PG Price ID"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-10-22 10:34:57.651324",
+ "modified": "2022-02-23 14:01:43.437454",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas AddOn",
