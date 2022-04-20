@@ -21,6 +21,9 @@ better_saas/better_saas/custom/subscription_plan.json
 better_saas/better_saas/custom/subscription_plan_detail.json
 better_saas/better_saas/desk_page/better_saas/better_saas.json
 better_saas/better_saas/doctype/__init__.py
+better_saas/better_saas/doctype/coupon_code_stack_limit/__init__.py
+better_saas/better_saas/doctype/coupon_code_stack_limit/coupon_code_stack_limit.json
+better_saas/better_saas/doctype/coupon_code_stack_limit/coupon_code_stack_limit.py
 better_saas/better_saas/doctype/facebook_clients/__init__.py
 better_saas/better_saas/doctype/facebook_clients/facebook_clients.js
 better_saas/better_saas/doctype/facebook_clients/facebook_clients.json
@@ -145,6 +148,8 @@ better_saas/templates/pages/__pycache__/__init__.py
 better_saas/www/__init__.py
 better_saas/www/add-on.html
 better_saas/www/add-on.py
+better_saas/www/appsumo.html
+better_saas/www/appsumo.py
 better_saas/www/better_saas_login.py
 better_saas/www/checkout.css
 better_saas/www/checkout.html

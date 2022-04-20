@@ -1,107 +1,118 @@
 {% extends "templates/web.html" %}
 
 {% block style %}
-<!-- style>
-    {% include "templates/includes/signup/frappe-theme.css" %}
-	{% include "templates/includes/signup/signup.css" %}
-</style -->
+<style>
+    {% include "public/css/font-awesome.min.css" %}
+
+
+.rounded-lg {
+  border-radius: 1rem !important;
+}
+
+.text-small {
+  font-size: 0.9rem !important;
+}
+
+.custom-separator {
+  width: 5rem;
+  height: 2px;
+  border-radius: 1rem;
+}
+
+</style>
 {% endblock %}
 
 {% block page_content %}
 <!-- {{ for_test }} -->
 <div class="container">
-    <div class="py-5" style="min-height: 650px;">
-        <button class="btn btn-link btn-sm float-right"
-            style="background-color: #f4f5f6; color: #16161785; border: 1px #dce3e894 solid;" id="cancel-button">
-            Cancel Subscription
-        </button>
-        <h4 class="mb-3" style="line-height: 1.5;">Manage subscription for <mark>{{ site }}</mark></h4>
         <div>
-            <div role="alert" class="alert alert-secondary" id="site_info">
+            <div role="alert" class="alert border-primary" id="site_info">
+                <div class="row">
+                    <div class="col-md-4 col-xs-12 text-center"><strong>{{site.name}}</strong><br>
+                        {% if site.expiry.strftime("%Y-%m-%d") >= frappe.utils.today() %}
+                        <i class="fa fa-check-circle text-success">&nbsp;Active</i>
+                        {% else %}
+                        <i class="fa fa-ban text-danger">&nbsp;Expired</i>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 col-xs-12 text-center"><span class="badge badge-dark" title="Current Plan">{{site.base_plan}}</span><br>
+                        <small>{% if site.expiry.strftime("%Y-%m-%d") < frappe.utils.today() %}
+                            Expired On: {{frappe.format_date(site.expiry) }}
+                        {% else %}
+                        Renews On: {{frappe.format_date(site.expiry)}}
+                       {% endif %}
+                       </small>
+                    </div>
+                    <div class="col-md-4 col-xs-12 text-center">{% if current_subscription %}
+                        <button type="button" class="btn btn-xs btn-outline-primary border-primary" id="change-plan-button">
+                            Change Plan
+                        </button>
+                        {% endif %}</div>
+                </div>
             </div>
             <div class="my-5">
                 <h4>Choose your plan</h4>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend" style="margin-right: -5px;"><label for="billing_cycle"
-                            class="input-group-text"
-                            style="border-top-left-radius: 3px; border-bottom-left-radius: 3px;">Billing Cycle</label>
-                    </div> <select id="billing_cycle" class="form-control">
-                        <option value="Monthly">
-                            Monthly
-                        </option>
-                    </select>
-                </div>
-                <div class="row">
-                    <div class="col-12 col-md mb-3 mb-md-0">
-                        <div class="card plan-card border border-primary">
-                            <div class="bg-primary rounded-circle text-white d-flex justify-content-center align-items-center"
-                                style="width: 1.5em; position: absolute; height: 1.5em; right: 1rem; top: 1rem;"><svg
-                                    xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="feather feather-check">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg></div>
-                            <div class="card-body">
-                                <h6 class="card-title text-uppercase ">Subscription
-                                    <span class="ml-2" style="font-size: 1em; color: green;" id="discount">
-                                    </span>
-                                </h6>
-                                <div class="row">
-                                    <div class="col-6 col-md-12 text-dark text-nowrap">
-                                        <span>
-                                            <span style="font-size: 1.5em;" class="currency-symbol"></span>
-                                            <span class="display-4 subscription-amount"
-                                                style="font-size: 2.5rem;"></span>
-                                            <span class="text-muted billing-frequency">/month</span>
-                                            <br>
-                                            <span class="display-4 ml-4 text-muted" style="font-size: 1.6rem;">
-                                                <span class="non-discounted-subscription-amount"></span>
-                                            </span>
-                                        </span>
-                                    </div>
-                                    <div class="col-6 col-md-12 small mt-md-2">
-                                        <div class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg"
-                                                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round" class="feather feather-check mr-2 mt-1">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                            <span class="subscribed-users"></span>
-                                        </div>
-                                        <!-- <div class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg"
-                                                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round" class="feather feather-check mr-2 mt-1">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                            <span class="subscribed-storage"></span>
-                                        </div>
-                                        <div class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg"
-                                                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round" class="feather feather-check mr-2 mt-1">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                            <span class="subscribed-emails"></span>
-                                        </div> -->
-                                    </div>
-                                </div>
-                            </div>
+                <hr>
+                <section>
+                    <div class="row text-center align-items-end">
+                    {% for plan_name,plan in plans.items() %}
+                        <!-- Pricing Table-->
+                    <div class="col-lg-4 mb-5 ">
+                        <div class="bg-white p-5 rounded-lg shadow">
+                        <h1 class="h6 text-uppercase font-weight-bold mb-4">{{plan.name}}</h1>
+                        <h2 class="h1 font-weight-bold">{{ frappe.utils.fmt_money(plan.cost, currency = plan.currency, precision = 0) }}<span class="text-small font-weight-normal ml-2">{% if not plan.is_unlimited %} / {{plan.uom}} {% endif %} / {{plan.billing_interval}}</span></h2>
+                        <div class="custom-separator my-4 mx-auto bg-primary"></div>
+                        {% if plan.is_unlimited %}
+                        <ul class="list-unstyled my-5 text-small text-left">
+                            <li class="mb-3">
+                            <i class="fa fa-check mr-2 text-primary"></i>Unlimited {{plan.uom}}s</li>
+                        </ul>
+                        {% else %}
+                        <ul class="list-unstyled my-5 text-small text-left">
+                            <li class="mb-3">
+                            <i class="fa fa-check mr-2 text-primary"></i>Pay as you go</li>
+                        </ul>
+                        {% endif %}
+                        <a href="javascript:;" data-type="plan" data-name="{{plan.name}}" class="btn btn-primary plan btn-block p-2 shadow rounded-pill {% if active_plan.name==plan.name %}disabled{% endif %}">{% if active_plan.name==plan.name %}Current Plan{% else %}Select{% endif %}</a>
                         </div>
                     </div>
+                    {% endfor %}    
+                </div>
+                </section>
+            </div>
+            <div class="my-5">
+                <h4>Add-Ons</h4>
+                <hr>
+                <div class="row text-center align-items-end" id="saas-addons">
+                    {% for plan_name,plan in add_ons.items() %}
+                    <div class="col-lg-4 mb-5 ">
+                        <div class="bg-white p-5 rounded-lg shadow">
+                        <h1 class="h6 text-uppercase font-weight-bold mb-4">{{plan.name}}</h1>
+                        <h2 class="h3 font-weight-bold">{{ frappe.utils.fmt_money(plan.cost, currency = plan.currency, precision = 0) }}<span class="text-small font-weight-normal ml-2">{% if not plan.is_unlimited %} / {{plan.uom}} {% endif %} / {{plan.billing_interval}}</span></h2>
+                        <div class="custom-separator my-4 mx-auto bg-primary"></div>
+                        {% if plan.is_unlimited %}
+                        <ul class="list-unstyled my-5 text-small text-left">
+                            <li class="mb-3">
+                            <i class="fa fa-check mr-2 text-primary"></i>Unlimited {{plan.uom}}s</li>
+                        </ul>
+                        {% else %}
+                        <ul class="list-unstyled my-5 text-small text-left">
+                            <li class="mb-3">
+                            <i class="fa fa-check mr-2 text-primary"></i>Pay as you go</li>
+                        </ul>
+                        {% endif %}
+                        <a href="javascript:;" data-type="add_ons" data-name="{{plan.name}}" class="btn btn-primary plan btn-block p-2 shadow rounded-pill {% if plan.name in subscription_plans %}disabled{% endif %}">{% if plan.name in subscription_plans %}Current Plan{% else %}Add to Plan{% endif %}</a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            <!-- <div class="my-5">
-                <h5>Add-Ons</h5>
-                <div class="row flex-wrap" id="saas-addons">
-                    No Active Addons
-                </div>
-            </div> -->
             <div>
-                <div>
-                    <h5>Subscription Details</h5>
+                <div class="my-5">
+                    <h5>Cart</h5>
+                    <hr>
                     <div id="checkout-wrapper">
-                        Loading... Subscription Details
+                        {{ frappe.render_template("templates/includes/upgrade/cart.html", {"cart":current_subscription.plans,"plans":plans,"add_ons":add_ons,"currency":active_plan.currency, "tax_rate":tax_rate}) }}
                     </div>
                     <div class="mt-3 row">
                         <div class="card border col-md-6">
@@ -112,7 +123,10 @@
                                 <span style="white-space: nowrap;" id="change-billing-address-text"></span>
                             </button></h6>
                             <div id="address-wrapper">
-                                Loading... Billing Address
+                                {% set address_template = frappe.get_doc("Address Template",{"is_default":1}) %}
+                                {% for adr in address%}
+                                    {{frappe.render_template(address_template.template,adr)}}
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -135,7 +149,7 @@
                     </div>
                     <div class="mt-3 col-md-4 offset-md-7 text-center">
                         <div class="alert alert-info hide" id="pay-message"></div>
-                        <button class="btn btn-primary" id="payment-button"></button>
+                        <button class="btn btn-primary" id="payment-button">{% if current_subscription and current_subscription.subscription_id %}Update{% else %}Pay Now{% endif %}</button>
                     </div>
                     <!---->
                     <!---->
@@ -145,7 +159,7 @@
                 <!---->
             </div>
         </div>
-    </div>
+    
 </div>
 {% endblock %}
 

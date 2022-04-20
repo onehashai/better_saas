@@ -1,0 +1,62 @@
+<div class="row border-bottom text-muted">
+    <div class="col-md-5 col-xs-4 py-2 px-3">
+        Plan
+    </div>
+    <div class="col-md-2 col-xs-3 py-2 px-3 text-center text-nowrap">
+        Qty
+    </div>
+    <div class="col-4 py-2 px-3  text-nowrap"><span style="float: right;"> Amount </span></div>
+    <div class="col-1"></div>
+</div>
+{% set total = namespace(value=0) %}
+{% for item in cart %}
+{% set plan_details = plans[item.plan] if item.plan in plans else add_ons[item.plan] if item.plan in add_ons else item -%}
+<div class="row">
+    <div class="col-md-5 col-xs-4 py-2 px-3">
+        {{item.plan}}
+    </div>
+    <div class="col-md-2 col-xs-3 py-2 px-3 text-center text-nowrap">
+    <div class="input-group number-widget">
+        <span class="input-group-prepend">
+            <button type="button" class="btn btn-outline-primary btn-number btn-xs" style="" data-type="minus" data-field="{{item.plan}}">-</button>
+        </span>                     
+    <input type="text" name="{{item.plan}}" data-upgrade-type="{{item.plan}}" data-type="{% if plan_details.is_addon %}add_ons{% else %}base_plan{% endif %}" data-current-value="{{plan_details.cost}}" class="form-control input-number text-center" value="{{item.qty}}" id="{{item.plan}}"  min="0" {% if plan_details.is_unlimited %} max="1"{% endif %} data-currency="{{plan_details.currency}}" data-rate="{{plan_details.cost}}" step="1">                     
+    <span class="input-group-append">
+    <button type="button" class="btn btn-outline-primary btn-number btn-xs" data-type="plus" data-field="{{item.plan}}">+</button>                     </span>                 </div>
+       
+    </div>
+    <div class="col-4 py-2 px-3 text-nowrap"><span style="float: right;">{{ frappe.utils.fmt_money(plan_details.cost*item.qty, currency = plan_details.currency, precision = 2) }} </span></div>
+</div><div class="col-1"></div>
+{% set total.value = total.value+plan_details.cost*item.qty %}
+{% endfor %}
+
+<div class="row font-weight-bold border-top">
+    <div class="col-md-5 col-xs-4 py-2 px-3">
+    </div>
+    <div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap">Total</div>
+    <div class="col-4 py-2 px-3 text-right text-nowrap">
+        {{ frappe.utils.fmt_money(total.value, currency = currency, precision = 2) }}
+    </div>
+    <div class="col-1"></div>
+</div>
+{% if tax_rate>0 %}
+<div class="row border-top">
+<div class="col-md-5 col-xs-4 py-2 px-3">
+    </div>
+    <div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap">Tax</div>
+    <div class="col-4 py-2 px-3 text-right text-nowrap">
+        {{ frappe.utils.fmt_money(total.value*tax_rate/100, currency = currency, precision = 2) }}
+    </div>
+    <div class="col-1"></div>
+</div>
+<div class="row font-weight-bold border-top">
+<div class="col-md-5 col-xs-4 py-2 px-3">
+            </div>
+            <div class="col-md-2 col-xs-3 col-xs-3 py-2 px-3 text-right text-nowrap">Grand Total</div>
+            <div class="col-4 py-2 px-3 text-right text-nowrap">
+                {{ frappe.utils.fmt_money((total.value+total.value*tax_rate/100), currency = currency, precision = 2) }}
+            </div>
+            <div class="col-1"></div>
+        </div>
+
+{% endif %}
