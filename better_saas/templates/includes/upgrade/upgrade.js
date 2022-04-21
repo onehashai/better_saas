@@ -5,6 +5,7 @@ var subscription;
 var has_billing_address=false;
 var base_plan="{{active_plan_name}}";
 var currency="{{currency}}";
+var current_cart = {{ cart }};
 var cart = {{ cart }};
 var addons ={};
 var plans = {};
@@ -26,7 +27,11 @@ frappe.ready(function () {
 	$(".plan").on("click",function(){
 		let data = $(this).data();
 		if(data.selected==1){
-			delete cart[data.name]
+			if(data.type=="plan"){
+				cart["base_plan"] = current_cart["base_plan"];
+			} else {
+				delete cart["add_ons"][data.name];
+			}
 			$(this).text("Select");
 			$(this).data("selected",0);
 		}else {
@@ -41,6 +46,27 @@ frappe.ready(function () {
 		}
 		get_cart()
 	});
+	$(".input-number").change(function(){
+		let input = $(this);
+		let plan_type = input.attr("data-type");
+		let fieldName = input.attr("name");
+		let current_value = parseInt(input.val());
+		let max_value = input.attr("max")!=undefined?input.attr("max"):0;
+		let min_value = input.attr("min")!=undefined?input.attr("min"):0;
+		if(max_value>0 && current_value>max_value){
+			input.val(parseInt(max_value))
+		}
+		if(current_value<0){
+			input.val(0)
+		}
+		if(plan_type=="base_plan"){
+			cart["base_plan"]["qty"]=parseInt(input.val());	
+		}else{
+			cart["add_ons"][fieldName]=parseInt(input.val());
+		}
+		get_cart();
+	});
+
 	$('.btn-number').click(function(e){
 		e.preventDefault();
 		let fieldName = $(this).attr('data-field');
@@ -75,12 +101,12 @@ frappe.ready(function () {
 				}
 				
 			}
-			if(plan_type=="base_plan"){
-				cart["base_plan"]["qty"]=parseInt(input.val());	
-			}else{
-				cart["add_ons"][fieldName]=parseInt(input.val());
-			}
-			get_cart();
+			// if(plan_type=="base_plan"){
+			// 	cart["base_plan"]["qty"]=parseInt(input.val());	
+			// }else{
+			// 	cart["add_ons"][fieldName]=parseInt(input.val());
+			// }
+			// get_cart();
 		} else {
 			input.val(0);
 		}
@@ -146,15 +172,35 @@ frappe.ready(function () {
 						}
 						
 					}
-					if(plan_type=="base_plan"){
-						cart["base_plan"]["qty"]=parseInt(input.val());	
-					}else{
-						cart["add_ons"][fieldName]=parseInt(input.val());
-					}
-					get_cart();
+					// if(plan_type=="base_plan"){
+					// 	cart["base_plan"]["qty"]=parseInt(input.val());	
+					// }else{
+					// 	cart["add_ons"][fieldName]=parseInt(input.val());
+					// }
+					// get_cart();
 				} else {
 					input.val(0);
 				}
+			});
+			$(".input-number").change(function(){
+				let input = $(this);
+				let plan_type = input.attr("data-type");
+				let fieldName = input.attr("name");
+				let current_value = parseInt(input.val());
+				let max_value = input.attr("max")!=undefined?input.attr("max"):0;
+				let min_value = input.attr("min")!=undefined?input.attr("min"):0;
+				if(max_value>0 && current_value>max_value){
+					input.val(parseInt(max_value))
+				}
+				if(current_value<0){
+					input.val(0)
+				}
+				if(plan_type=="base_plan"){
+					cart["base_plan"]["qty"]=parseInt(input.val());	
+				}else{
+					cart["add_ons"][fieldName]=parseInt(input.val());
+				}
+				get_cart();
 			});
 		});
 	}
