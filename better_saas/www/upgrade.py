@@ -3,7 +3,7 @@ import frappe
 import json
 import datetime
 from frappe import _
-from frappe.exceptions import ValidationError
+from frappe.exceptions import DoesNotExistError, ValidationError
 from frappe.integrations.doctype.stripe_settings.stripe_settings import get_gateway_controller
 from frappe.integrations.utils import get_payment_gateway_controller
 from frappe.utils import format_date, flt
@@ -31,7 +31,7 @@ def get_context(context):
         subscription_plans = []
         for plan in context.current_subscription.plans:
             subscription_plans.append(plan.plan)
-        context.subscription_plans = subscription_plans if len(subscription_plans)>0 else None
+        context.subscription_plans = subscription_plans if len(subscription_plans)>0 else {}
         context.add_ons = get_all_addons(currency=active_plan.currency)
         context.plans = get_all_plans(currency=active_plan.currency)
         context.address = get_address_by_site(site_name)
@@ -57,7 +57,13 @@ def get_all_plans(currency=None,product="OneCRM"):
 
 @frappe.whitelist(allow_guest=True)
 def get_current_plan(site_name,active_plan_name):
-    doc =  frappe.get_doc("Subscription",{"reference_site":site_name},ignore_permissions=True)
+    args = {"reference_site":site_name}
+    if frappe.db.exists("Subscription",args):
+        doc =  frappe.get_doc("Subscription",{"reference_site":site_name},ignore_permissions=True)
+    else:
+        doc = frappe.new_doc("Subscription")
+        doc.append("plans",{"plan":active_plan_name,"qty":1})
+
     cart={"base_plan":{},"add_ons":{}}
     for plan in doc.plans:
         if plan.plan==active_plan_name:
