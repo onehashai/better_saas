@@ -33,7 +33,7 @@ def get_context(context):
             subscription_plans.append(plan.plan)
         context.subscription_plans = subscription_plans if len(subscription_plans)>0 else {}
         context.add_ons = get_all_addons(currency=active_plan.currency)
-        context.plans = get_all_plans(currency=active_plan.currency)
+        context.plans = get_all_plans(currency=active_plan.currency,current_plan=context.active_plan_name)
         context.address = get_address_by_site(site_name)
         context.geo_country = get_geo_ip_country(
             frappe.local.request_ip) if frappe.local.request_ip else None
@@ -42,7 +42,7 @@ def get_context(context):
         frappe.log_error(e)
     pass
 
-def get_all_plans(currency=None,product="OneCRM"):
+def get_all_plans(currency=None,product="OneCRM",current_plan=None):
     filters = {"show_on_website":1,"is_addon":0}
     filters["product"]=product
     if currency:
@@ -52,7 +52,8 @@ def get_all_plans(currency=None,product="OneCRM"):
     plans_obj ={}
     for plan in plans:
         plans_obj[plan.name]=plan
-
+    if current_plan and current_plan not in plans_obj:
+        plans_obj[current_plan] = frappe.get_doc("Subscription Plan",current_plan,ignore_permissions=True).as_dict()
     return plans_obj    
 
 @frappe.whitelist(allow_guest=True)
@@ -147,7 +148,7 @@ def pay(cart, site_name,email,onehash_partner,currency):
     cart  = json.loads(cart)
     site = get_current_limits(site_name)
     current_subscription,old_cart = get_current_plan(site_name,site.base_plan)
-    plans = get_all_plans()
+    plans = get_all_plans(current_plan=site.base_plan)
     add_ons = get_all_addons()
     
     # new subscription
@@ -330,7 +331,8 @@ def update_site_limits(saas_site,subscription_items):
     pass
 
 def get_base_plan_and_subscription_items(saas_site,subscription_items):
-    plans = get_all_plans()
+    plans = get_all_plans(current_plan=saas_site.get("base_plan"))
+    frappe.log_error(plans,"Subscription Plans")
     add_ons = get_all_addons()
     plans_by_subscription_price_id={}
     base_plan = saas_site.get("base_plan")
