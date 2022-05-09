@@ -237,7 +237,7 @@ def update_subscription(plans,add_ons,cart,site,current_subscription):
 @frappe.whitelist(allow_guest=True)
 def stripe_webhook():
     data = frappe._dict(json.loads(frappe.request.get_data()))
-    if data.type in ['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted']:
+    if data.type in ['customer.subscription.created', 'customer.subscription.updated']:
         try:
             stripe_subscription = frappe._dict(data.get("data", {}).get("object", {}))
             stripe_subscription_items = stripe_subscription.get("items",{}).get("data",[])
@@ -260,19 +260,25 @@ def stripe_webhook():
             saas_site.base_plan=base_plan
             saas_site = update_site_limits(saas_site,subscription_items)
             saas_site.expiry = stripe_subscription.current_period_end
-            
-            subscription = update_site_subscription(saas_site,subscription_items,stripe_subscription)
-            if "status" in subscription:
-                return subscription
-            saas_site.subscription = subscription
+            if data.type not in ['customer.subscription.deleted']:
+                subscription = update_site_subscription(saas_site,subscription_items,stripe_subscription)
+                if "status" in subscription:
+                    return subscription
+                saas_site.subscription = subscription
+            else:
+                subscription = frappe.get_doc("Subscription", saas_site.subscription, ignore_permissions=True)
+                subscription.cancel_at_period_end = True
+                subscription.save(ignore_permissions=True)
+                saas_site.expiry = today()
+                subscription.cancel_subscription()
+
             saas_site.save(ignore_permissions=True)
             apply_new_limits(saas_site.limit_for_users,saas_site.limit_for_emails,saas_site.limit_for_space,saas_site.limit_for_email_group,saas_site.expiry,site_name)
             pass
         except Exception as e:
             log = frappe.log_error(frappe.get_traceback(), "Exception Occured while handling stripe callback")
             return {"status": "Failed", "reason": e}
-        return {"status": "Success"}    
-    
+        return {"status": "Success"} 
     pass
 
 def update_site_subscription(saas_site,subscription_items,stripe_subscription):
