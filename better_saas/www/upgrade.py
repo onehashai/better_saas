@@ -109,10 +109,8 @@ def get_balance(stripe_subscription_id,customer):
     if stripe_subscription_id==None:
         return 0
     stripe_subscription  = stripe.Subscription.retrieve(stripe_subscription_id)
-    frappe.log_error(stripe_subscription)
     stripe_customer = stripe.Customer.retrieve(stripe_subscription.get("customer"))
     balance = -1*stripe_customer.get("balance")/100
-    frappe.log_error(balance,stripe_subscription.get("customer"))
     return balance
 
 
@@ -126,7 +124,6 @@ def get_balance(stripe_subscription_id,customer):
 
 @frappe.whitelist(allow_guest=True)
 def add_balance(amount,currency,site_name):
-    frappe.log_error(amount,"Amount")
     amount = cint(flt(amount)*100)
     item = [{"price_data":{
     "currency":currency,
@@ -136,7 +133,6 @@ def add_balance(amount,currency,site_name):
         }
     },
     'quantity':1}]
-    frappe.log_error(item,"Item")
     saas_user  = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
     address= get_address_by_site(site_name,primary=True)[0]
     checkout_session = stripe.checkout.Session.create(
@@ -237,7 +233,6 @@ def get_payment_gateway_by_plan(plan_name):
 
 def get_gateway_object_by_plan(plan):
     payment_gateway= frappe.get_value("Subscription Plan",plan,"payment_gateway")
-    frappe.log_error(payment_gateway,"Payment Gateway")
     gateway = frappe.get_value("Payment Gateway Account", payment_gateway, "payment_gateway")
     return get_gateway_object(gateway)
     pass
@@ -313,7 +308,6 @@ def get_gateway_object(gateway):
     gateway_controller = frappe.db.get_value("Payment Gateway",gateway, "gateway_controller")
     stripe_controller = frappe.get_doc("Stripe Settings",gateway_controller,ignore_permissions=True)
     stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
-    frappe.log_error(stripe.api_key,"API Key")
     return stripe    
     pass
 
