@@ -1,6 +1,7 @@
 {
 	"js/better-saas-web.min.js": [
 		"public/js/templates/addons-list.html",
-		"public/js/templates/addon-cart.html"
+		"public/js/templates/addon-cart.html",
+		"templates/includes/upgrade/address.html"
 	]
 }

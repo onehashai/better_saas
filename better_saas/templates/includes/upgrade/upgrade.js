@@ -10,6 +10,286 @@ var cart = {{ cart }};
 var addons ={};
 var plans = {};
 var current_subscription={};
+var country_list = {{country}};
+var indian_states = [
+	'Andaman and Nicobar Islands',
+	'Andhra Pradesh',
+	'Arunachal Pradesh',
+	'Assam',
+	'Bihar',
+	'Chandigarh',
+	'Chhattisgarh',
+	'Dadra and Nagar Haveli and Daman and Diu',
+	'Delhi',
+	'Goa',
+	'Gujarat',
+	'Haryana',
+	'Himachal Pradesh',
+	'Jammu and Kashmir',
+	'Jharkhand',
+	'Karnataka',
+	'Kerala',
+	'Ladakh',
+	'Lakshadweep Islands',
+	'Madhya Pradesh',
+	'Maharashtra',
+	'Manipur',
+	'Meghalaya',
+	'Mizoram',
+	'Nagaland',
+	'Odisha',
+	'Other Territory',
+	'Pondicherry',
+	'Punjab',
+	'Rajasthan',
+	'Sikkim',
+	'Tamil Nadu',
+	'Telangana',
+	'Tripura',
+	'Uttar Pradesh',
+	'Uttarakhand',
+	'West Bengal'
+   ];
+   
+var address_dialog= new frappe.ui.Dialog({
+	title: 'Billing Information',
+	fields: [{
+		label: 'Billing Email',
+		fieldname: 'email_id',
+		fieldtype: 'Data',
+		options:'Email',
+		reqd:1
+	},
+	
+		{
+		label: 'Address Line 1',
+		fieldname: 'address_line1',
+		fieldtype: 'Data',
+		reqd: 1
+	},
+	{
+		label: 'Address Line 2',
+		fieldname: 'address_line2',
+		fieldtype: 'Data'
+	},
+	{
+		label: 'City/Town',
+		fieldname: 'city',
+		fieldtype: 'Data',
+		reqd: 1
+	},
+	{
+		label: '',
+		fieldname: 'col-1',
+		fieldtype: 'Column Break',
+		reqd: 1
+	},
+	
+	{
+		label: 'Phone (optional)',
+		fieldname: 'phone',
+		fieldtype: 'Data',
+		options:"Phone"
+	},
+	{
+		label: 'Country',
+		fieldname: 'country',
+		fieldtype: 'Autocomplete',
+		options:country_list || [],
+		reqd:1,
+		onchange: function(){
+			const country =this.get_value();
+			if(country=="India"){
+				address_dialog.set_df_property('state', 'hidden', 1);
+				address_dialog.set_df_property('state_india', 'hidden', 0);
+				address_dialog.set_df_property('state_india', 'reqd', 1);
+			}else{
+				address_dialog.set_df_property('state', 'hidden', 0);
+				address_dialog.set_df_property('state_india', 'hidden', 1);
+				address_dialog.set_df_property('state_india', 'reqd', 0);
+			}
+			console.log("Selected Country",country);
+		}
+	},
+	{
+		label: 'State/Province',
+		fieldname: 'state_india',
+		fieldtype: 'Autocomplete',
+		options:indian_states,
+		hidden:1
+	},
+	{
+		label: 'State/Province',
+		fieldname: 'state',
+		fieldtype: 'Data',
+		hidden:1
+	},
+	{
+		label: 'Postal Code',
+		fieldname: 'pincode',
+		fieldtype: 'Data',
+		reqd: 1
+	},
+	{
+		label: '',
+		fieldname: 'sec_break-1',
+		fieldtype:'Section Break',
+		depends_on:"eval: doc.country == 'India'"
+	},
+	{
+		label: 'Are you registered for GSTIN?',
+		fieldname: 'is_registered',
+		fieldtype: 'Check',
+		depends_on: "eval: doc.country == 'India'"
+	},
+	{
+		label: 'GST State',
+		fieldname: 'gst_state',
+		fieldtype: 'Autocomplete',
+		mandatory_depends_on: "eval:doc.is_registered == 1",
+		depends_on: "eval: doc.is_registered == 1",
+		options: indian_states
+	},
+	{
+		label: "GSTIN",
+		fieldname: "gstin",
+		fieldtype: 'Data',
+		mandatory_depends_on: "eval:doc.is_registered == 1",
+		depends_on: "eval:doc.is_registered == 1",
+	},
+	{
+		label: 'Address Name',
+		fieldname: 'address_name',
+		fieldtype: 'Data',
+		read_only: 1,
+		hidden: 1
+	},
+	{
+		label: 'Address Type',
+		fieldname: 'address_type',
+		fieldtype: 'Data',
+		read_only: 1,
+		hidden: 1,
+		default: "Billing",
+	}
+			]
+});
+
+
+	function add_address(site_name){
+		address_dialog.set_values({"country":"India","email_id":"{{billing_email}}" });
+		address_dialog.set_primary_action(__('Add Address'), function() {
+				var args = address_dialog.get_values();
+				if (args["country"]=="India"){
+					args["state"] = args["state_india"];
+					delete args["state_india"];
+				}
+				args["site_name"]=site_name;
+				frappe.call({
+					args: args,
+					method: "better_saas.www.upgrade.add_address",
+					callback: function (r) {
+						if (r.message) {
+							$("#address-wrapper").html(r.message);
+							address_dialog.hide();
+							frappe.msgprint("Address has been Added");
+						}else{
+							frappe.msgprint("Could not add the address.");
+						}
+					}
+				});
+			});
+			address_dialog.show();
+		}
+		// address_dialog.show();
+
+
+
+function update_address(context){
+	let address_id = $(context).data("name");
+	frappe.call({
+		args: {name:address_id},
+		method: "better_saas.www.upgrade.get_address_by_id",
+		callback: function (r) {
+			if (r.message) {
+				if (r.message.email_id==""){
+					r.message.email_id ="{{billing_email}}";
+				}
+				if(r.message.country=="India"){
+					r.message.state_india = r.message.state;
+					delete r.message.state;
+				}
+				address_dialog.set_values(r.message);
+				address_dialog.set_primary_action(__('Update Address'), function() {
+					var args = address_dialog.get_values();
+					if (args["country"]=="India"){
+						args["state"] = args["state_india"];
+						delete args["state_india"];
+					}
+					args["site_name"]=site_name;
+					args["name"]=address_id;
+					frappe.call({
+						args: args,
+						method: "better_saas.www.upgrade.update_address",
+						callback: function (r) {
+							if (r.message) {
+								$("#address-wrapper").html(r.message);
+								address_dialog.hide();
+								frappe.msgprint("Address has been updated");
+							}else{
+								frappe.msgprint("Could not update the address.");
+							}
+						}
+					});
+				});
+				address_dialog.show();
+			}else{
+				frappe.msgprint("Could not add the address.");
+			}
+		}
+	});
+	console.log("Hurrey Update Address Called");
+}
+
+function add_balance(context){
+	frappe.prompt({
+		label: 'Amount',
+		fieldname: 'amount',
+		fieldtype: 'Currency',
+		options:currency,
+		reqd:1,
+		non_negative:1
+	}, (values) => {
+		frappe.call({
+			args:{"amount":values.amount,"site_name":site_name,"currency":currency},
+			method: "better_saas.www.upgrade.add_balance",
+			callback: function(r){
+				if(r.message.redirect_to){
+					window.location.href=r.message.redirect_to;
+				}else{
+					frappe.msgprint(r.message.message)
+				}
+			}
+		});
+	},__("Enter Amount"),__("Add Balance"));
+}
+
+function mark_address_primary(context){
+	address_id = $(context).data("name");
+	frappe.call({
+		args: {name:address_id,site_name:site_name},
+		method: "better_saas.www.upgrade.mark_address_primary",
+		callback: function (r) {
+			if (r.message) {
+				$("#address-wrapper").html(r.message);
+				frappe.msgprint("Address has been set as Default.");
+			}else{
+				frappe.msgprint("Could not add the address.");
+			}
+		}
+	});
+	console.log("Hurrey Mark address Called");
+}
 
 frappe.ready(function () {
 	let $page = $('#page-upgrade');
