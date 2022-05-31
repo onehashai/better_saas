@@ -1,0 +1,10 @@
+{% for invoice in invoices %}
+<div class="row">
+    <div class="col-4">{{ frappe.format_date(invoice.created|timeformat) }} <a href="{{invoice.hosted_invoice_url}}"><i class="fa fa-external-link"></i></a></div>
+    <div class="col-4"><span class="badge {% if invoice.status=='paid' %}badge-success{% elif invoice.status=='open' %}badge-danger{% else %}badge-secondary{%endif%}">{% if invoice.status=="open" %}Unpaid{% else %}{{ invoice.status |capitalize }}{% endif %}</span></div>
+    <div class="col-4">{{ frappe.format(invoice.amount_due/100, {'fieldtype': 'Currency',"options": invoice.currency|upper}) }}</div>
+</div>
+{% endfor %}
+{% if invoices|count==0 %}
+<div class="row"><div class="col-12">Sorry, No invoice found.</div></div>
+{% endif %}

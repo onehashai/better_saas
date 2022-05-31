@@ -790,7 +790,7 @@ def refund_promocode(promocode):
 			coupon_limit_for_users = stack_limits.limit_for_users
 			coupon_discounted_users = stack_limits.discounted_users
 			# coupon_max_discounted_user_limit = coupon_code.stack_limits[stack_count].max_discounted_user_limit
-			limit_users =  saas_site.limit_for_users - coupon_limit_for_users if coupon_limit_for_users else saas_site.limit_for_users
+			limit_users =  saas_site.limit_for_users - coupon_limit_for_users if saas_site.limit_for_users - coupon_limit_for_users>0 else saas_settings.default_limit_for_users  if coupon_limit_for_users else saas_site.limit_for_users
 			discounted_users =  saas_site.discounted_users - coupon_discounted_users if coupon_discounted_users else saas_site.discounted_users
 			coupon_limit_for_emails = stack_limits.limit_for_emails
 			coupon_limit_for_space = stack_limits.limit_for_space
@@ -813,7 +813,7 @@ def refund_promocode(promocode):
 			
 		## Check for Life-Time Deals (i.e. for 100 years)
 		if is_no_expiry:
-			limit_expiry = saas_settings.ltd_expiry if stack_count>0 else today()
+			limit_expiry = saas_settings.ltd_expiry if stack_count>1 else today()
 		else:
 			limit_expiry = add_days(saas_site.expiry, -1*int(expiry_days)) if expiry_days > 0 else saas_site.expiry
 		

@@ -1,5 +1,10 @@
 {% extends "templates/web.html" %}
-
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({"gtm.start":
+	new Date().getTime(),event:"gtm.js"});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!="dataLayer"?"&l="+l:"";j.async=true;j.src="https://www.googletagmanager.com/gtm.js?id="+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,"script","dataLayer","GTM-W9HWLSJ");</script>
+	<!-- End Google Tag Manager -->
 {% block style %}
 <style>
     {% include "public/css/font-awesome.min.css" %}
@@ -26,6 +31,26 @@
 <!-- {{ for_test }} -->
 <div class="container">
         <div>
+            {% set unpaid_count = namespace(value=0) %}
+            {% for invoice in invoices %}
+                {% if invoice.status not in ["paid","void"] %}
+                    {% if unpaid_count.value==0 %}
+                    <div class="alert border-warning">
+                        {% set unpaid_count.value = unpaid_count.value+1 %}
+                    {% endif %}
+                    <div class="row mb-3">
+                        <div class="col-3">{{ frappe.format_date(invoice.created) }} <a href="{{invoice.hosted_invoice_url}}"><i class="fa fa-external-link"></i></a></div>
+                        <div class="col-3"><span class="badge {% if invoice.status=='paid' %}badge-success{% elif invoice.status=='open' %}badge-danger{% else %}badge-secondary{%endif%}">{% if invoice.status=="open" %}Unpaid{% else %}{{ invoice.status |capitalize }}{% endif %}</span></div>
+                        <div class="col-3">{{ frappe.format(invoice.amount_due/100, {'fieldtype': 'Currency',"options": invoice.currency|upper}) }}</div>
+                        <div class="col-3"><a class="btn btn-outline-primary btn-xs" href="{{invoice.hosted_invoice_url}}">Pay Now</a></div>
+                    </div>
+                {% endif %}
+                
+                {% endfor %}
+            {% if unpaid_count.value>0 %}
+                </div>
+            {% endif %}
+
             <div role="alert" class="alert border-primary" id="site_info">
                 <div class="row">
                     <div class="col-md-4 col-xs-12 text-center"><strong>{{site.name}}</strong><br>
@@ -44,9 +69,10 @@
                        </small>
                     </div>
                     <div class="col-md-4 col-xs-12 text-center">{% if current_subscription %}
-                        <button type="button" class="btn btn-xs btn-outline-primary border-primary" id="change-plan-button">
-                            Change Plan
-                        </button>
+                        <!-- <small>Current Balance: {{ frappe.format(balance, {"fieldtype":"Currency","Options":currency})}}
+                        <button id="add-balance" type="button" title="Add Balance" class="btn btn-xs btn-outline-primary border-primary" id="Add Balance" onclick="javascript:add_balance(this);">
+                            <i class="fa fa-plus"></i>&nbsp;Add
+                        </button></small> -->
                         {% endif %}</div>
                 </div>
             </div>
@@ -118,15 +144,12 @@
                         <div class="card border col-md-6">
                             <div class="card-body">
                         <div class="" style="font-size: smaller;">
-                            <h6>Billing Address &nbsp; <button class="btn btn-outline-primary btn-sm pull-right" 
-                                id="change-billing-address-link"><i class="fa fa-address-card">&nbsp;</i>
-                                <span style="white-space: nowrap;" id="change-billing-address-text"></span>
+                            <h6>Billing Address &nbsp; <button class="btn btn-primary btn-xs pull-right" onclick="javascript:add_address('{{site.name}}');" style="margin-right:15px;font-size:smaller;" 
+                                id="change-billing-address-link"><i class="fa fa-plus"></i>&nbsp;Add
                             </button></h6>
-                            <div id="address-wrapper">
-                                {% set address_template = frappe.get_doc("Address Template",{"is_default":1}) %}
-                                {% for adr in address%}
-                                    {{frappe.render_template(address_template.template,adr)}}
-                                {% endfor %}
+                            <hr>
+                            <div id="address-wrapper" style="max-height:200px; overflow: scroll;">
+                                {{frappe.render_template("templates/includes/upgrade/address.html",{"address":address}) }}
                             </div>
                         </div>
                     </div>
@@ -158,12 +181,25 @@
                 <!---->
                 <!---->
             </div>
+            <div class="my-5">
+                <h5>Invoice History</h5>
+                    <hr>
+                    <div id="checkout-wrapper">
+                        {{ frappe.render_template("templates/includes/upgrade/invoices.html", {"invoices":invoices}) }}
+                    </div>
+                    
+            </div>
         </div>
     
 </div>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9HWLSJ"
+	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<!-- End Google Tag Manager (noscript) -->
 {% endblock %}
 
 {% block script %}
+<script src="https://js.stripe.com/v3/"></script>
 <script type="text/javascript" src="/assets/js/control.min.js"></script>
 <script type="text/javascript" src="/assets/js/dialog.min.js"></script>
 <script>{% include "templates/includes/upgrade/upgrade.js" %}</script>
