@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 import frappe
 import json
-import datetime
+from datetime import datetime
 from frappe import _
 from frappe.exceptions import DoesNotExistError, ValidationError
 from frappe.integrations.doctype.stripe_settings.stripe_settings import get_gateway_controller
 from frappe.integrations.utils import get_payment_gateway_controller
 from frappe.utils import format_date, flt
-from frappe.utils.data import (ceil, global_date_format, getdate, flt, today)
+from frappe.utils.data import (ceil, global_date_format, getdate, flt, today,cint)
 from frappe.sessions import get_geo_ip_country
 from better_saas.better_saas.doctype.saas_user.saas_user import apply_new_limits, disable_enable_site
 from erpnext.accounts.doctype.subscription.subscription import  get_subscription_updates
@@ -15,26 +15,36 @@ from erpnext.erpnext_integrations.stripe_integration import stripe_cancel_subscr
 from erpnext.crm.doctype.lead.lead import make_customer
 
 no_cache = 1
+import stripe
+# stripe.api_key = "sk_test_51Hf3MFCwmuPVDwVyVlhlRK2GXQPLS3tWpKSZbfCKg0FQmwjOnFTadwz5xTtA8330XzC4TC1SxLHrQwhqEnnFyRG700VxEhABqA"
 
 def get_context(context):
     try:
         context.no_cache = 1
         args = frappe.request.args
+        frappe.local.jenv.filters["timeformat"] = datetime.fromtimestamp
         site_name = args["site"] if "site" in args else ""
         context.site = get_current_limits(site_name)
         active_plan = frappe.get_doc("Subscription Plan",context.site.base_plan,ignore_permissions=True)
         context.active_plan = active_plan
         context.active_plan_name = context.site.base_plan
+        # get_gateway_object_by_plan(context.active_plan_name)
         context.currency = active_plan.currency
+        context.country = frappe.get_all("Country",pluck="name")
         context.tax_rate = get_tax_rate(active_plan.sales_taxes_and_charges_template)
         context.current_subscription,context.cart = get_current_plan(site_name,context.active_plan_name)
+        context.balance=0 #get_balance(context.current_subscription.get("subscription_id"),context.site.get("customer"))
         subscription_plans = []
+        saas_user = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
+        context.billing_email = saas_user.email
+        context.customer_name = saas_user.company_name
         for plan in context.current_subscription.plans:
             subscription_plans.append(plan.plan)
         context.subscription_plans = subscription_plans if len(subscription_plans)>0 else {}
         context.add_ons = get_all_addons(currency=active_plan.currency)
         context.plans = get_all_plans(currency=active_plan.currency,current_plan=context.active_plan_name)
         context.address = get_address_by_site(site_name)
+        context.invoices = get_stripe_subscription_invoice(context.current_subscription.get("subscription_id",None),get_payment_gateway_by_plan(context.active_plan_name))
         context.geo_country = get_geo_ip_country(
             frappe.local.request_ip) if frappe.local.request_ip else None
     except Exception as e:
@@ -58,9 +68,9 @@ def get_all_plans(currency=None,product="OneCRM",current_plan=None):
 
 @frappe.whitelist(allow_guest=True)
 def get_current_plan(site_name,active_plan_name):
-    args = {"reference_site":site_name}
+    args = {"reference_site":site_name,"status":["!=","Cancelled"]}
     if frappe.db.exists("Subscription",args):
-        doc =  frappe.get_doc("Subscription",{"reference_site":site_name},ignore_permissions=True)
+        doc =  frappe.get_doc("Subscription",{"reference_site":site_name,"status":["!=","Cancelled"]},ignore_permissions=True)
     else:
         doc = frappe.new_doc("Subscription")
         doc.append("plans",{"plan":active_plan_name,"qty":1})
@@ -72,6 +82,9 @@ def get_current_plan(site_name,active_plan_name):
             cart["base_plan"]["qty"]=plan.qty
         else:
             cart["add_ons"][plan.plan]=plan.qty
+
+    if not "plan" in cart["base_plan"]:
+        cart["base_plan"]["plan"] = active_plan_name 
     return doc,cart
     pass
 
@@ -90,16 +103,70 @@ def get_all_addons(currency=None,product="OneCRM"):
         
     return plans_obj    
 
+def get_balance(stripe_subscription_id,customer):
+    if customer==None:
+        return 0
+    if stripe_subscription_id==None:
+        return 0
+    stripe_subscription  = stripe.Subscription.retrieve(stripe_subscription_id)
+    frappe.log_error(stripe_subscription)
+    stripe_customer = stripe.Customer.retrieve(stripe_subscription.get("customer"))
+    balance = -1*stripe_customer.get("balance")/100
+    frappe.log_error(balance,stripe_subscription.get("customer"))
+    return balance
 
-def get_address(customer):
-    return frappe.get_all("Address", filters={"link_name": customer},fields="*")
+
+#     response = stripe.Customer.create_balance_transaction(
+#   "cus_LfTNvmoW4cpGFN",
+#   amount=500,
+#   currency="inr",
+# )
+#     return response.get("ending_balance")
+    # pass
+
+@frappe.whitelist(allow_guest=True)
+def add_balance(amount,currency,site_name):
+    frappe.log_error(amount,"Amount")
+    amount = cint(flt(amount)*100)
+    item = [{"price_data":{
+    "currency":currency,
+        "unit_amount": amount,
+        "product_data":{
+        "name":"Add balance"
+        }
+    },
+    'quantity':1}]
+    frappe.log_error(item,"Item")
+    saas_user  = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
+    address= get_address_by_site(site_name,primary=True)[0]
+    checkout_session = stripe.checkout.Session.create(
+    customer_email = saas_user.email,
+    success_url= frappe.utils.get_url("https://{0}/upgrade?site={1}&email={2}&full_name={3}&country={4}".format(frappe.conf.get("master_site_domain","app.onehash.ai"),site_name,saas_user.email,saas_user.first_name,saas_user.country)+"?subscription_status=success" or "https://app.onehash.ai/"),
+    cancel_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name)+"?subscription_status=cancel" or "https://app.onehash.ai/"),
+    mode="payment",             
+    payment_method_types=["card"],
+    line_items=item,
+    metadata = {"site_name":site_name}
+    )
+    return checkout_session
     pass
 
-def get_address_by_site(site_name):
+def get_address(customer,primary=False):
+    filters={"link_name": customer}
+    if primary:
+        filters["is_primary_address"]=1
+    order_by = "is_primary_address DESC"
+    return frappe.get_all("Address", filters=filters,fields="*",order_by=order_by)
+    pass
+
+def get_address_by_site(site_name,primary=False):
     customer = get_customer_by_site(site_name)
     if not customer:
         customer = get_lead_by_site(site_name)
-    return get_address(customer)
+    if not customer:
+        registered_email = frappe.get_value("Saas User",{"linked_saas_site":site_name},"email")
+        customer = frappe.get_value("Lead",{"email_id":registered_email},"name")
+    return get_address(customer,primary)
 
 def get_customer_by_site(site_name):
     return frappe.db.get_value("Saas Site",site_name,"customer")
@@ -160,9 +227,21 @@ def pay(cart, site_name,email,onehash_partner,currency):
             return {"redirect_to":"","message":"Something went wrong, Please try after sometime."}
         pass
     else:
-        response= update_subscription(plans,add_ons,cart,site,current_subscription)
-        return {"redirect_to":"","message":"Subscription Updated Successfully."}
+        response,redirect_url= update_subscription(plans,add_ons,cart,site,current_subscription)
+        return {"redirect_to":redirect_url,"message":"Subscription Updated Successfully." if redirect_url=="" else "Please complete the payment."}
         pass
+
+def get_payment_gateway_by_plan(plan_name):
+    payment_gateway = frappe.db.get_value("Subscription Plan",plan_name,"payment_gateway")
+    return frappe.get_value("Payment Gateway Account",payment_gateway,"payment_gateway")
+
+def get_gateway_object_by_plan(plan):
+    payment_gateway= frappe.get_value("Subscription Plan",plan,"payment_gateway")
+    frappe.log_error(payment_gateway,"Payment Gateway")
+    gateway = frappe.get_value("Payment Gateway Account", payment_gateway, "payment_gateway")
+    return get_gateway_object(gateway)
+    pass
+
 
 def get_stripe_items(plans,add_ons,cart,subscription_id=None):
     cart_object = []
@@ -202,16 +281,29 @@ def create_subscription(plans,add_ons,cart,site,current_subscription=None):
     stripe = get_gateway_object(gateway)
     site_name = site.name
     saas_user  = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
+    address= get_address_by_site(site_name,primary=True)[0]
     checkout_session = stripe.checkout.Session.create(
-      success_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/"),
-      cancel_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name) or "https://app.onehash.ai/"),
+    customer={
+                        "name":saas_user.company_name,
+                        "email":saas_user.email,
+                        "metadata":{"site_name":site_name},
+                        "address":{
+                            "city":address.get("city"),
+                            # "country":address.get("country"),
+                            "line1":address.get("address_line1"),
+                            "line2":address.get("address_line2"),
+                            "postal_code":address.get("postal_code"),
+                            "state":address.get("state")
+                        }
+                    },
+      success_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name)+"?subscription_status=success" or "https://app.onehash.ai/"),
+      cancel_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name)+"?subscription_status=cancel" or "https://app.onehash.ai/"),
       mode="subscription",             
       payment_method_types=["card"],
       billing_address_collection='required',
       line_items=items,
       metadata = {"site_name":site.name},
-      subscription_data = {"metadata":{"site_name":site.name}},
-      customer_email = saas_user.email
+      subscription_data = {"metadata":{"site_name":site.name}}
     )
     return checkout_session
     pass
@@ -221,6 +313,7 @@ def get_gateway_object(gateway):
     gateway_controller = frappe.db.get_value("Payment Gateway",gateway, "gateway_controller")
     stripe_controller = frappe.get_doc("Stripe Settings",gateway_controller,ignore_permissions=True)
     stripe.api_key = stripe_controller.get_password(fieldname="secret_key", raise_exception=False)
+    frappe.log_error(stripe.api_key,"API Key")
     return stripe    
     pass
 
@@ -230,17 +323,31 @@ def update_subscription(plans,add_ons,cart,site,current_subscription):
         current_subscription_items[plan.plan]=plan
     items,gateway = get_stripe_items(plans,add_ons,cart,current_subscription.subscription_id)
     stripe = get_gateway_object(gateway)
+    redirect_url = ""
     response = stripe.Subscription.modify(current_subscription.subscription_id,items=items,payment_behavior="allow_incomplete",proration_behavior="always_invoice",payment_settings={"payment_method_options":{"card":{"mandate_options":{"amount":10000,"amount_type":"maximum"}}}})
-    return response
+    if response.get("status")!="active":
+        invoice = stripe.Invoice.retrieve(response.get("latest_invoice"))
+        pi = stripe.PaymentIntent.confirm(invoice.get("payment_intent"),return_url="https://staging.onehash.ai/upgrade?site="+site.name+"&email=None&full_name=Administrator")
+        next_action = pi.get("next_action")
+        if next_action.get("type")=="redirect_to_url":
+            redirect_url = next_action.get("redirect_to_url").get("url")
+        elif next_action.get("type")=="use_stripe_sdk":
+            redirect_url = next_action.get("use_stripe_sdk").get("stripe_js")
+        else:
+            redirect_url = invoice.get("hosted_invoice_url")
+    return response,redirect_url
     pass
 
 @frappe.whitelist(allow_guest=True)
 def stripe_webhook():
     data = frappe._dict(json.loads(frappe.request.get_data()))
-    if data.type in ['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted']:
+    if data.get("type") in ['customer.subscription.created', 'customer.subscription.updated']:
         try:
             stripe_subscription = frappe._dict(data.get("data", {}).get("object", {}))
             stripe_subscription_items = stripe_subscription.get("items",{}).get("data",[])
+            if stripe_subscription.get("status")!="active":
+                return {"success":True,"response":"Request rejected due to invalid status"+stripe_subscription.get("status")}
+                pass
             metadata = stripe_subscription.get("metadata",{})
             product = metadata.get("website","OneHash")
             if product=="OneChat":
@@ -249,8 +356,8 @@ def stripe_webhook():
             if not site_name:
                 frappe.throw(_("Site Name is required"),ValidationError)
             
-            stripe_subscription.current_period_start = datetime.datetime.fromtimestamp(stripe_subscription.current_period_start).strftime("%Y-%m-%d")
-            stripe_subscription.current_period_end = datetime.datetime.fromtimestamp(stripe_subscription.current_period_end).strftime("%Y-%m-%d")
+            stripe_subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start).strftime("%Y-%m-%d")
+            stripe_subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end).strftime("%Y-%m-%d")
             
             saas_site = get_current_limits(site_name)
             if not saas_site.customer:
@@ -260,19 +367,25 @@ def stripe_webhook():
             saas_site.base_plan=base_plan
             saas_site = update_site_limits(saas_site,subscription_items)
             saas_site.expiry = stripe_subscription.current_period_end
-            
-            subscription = update_site_subscription(saas_site,subscription_items,stripe_subscription)
-            if "status" in subscription:
-                return subscription
-            saas_site.subscription = subscription
+            if data.type not in ['customer.subscription.deleted']:
+                subscription = update_site_subscription(saas_site,subscription_items,stripe_subscription)
+                if "status" in subscription:
+                    return subscription
+                saas_site.subscription = subscription
+            else:
+                subscription = frappe.get_doc("Subscription", saas_site.subscription, ignore_permissions=True)
+                subscription.cancel_at_period_end = True
+                subscription.save(ignore_permissions=True)
+                saas_site.expiry = today()
+                subscription.cancel_subscription()
+
             saas_site.save(ignore_permissions=True)
             apply_new_limits(saas_site.limit_for_users,saas_site.limit_for_emails,saas_site.limit_for_space,saas_site.limit_for_email_group,saas_site.expiry,site_name)
             pass
         except Exception as e:
             log = frappe.log_error(frappe.get_traceback(), "Exception Occured while handling stripe callback")
             return {"status": "Failed", "reason": e}
-        return {"status": "Success"}    
-    
+        return {"status": "Success"} 
     pass
 
 def update_site_subscription(saas_site,subscription_items,stripe_subscription):
@@ -332,7 +445,6 @@ def update_site_limits(saas_site,subscription_items):
 
 def get_base_plan_and_subscription_items(saas_site,subscription_items):
     plans = get_all_plans(current_plan=saas_site.get("base_plan"))
-    frappe.log_error(plans,"Subscription Plans")
     add_ons = get_all_addons()
     plans_by_subscription_price_id={}
     base_plan = saas_site.get("base_plan")
@@ -709,6 +821,14 @@ def get_redirect_message(title=_("Subscription Updated"),message=_("Your Subscri
 </script>'''
     return {"redirect_to": frappe.redirect_to_message(_(title), _(message+redirect_html),context={"primary_action":primary_action,"primary_label":primary_label,"title":title})}
 
+def get_stripe_subscription_invoice(stripe_subscription_id,gateway):
+    if not stripe_subscription_id:
+        return []
+    stripe = get_gateway_object(gateway)
+    return stripe.Invoice.list(subscription=stripe_subscription_id)
+    pass
+
+
 @frappe.whitelist(allow_guest=True)
 def verify_system_user(site_name, email):
     if email in ["None","Administrator"]:
@@ -723,3 +843,71 @@ def verify_system_user(site_name, email):
     except:
         frappe.log_error('Authorization Failed, Please contact <a href="mailto:support@onehash.ai">support@onehash.ai</a> or your site Administrator.')
         return False
+
+def get_customer_or_lead_by_site(site_name,billing_email=None):
+    customer = get_customer_by_site(site_name)
+    if(customer):
+        return customer,"Customer"
+    customer = get_lead_by_site(site_name)
+    if customer:
+        return customer,"Lead"
+    if billing_email:
+        lead_name = frappe.get_value("Lead",{"email_id":billing_email},name)
+        return lead_name,"Lead"
+    return None,None    
+    pass
+
+@frappe.whitelist(allow_guest=True)
+def add_address(site_name,**kwargs):
+    dn,dt = get_customer_or_lead_by_site(site_name,kwargs.get("email_id"))
+    doc = frappe.get_doc({
+        "doctype":"Address",
+        "address_line1":kwargs.get("address_line1"),
+        "address_line2":kwargs.get("address_line2"),
+        "city":kwargs.get("city"),
+        "state":kwargs.get("state"),
+        "country":kwargs.get("country"),
+        "pincode":kwargs.get("pincode"),
+        "email_id":kwargs.get("email_id"),
+        "phone":kwargs.get("phone"),
+        "gst_state":kwargs.get("gst_state") or "",
+        "gstin":kwargs.get("gstin") or "",
+        "is_primary_address":True
+    })
+    doc.append("links",{"link_doctype":dt,"link_name":dn})
+    doc.save(ignore_permissions=True)
+    address = get_address_by_site(kwargs.get("site_name"))
+    return frappe.render_template("templates/includes/upgrade/address.html",{"address":address})
+    pass
+
+@frappe.whitelist(allow_guest=True)
+def mark_address_primary(name,site_name):
+    doc =frappe.get_doc("Address",name,ignore_permissions=True)
+    doc.is_primary_address = True
+    doc.save(ignore_permissions=True)
+    address = get_address_by_site(site_name)
+    return frappe.render_template("templates/includes/upgrade/address.html",{"address":address})
+    pass
+
+@frappe.whitelist(allow_guest=True)
+def update_address(name,**kwargs):
+    doc =frappe.get_doc("Address",name,ignore_permissions=True)
+    doc.address_line1=kwargs.get("address_line1")
+    doc.address_line2 = kwargs.get("address_line2")
+    doc.city=kwargs.get("city")
+    doc.state=kwargs.get("state")
+    doc.country=kwargs.get("country")
+    doc.pincode=kwargs.get("pincode")
+    doc.email_id=kwargs.get("email_id")
+    doc.phone=kwargs.get("phone")
+    doc.gst_state=kwargs.get("gst_state") or ""
+    doc.gstin=kwargs.get("gstin") or ""
+    doc.save(ignore_permissions=True)
+    # return doc
+    address = get_address_by_site(kwargs.get("site_name"))
+    return frappe.render_template("templates/includes/upgrade/address.html",{"address":address})
+    pass
+
+@frappe.whitelist(allow_guest=True)
+def get_address_by_id(name):
+    return frappe.get_doc("Address",name,ignore_permissions=True)
