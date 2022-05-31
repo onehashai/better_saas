@@ -41,7 +41,7 @@
                     <div class="row mb-3">
                         <div class="col-3">{{ frappe.format_date(invoice.created|timeformat) }} <a href="{{invoice.hosted_invoice_url}}"><i class="fa fa-external-link"></i></a></div>
                         <div class="col-3"><span class="badge {% if invoice.status=='paid' %}badge-success{% elif invoice.status=='open' %}badge-danger{% else %}badge-secondary{%endif%}">{% if invoice.status=="open" %}Unpaid{% else %}{{ invoice.status |capitalize }}{% endif %}</span></div>
-                        <div class="col-3">{{ frappe.format(invoice.amount_due/100, {'fieldtype': 'Currency',"options": invoice.currency|upper}) }}</div>
+                        <div class="col-3">{{ frappe.format(invoice.amount_due/100, {'fieldtype': 'Currency',"options": invoice.currency|upper}, currency=invoice.currency|upper) }}</div>
                         <div class="col-3"><a class="btn btn-outline-primary btn-xs" href="{{invoice.hosted_invoice_url}}">Pay Now</a></div>
                     </div>
                 {% endif %}
