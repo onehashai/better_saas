@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from erpnext.crm.doctype.lead.lead import make_customer
 import frappe
 from frappe import _
+from frappe.exceptions import PageDoesNotExistError
 from frappe.utils import cint, fmt_money
 from frappe.utils import today
 import json
@@ -17,6 +18,7 @@ expected_keys = ('amount', 'title', 'description',
 	'payer_name', 'payer_email', 'order_id', 'currency','reference_docname','reference_doctype')
 
 def get_context(context):
+    raise PageDoesNotExistError
     context.no_cache = 1
     try:
         args = frappe.request.args.to_dict() or {}
