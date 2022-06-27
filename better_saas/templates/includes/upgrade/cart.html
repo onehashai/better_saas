@@ -10,7 +10,7 @@
 </div>
 {% set total = namespace(value=0) %}
 {% for item in cart %}
-{% set plan_details = plans[item.plan] if item.plan in plans else add_ons[item.plan] if item.plan in add_ons else item -%}
+{% set plan_details = plans[item.plan] if item.plan in plans else add_ons[item.plan] if item.plan in add_ons else frappe.get_doc("Subscription Plan",item.plan)  -%}
 <div class="row">
     <div class="col-md-5 col-xs-4 py-2 px-3">
         {{item.plan}}
