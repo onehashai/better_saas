@@ -53,7 +53,15 @@ var indian_states = [
    
 var address_dialog= new frappe.ui.Dialog({
 	title: 'Billing Information',
-	fields: [{
+	fields: [
+		{
+			label: 'Address Title',
+			fieldname: 'address_title',
+			fieldtype: 'Data',
+			options:'',
+			reqd:1
+		},
+		{
 		label: 'Billing Email',
 		fieldname: 'email_id',
 		fieldtype: 'Data',
@@ -393,21 +401,29 @@ frappe.ready(function () {
 	});
 
 	$("#payment-button").click(function(){
-		frappe.call({"method":"better_saas.www.upgrade.pay", args:{
-			cart: cart,
-			site_name: site_name,
-			email: email,
-			currency:currency,
-			onehash_partner: onehash_partner
-		},freeze:true,freeze_message:"Updating subscription"}).then(r=>{
-			if(r.message){
-				if(r.message.redirect_to){
-					window.location.href=r.message.redirect_to;
-				}else{
-					frappe.msgprint(r.message.message)
-				}
-			} 
-		});
+		function pay(){
+				frappe.call({"method":"better_saas.www.upgrade.pay", args:{
+					cart: cart,
+					site_name: site_name,
+					email: email,
+					currency:currency,
+					onehash_partner: onehash_partner
+				},freeze:true,freeze_message:"Updating subscription"}).then(r=>{
+					if(r.message){
+						if(r.message.redirect_to){
+							window.location.href=r.message.redirect_to;
+						}else{
+							frappe.msgprint(r.message.message)
+						}
+					} 
+				});
+			}
+		if($(this).text()=="Update" && currency=="INR"){
+			frappe.warn(__("Confirm"),__("On Proceeding it will cancel existing subscription and create a new subscription.\n Please Do not leave in between."),pay,__("Proceed"));
+		}else{
+			pay()
+		}
+		
 	});
 
 	function get_cart(){

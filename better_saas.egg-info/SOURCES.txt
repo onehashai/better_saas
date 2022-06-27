@@ -140,9 +140,12 @@ better_saas/templates/includes/signup/frappe-theme.css
 better_saas/templates/includes/signup/signup.css
 better_saas/templates/includes/signup/signup.js
 better_saas/templates/includes/upgrade/add-on.js
-better_saas/templates/includes/upgrade/addons-list.html
+better_saas/templates/includes/upgrade/address.html
+better_saas/templates/includes/upgrade/cart.html
+better_saas/templates/includes/upgrade/invoices.html
 better_saas/templates/includes/upgrade/site_expiry.html
 better_saas/templates/includes/upgrade/upgrade.js
+better_saas/templates/includes/upgrade/upgrade_old.js
 better_saas/templates/pages/__init__.py
 better_saas/templates/pages/__pycache__/__init__.py
 better_saas/www/__init__.py
@@ -163,4 +166,6 @@ better_saas/www/signup.js
 better_saas/www/signup.py
 better_saas/www/upgrade.html
 better_saas/www/upgrade.py
+better_saas/www/upgrade_old.html
+better_saas/www/upgrade_old.py
 better_saas/www/__pycache__/__init__.py
