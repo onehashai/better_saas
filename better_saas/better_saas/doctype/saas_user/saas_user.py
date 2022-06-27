@@ -473,7 +473,7 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_
 	return final_result
 
 def create_lead(saas_user):
-	frappe.set_user("Administrator")
+	#frappe.set_user("Administrator")
 	existing_lead = frappe.get_value("Lead",filters={"email_id":saas_user.email})
 	if(saas_user.promocode):
 		customer = frappe.get_value("Coupon Code",{"coupon_code":saas_user.promocode},"customer")
@@ -481,7 +481,7 @@ def create_lead(saas_user):
 			existing_lead = frappe.get_value("Customer",customer,"lead_name")
 			
 	if(existing_lead):
-		lead_doc = frappe.get_doc("Lead",existing_lead)
+		lead_doc = frappe.get_doc("Lead",existing_lead,ignore_permissions=True)
 		if(lead_doc.contact_date and lead_doc.contact_date.strftime("%Y-%m-%d %H:%M:%S.%f") < frappe.utils.now()):
 			lead_doc.contact_date = ""
 

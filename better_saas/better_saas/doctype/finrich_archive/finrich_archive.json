@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "naming_series:",
  "creation": "2021-02-10 21:18:39.169081",
  "doctype": "DocType",
@@ -55,11 +56,10 @@
   },
   {
    "fieldname": "reference_docname",
-   "fieldtype": "Dynamic Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Reference Name",
-   "options": "reference_doctype",
    "read_only": 1
   },
   {
@@ -91,9 +91,8 @@
   },
   {
    "fieldname": "reference_site",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Reference Site",
-   "options": "Saas Site",
    "read_only": 1
   },
   {
@@ -117,8 +116,9 @@
   }
  ],
  "in_create": 1,
- "modified": "2021-02-22 11:40:03.405101",
- "modified_by": "narendra@onehash.ai",
+ "links": [],
+ "modified": "2022-06-13 16:14:26.052430",
+ "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "FinRich Archive",
  "owner": "Administrator",

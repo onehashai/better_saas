@@ -44,7 +44,7 @@ def get_context(context):
         context.add_ons = get_all_addons(currency=active_plan.currency)
         context.plans = get_all_plans(currency=active_plan.currency,current_plan=context.active_plan_name)
         context.address = get_address_by_site(site_name)
-        context.invoices = get_stripe_subscription_invoice(context.current_subscription.get("subscription_id",None),get_payment_gateway_by_plan(context.active_plan_name))
+        context.invoices = get_stripe_subscription_invoice(context.billing_email,get_payment_gateway_by_plan(context.active_plan_name))
         context.geo_country = get_geo_ip_country(
             frappe.local.request_ip) if frappe.local.request_ip else None
     except Exception as e:
@@ -154,8 +154,10 @@ def get_address(customer,primary=False):
     order_by = "is_primary_address DESC"
     return frappe.get_all("Address", filters=filters,fields="*",order_by=order_by)
     pass
-
+@frappe.whitelist(allow_guest=True)
 def get_address_by_site(site_name,primary=False):
+    if not site_name:
+        raise ValidationError
     customer = get_customer_by_site(site_name)
     if not customer:
         customer = get_lead_by_site(site_name)
@@ -259,6 +261,8 @@ def get_stripe_items(plans,add_ons,cart,subscription_id=None):
         
     for plan,qty in cart["add_ons"].items():
         price_id = add_ons[plan].product_price_id
+        if qty==0:
+            continue
         item_object = {"price":price_id,"quantity":qty,"tax_rates":[add_ons[plan].pg_tax_id] if add_ons[plan].pg_tax_id else []}
         if price_id in stripe_subscription_items:
             item_object["id"]=stripe_subscription_items[price_id].get("id")
@@ -271,31 +275,40 @@ def get_stripe_items(plans,add_ons,cart,subscription_id=None):
     return cart_object,gateway
     pass
 
-def create_subscription(plans,add_ons,cart,site,current_subscription=None):
+def create_subscription(plans,add_ons,cart,site,current_subscription=None,is_update=False):
     items,gateway = get_stripe_items(plans,add_ons,cart)
     stripe = get_gateway_object(gateway)
     site_name = site.name
     saas_user  = frappe.get_doc("Saas User",{"linked_saas_site":site_name},ignore_permissions=True)
-    address= get_address_by_site(site_name,primary=True)[0]
-    checkout_session = stripe.checkout.Session.create(
-    customer={
+    address_list= get_address_by_site(site_name,primary=True)
+    if len(address_list)>0:
+        address = address_list[0]
+    else:
+        frappe.throw(_("Address is missing"),ValidationError)
+    
+    # Get Customer based on email from stripe
+    customer_object={
                         "name":saas_user.company_name,
                         "email":saas_user.email,
                         "metadata":{"site_name":site_name},
                         "address":{
                             "city":address.get("city"),
-                            # "country":address.get("country"),
+                            "country":frappe.get_value("Country",address.get("country"),"code").upper(),
                             "line1":address.get("address_line1"),
                             "line2":address.get("address_line2"),
                             "postal_code":address.get("postal_code"),
                             "state":address.get("state")
                         }
-                    },
-      success_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name)+"?subscription_status=success" or "https://app.onehash.ai/"),
+                    }
+    
+    customer_list = stripe.Customer.list(email=saas_user.email,limit=1)
+    customer  = customer_list.get("data")[0].get("id") if len(customer_list.get("data"))>0 else stripe.Customer.create(**customer_object).get("id")
+    success_url = frappe.utils.get_url("https://{0}/app/usage-info".format(site_name)+("?subscription_status=success" if is_update else "") or "https://app.onehash.ai/")
+    checkout_session = stripe.checkout.Session.create(
+    customer=customer,
+      success_url= success_url,
       cancel_url= frappe.utils.get_url("https://{0}/app/usage-info".format(site_name)+"?subscription_status=cancel" or "https://app.onehash.ai/"),
       mode="subscription",             
-      payment_method_types=["card"],
-      billing_address_collection='required',
       line_items=items,
       metadata = {"site_name":site.name},
       subscription_data = {"metadata":{"site_name":site.name}}
@@ -315,10 +328,21 @@ def update_subscription(plans,add_ons,cart,site,current_subscription):
     current_subscription_items = {}
     for plan in current_subscription.plans:
         current_subscription_items[plan.plan]=plan
+    
     items,gateway = get_stripe_items(plans,add_ons,cart,current_subscription.subscription_id)
     stripe = get_gateway_object(gateway)
     redirect_url = ""
-    response = stripe.Subscription.modify(current_subscription.subscription_id,items=items,payment_behavior="allow_incomplete",proration_behavior="always_invoice",payment_settings={"payment_method_options":{"card":{"mandate_options":{"amount":10000,"amount_type":"maximum"}}}})
+    
+    if plans[cart["base_plan"]["plan"]].currency=="INR":
+        try:
+            cancel_subscription = stripe.Subscription.delete(current_subscription.subscription_id,prorate=True)
+        except Exception as e:
+            pass
+        response = create_subscription(plans,add_ons,cart,site,is_update=True)
+        return response,response.url
+        
+    # sample mandate update request payment_settings={"payment_method_options":{"card":{"mandate_options":{"amount":10000,"amount_type":"maximum"}}}}
+    response = stripe.Subscription.modify(current_subscription.subscription_id,items=items,payment_behavior="allow_incomplete",proration_behavior="always_invoice")
     if response.get("status")!="active":
         invoice = stripe.Invoice.retrieve(response.get("latest_invoice"))
         pi = stripe.PaymentIntent.confirm(invoice.get("payment_intent"),return_url="https://staging.onehash.ai/upgrade?site="+site.name+"&email=None&full_name=Administrator")
@@ -335,12 +359,12 @@ def update_subscription(plans,add_ons,cart,site,current_subscription):
 @frappe.whitelist(allow_guest=True)
 def stripe_webhook():
     data = frappe._dict(json.loads(frappe.request.get_data()))
-    if data.get("type") in ['customer.subscription.created', 'customer.subscription.updated']:
+    if data.get("type") in ['customer.subscription.created', 'customer.subscription.deleted', 'customer.subscription.updated']:
         try:
             stripe_subscription = frappe._dict(data.get("data", {}).get("object", {}))
             stripe_subscription_items = stripe_subscription.get("items",{}).get("data",[])
-            if stripe_subscription.get("status")!="active":
-                return {"success":True,"response":"Request rejected due to invalid status"+stripe_subscription.get("status")}
+            if stripe_subscription.get("status") not in ["active","canceled"]:
+                return {"success":True,"response":"Request rejected due to invalid status "+stripe_subscription.get("status")}
                 pass
             metadata = stripe_subscription.get("metadata",{})
             product = metadata.get("website","OneHash")
@@ -387,21 +411,25 @@ def update_site_subscription(saas_site,subscription_items,stripe_subscription):
         subscription_name = saas_site.subscription
         if not subscription_name:
             subscription = frappe.new_doc('Subscription')
+            subscription.start_date = datetime.fromtimestamp(stripe_subscription.get("start_date")).strftime("%Y-%m-%d")
         else:
-            subscription = frappe.get_doc("Subscription",subscription_name)
-
+            subscription = frappe.get_doc("Subscription",subscription_name,for_update=True,ignore_permissions=True)
+            if subscription.status=="Cancelled":
+                subscription = frappe.new_doc("Subscription")
+                subscription.start_date = datetime.fromtimestamp(stripe_subscription.get("start_date")).strftime("%Y-%m-%d")
+        
         subscription.subscription_id = stripe_subscription.get("id")
         subscription.reference_site = saas_site.name
         subscription.party_type = 'Customer'
         subscription.party = saas_site.customer
-        subscription.current_invoice_start = stripe_subscription.get("current_plan_start")
-        subscription.current_invoice_end = stripe_subscription.get("current_plan_end")
+        subscription.current_invoice_start = stripe_subscription.get("current_period_start")
+        subscription.current_invoice_end = stripe_subscription.get("current_period_end")
         subscription.cancel_at_period_end = False
         subscription.generate_invoice_at_period_start = True
+        subscription.generate_new_invoices_past_due_date = True
 
         base_plan = saas_site.base_plan
         subscription.sales_tax_template,subscription.company = frappe.db.get_value("Subscription Plan", base_plan, ["sales_taxes_and_charges_template","default_company"])
-
         updated_items=[]
         # map items
         current_subscription_items = subscription.get("plans",[])
@@ -417,6 +445,7 @@ def update_site_subscription(saas_site,subscription_items,stripe_subscription):
             pass
 
         subscription.save(ignore_permissions=True)
+        # frappe.db.commit()
         return subscription.name
     except Exception as e:
         log = frappe.log_error(frappe.get_traceback(),"Subscription Create Error")
@@ -501,28 +530,72 @@ def stripe_mid_upgrade_handler():
             payment_currency = (invoice.get("currency")).upper()
             subscription_id = invoice.get("subscription")
             payment_id = invoice.get("charge")
-            if(billing_reason =="subscription_update" or billing_reason=="subscription_cycle"):
-                
-                subscription = frappe.get_doc("Subscription",{"subscription_id":subscription_id},ignore_permissions=True)
+            if(billing_reason in ["subscription_update","subscription_cycle","subscription_create"]):
+                subscription = frappe.get_doc("Subscription",{"subscription_id":subscription_id},ignore_permissions=True,for_update=True)
                 if not subscription:
                     frappe.throw(_("Subscription is mandatory was generating invoice."))
+                    return
 
-                if paid_amount>0:
-                    upgrade_invoice  = create_upgrade_invoice(invoice,subscription)
-                    subscription.append('invoices', {
-                    'document_type': "Sales Invoice",
-                    'invoice': upgrade_invoice.name
-                    })
-                    subscription.save(ignore_permissions=True)
-                    create_payment_entry(subscription.name,payment_id,upgrade_invoice.name)
+                if billing_reason=="subscription_create":
+                    if len(subscription.invoices)>0:
+                        upgrade_invoice = frappe.get_doc("Sales Invoice",subscription.invoices[0].invoice)
+                    else:
+                        frappe.set_user("Administrator")
+                        subscription.process()
+                        subscription = frappe.get_doc("Subscription",subscription.name,ignore_permissions=True)
+                        upgrade_invoice = frappe.get_doc("Sales Invoice",subscription.invoices[0].invoice)
+                    
+                    #check if subecription has been created after upgrade
+                    refund_items = []
+                    for item in invoice.get("lines",{}).get("data",[]):
+                        if item.get("amount")<0:
+                            refund_items.append(item)
+                    if len(refund_items)>0:
+                        # Create Return Invoice only for the Items which are Cancelled.
+                        try:
+                            past_subscription = frappe.get_doc("Subscription",{"subscription_id":["!=",invoice.get("subscription")],"party":subscription.get("party")},ignore_permissions=True)
+                            return_invoice = create_upgrade_invoice(invoice,past_subscription,only_return=True)
+                            other_references = [{
+                                'reference_doctype': 'Sales Invoice',
+                                'reference_name': return_invoice.name,
+                                'total_amount': return_invoice.get('rounded_grand_total') or return_invoice.get("grand_total"),
+                                'outstanding_amount': return_invoice.get('outstanding_amount'),
+                                'allocated_amount': return_invoice.get('outstanding_amount')
+                            }]
+                            if invoice_total>0:
+                                create_payment_entry(subscription.name,payment_id,upgrade_invoice.name,invoice.get("amount_due")/100,other_reference=other_references)
+                            elif invoice_total<0:
+                                #create_refund_on_stripe(subscription,abs(invoice.get("total")),payment_currency,stripe_customer_id,charge_id)
+                                payment_id = invoice.get("id")
+                                stripe_customer_id = invoice.get("customer")
+                                create_refund_payment_entry(subscription.name,payment_id,upgrade_invoice.name,abs(invoice_total),other_references)
+                                charge_id = frappe.get_list("Payment Entry",filters={"party":subscription.party,"payment_type":"Receive","status":"Submitted"},fields=["reference_no","paid_amount"],ignore_permissions=True)#get_reference_charge_id(subscription,reference_invoice_no,abs(invoice_total))
+                                create_refund_on_stripe(subscription,abs(invoice.get("total")),payment_currency,stripe_customer_id,charge_id)
+                                pass
+                        except Exception as e:
+                            frappe.log_error(frappe.get_traceback(),"Upgrade Invioce Create Error.")
+                        pass
+                    else:
+                        create_payment_entry(subscription.name,payment_id,upgrade_invoice.name)
+                        pass
+
+
+                elif invoice_total>=0:
+                        upgrade_invoice  = create_upgrade_invoice(invoice,subscription)
+                        subscription.append('invoices', {
+                        'document_type': "Sales Invoice",
+                        'invoice': upgrade_invoice.name
+                        })
+                        subscription.save(ignore_permissions=True)
+                        create_payment_entry(subscription.name,payment_id,upgrade_invoice.name)
                     
                 elif invoice_total<0:
                     frappe.set_user("Administrator")
                     payment_id = invoice.get("id")
                     stripe_customer_id = invoice.get("customer")
                     reference_invoice_no = (subscription.invoices[-1]).get("invoice")
-                    create_credit_note(reference_invoice_no,abs(invoice_total))
-                    create_refund_payment_entry(subscription.name,payment_id,reference_invoice_no,abs(invoice_total))
+                    credit_note = create_upgrade_invoice(invoice,subscription) # create_credit_note(reference_invoice_no,abs(invoice_total))
+                    create_refund_payment_entry(subscription.name,payment_id,credit_note.name,abs(invoice_total))
                     charge_id = get_reference_charge_id(subscription,reference_invoice_no,abs(invoice_total))
                     create_refund_on_stripe(subscription,abs(invoice.get("total")),payment_currency,stripe_customer_id,charge_id)
         except Exception as e:
@@ -533,7 +606,7 @@ def stripe_mid_upgrade_handler():
 def create_credit_note(reference_invoice_no,refund_amount):
     from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
     credit_note_doc = make_sales_return(reference_invoice_no)
-    # credit_note_doc = extract_tax_from_grand_total(credit_note_doc,refund_amount)
+    credit_note_doc = extract_tax_from_grand_total(credit_note_doc,refund_amount)
     credit_note_doc.insert(ignore_permissions=True)
     credit_note_doc.submit()
     return credit_note_doc
@@ -609,7 +682,7 @@ def create_refund_on_stripe(subscription,refund_amt,payment_currency,stripe_cust
 
 
 
-def create_upgrade_invoice(gateway_invoice,subscription):
+def create_upgrade_invoice(gateway_invoice,subscription,only_return=False):
     """
     Creates a `Invoice`, submits it and returns it
     """
@@ -619,7 +692,9 @@ def create_upgrade_invoice(gateway_invoice,subscription):
     
     doctype = 'Sales Invoice'
     invoice = frappe.new_doc(doctype)
-    invoice.currency= invoice.get("currency").upper()
+    invoice.currency= gateway_invoice.get("currency").upper()
+    if only_return or gateway_invoice.get("total")<0:
+        invoice.is_return = True
     # For backward compatibility
     # Earlier subscription didn't had any company field
     company = subscription.get('company') or get_default_company()
@@ -653,16 +728,32 @@ def create_upgrade_invoice(gateway_invoice,subscription):
     si_items = {}
     for item in subscription.get("plans"):
         si_items[item.subscription_item_id] = item
-
+    item_code_index = {}
     for item in invoice_item:
-        plan_name = si_items[item.get("subscription_item")].plan
-        plan_details = plans[plan_name] if plan_name in plans else add_ons[plan_name]
-        rate = (item.get("amount")/item.get("quantity"))/100
-        quantity = item.get("quantity")
+        if only_return and item.get("amount")>0:
+            continue
+        multiplier = -1 if (only_return or item.get("amount")<0) else 1
+        # plan_name = si_items[item.get("subscription_item")].plan
+        plan_details = frappe.get_doc("Subscription Plan",{"product_price_id":item.get("plan").get("id")},ignore_permissions=True)#plans[plan_name] if plan_name in plans else add_ons[plan_name]
+        rate = multiplier*(cint(item.get("amount"))/item.get("quantity"))/100
+        quantity = multiplier*cint(item.get("quantity"))
+        item_code = plan_details.get("item")
+        if item_code in item_code_index and invoice.get("is_return"):
+            invoice.items[item_code_index[item_code]].qty = invoice.items[item_code_index[item_code]].qty + quantity
+            continue
+        item_code_index[plan_details.get("item")]=len(invoice.get("items",[]))
         item_row={"item_code":plan_details.get("item"),"description":item.get("description"), "qty": quantity, "rate": rate, 'cost_center': plan_details.get("cost_center")}
         invoice.append("items",item_row)
         pass
+    
+    # if invoice.is_return:
+    #     # Group Same Items
+    #     item_index = {}
+    #     for item in items:
+    #         if not item.item_code in item_index:
+    #             item_index=
 
+    # frappe.log_error([x.as_dict() for x in invoice.get("items")])
     # for item in items_list:
     #     item['cost_center'] = subscription.cost_center
     #     invoice.append('items', item)
@@ -678,13 +769,43 @@ def create_upgrade_invoice(gateway_invoice,subscription):
     invoice.from_date = subscription.current_invoice_start
     invoice.to_date = subscription.current_invoice_end
     # invoice = extract_tax_from_grand_total(invoice,paid_amount)
-    invoice.flags.ignore_mandatory = True
+    # invoice.flags.ignore_mandatory = True
     invoice.flags.ignore_permissions = True
     invoice.save()
     invoice.submit()
     return invoice
 
-def create_payment_entry(subscription_name, payment_id,reference_invoice=None,amount=None):
+def extract_tax_from_grand_total(doc,amount):
+    tax_rate = 0
+    # if hasattr(doc, 'taxes'):
+    #     for tax_row in doc.taxes:
+    #         tax_rate += flt(tax_row.rate,3)
+    
+    base_value = flt(flt(amount)/(1+(tax_rate/100)),2)
+    prev_invoice_item_rate = doc.items[0].rate
+    prev_invoice_quantity = doc.items[0].qty
+    expected_qty = doc.items[0].qty
+    multiplier = -1 if expected_qty<0 else 1
+    if(doc.items[0].qty!=0):
+        revised_rate = flt((base_value/abs(doc.items[0].qty)),3)
+    else:
+        revised_rate = doc.items[0].rate
+    
+    if(revised_rate>prev_invoice_item_rate):
+        expected_qty = ceil(base_value/prev_invoice_item_rate)*multiplier
+        revised_rate = flt((base_value/abs(expected_qty)),3)
+    doc.items[0].qty = expected_qty
+    doc.items[0].rate = revised_rate
+
+    if(abs(prev_invoice_quantity)<abs(expected_qty) and multiplier==-1):
+        doc.items[0].qty = 0
+
+    if(doc.items[0].qty==0):
+        doc.items[0].rate=base_value
+    
+    return doc
+
+def create_payment_entry(subscription_name, payment_id,reference_invoice=None,amount=None,other_reference=None):
     try:
         subscription = frappe.get_doc("Subscription", subscription_name, ignore_permissions=True)
         invoice = reference_invoice if reference_invoice else subscription.invoices[-1].invoice
@@ -698,17 +819,21 @@ def create_payment_entry(subscription_name, payment_id,reference_invoice=None,am
         frappe.flags.ignore_account_permission = True
         bank_amount = flt(amount) if amount else sales_invoice.grand_total
         pe = get_payment_entry(dt="Sales Invoice", dn=sales_invoice.name, bank_amount=bank_amount)
+        if other_reference:
+            for reference in other_reference:
+                pe.append("references",reference)
+        
         frappe.flags.ignore_account_permission=False
         pe.paid_to = payment_account
         pe.payment_type = "Receive"
-        #pe.paid_amount = bank_amount
-        pe.received_amount = pe.paid_amount/pe.target_exchange_rate
+        pe.paid_amount = bank_amount
+        pe.received_amount = pe.paid_amount*pe.target_exchange_rate
         pe.reference_no = payment_id
         pe.reference_date = getdate()
         pe.save(ignore_permissions=True)
         frappe.set_user("Administrator")
-        if(abs(pe.difference_amount)<1):
-            pe.paid_amount = pe.paid_amount - pe.difference_amount
+        if(abs(pe.difference_amount)<1 or abs(pe.unallocated_amount)<1):
+            pe.paid_amount = pe.paid_amount + pe.difference_amount - pe.unallocated_amount
             pe.save(ignore_permissions=True)
         frappe.flags.ignore_permissions=True
         pe.submit()
@@ -716,9 +841,9 @@ def create_payment_entry(subscription_name, payment_id,reference_invoice=None,am
         frappe.log_error(frappe.get_traceback(),"Error in Payment Entry")
 
 
-def create_refund_payment_entry(subscription_name, payment_id,reference_invoice=None,amount=None):
+def create_refund_payment_entry(subscription_name, payment_id,reference_invoice=None,amount=None,other_reference=None):
     subscription = frappe.get_doc("Subscription", subscription_name, ignore_permissions=True)
-    invoice = reference_invoice if reference_invoice else subscription.invoices[0].invoice
+    invoice = reference_invoice if reference_invoice else subscription.invoices[-1].invoice
     sales_invoice = frappe.get_doc("Sales Invoice", invoice, ignore_permissions=True)
 
     base_plan = frappe.get_value("Saas Site", subscription.reference_site, "base_plan")
@@ -730,25 +855,39 @@ def create_refund_payment_entry(subscription_name, payment_id,reference_invoice=
     bank_amount = flt(amount) if amount else sales_invoice.grand_total
     pe = get_payment_entry(dt="Sales Invoice", dn=sales_invoice.name, bank_amount=bank_amount)
     frappe.flags.ignore_account_permission=False
-    pe.paid_from = payment_account
     pe.payment_type = "Pay"
+    pe.paid_from = payment_account
+    pe.paid_to = sales_invoice.debit_to
     pe.paid_amount = bank_amount
-    pe.received_amount = pe.paid_amount/pe.target_exchange_rate
+    pe.received_amount = pe.paid_amount*pe.target_exchange_rate
     pe.reference_no = payment_id
     pe.reference_date = getdate()
-    outstanding_amount_diff = sales_invoice.outstanding_amount+pe.paid_amount
-    if(abs(outstanding_amount_diff)<1):
-        pe.paid_amount = pe.paid_amount - outstanding_amount_diff
-        pe.received_amount = pe.paid_amount/pe.target_exchange_rate
+    
+    if(abs(amount)-abs(sales_invoice.grand_total)<1):
+        pe.paid_amount = abs(sales_invoice.grand_total)
+        pe.received_amount = pe.paid_amount*pe.target_exchange_rate
+    # outstanding_amount_diff = sales_invoice.outstanding_amount+pe.paid_amount
+    # if(abs(outstanding_amount_diff)<1):
+    #     pe.paid_amount = pe.paid_amount - outstanding_amount_diff
+    #     pe.received_amount = pe.paid_amount*pe.target_exchange_rate
 
     # Negative Account Balance
     #get_negative_outstanding_invoices(pe.party_type,pe.paid_to,pe.company,pe.paid_to_account_currency,pe.paid_from_)
+    if other_reference:
+            for reference in other_reference:
+                pe.append("references",reference)
+        
     frappe.flags.ignore_permissions=True
+    frappe.log_error({"paid_amount":pe.paid_amount,"Received Amount":pe.received_amount,"Bank Amount":bank_amount})
     pe.save(ignore_permissions=True)
-    if(pe.difference_amount and abs(pe.difference_amount)<1):
-        pe.paid_amount = pe.paid_amount - pe.difference_amount
-        pe.save(ignore_permissions=True)
-        # pe.save(ignore_permissions=True)
+    if(abs(pe.difference_amount)<1 and abs(pe.unallocated_amount)<1):
+            pe.paid_amount = pe.paid_amount + pe.difference_amount - pe.unallocated_amount
+            pe.save(ignore_permissions=True)
+        
+    # if(pe.difference_amount and abs(pe.difference_amount)<1):
+    #     pe.paid_amount = pe.paid_amount - pe.difference_amount
+    #     pe.save(ignore_permissions=True)
+    #     # pe.save(ignore_permissions=True)
     pe.submit()
 
 def get_base_plan_details(plan_name):
@@ -815,11 +954,14 @@ def get_redirect_message(title=_("Subscription Updated"),message=_("Your Subscri
 </script>'''
     return {"redirect_to": frappe.redirect_to_message(_(title), _(message+redirect_html),context={"primary_action":primary_action,"primary_label":primary_label,"title":title})}
 
-def get_stripe_subscription_invoice(stripe_subscription_id,gateway):
-    if not stripe_subscription_id:
+def get_stripe_subscription_invoice(billing_email,gateway):
+    if not billing_email:
         return []
     stripe = get_gateway_object(gateway)
-    return stripe.Invoice.list(subscription=stripe_subscription_id)
+    stripe_customer = stripe.Customer.list(email=billing_email,limit=1)
+    if len(stripe_customer.get("data",[]))==0:
+        return []
+    return stripe.Invoice.list(customer=stripe_customer["data"][0].get("id"))
     pass
 
 
@@ -846,7 +988,7 @@ def get_customer_or_lead_by_site(site_name,billing_email=None):
     if customer:
         return customer,"Lead"
     if billing_email:
-        lead_name = frappe.get_value("Lead",{"email_id":billing_email},name)
+        lead_name = frappe.get_value("Lead",{"email_id":billing_email},"name")
         return lead_name,"Lead"
     return None,None    
     pass
@@ -866,11 +1008,12 @@ def add_address(site_name,**kwargs):
         "phone":kwargs.get("phone"),
         "gst_state":kwargs.get("gst_state") or "",
         "gstin":kwargs.get("gstin") or "",
-        "is_primary_address":True
+        "is_primary_address":True,
+        "address_title":kwargs.get("address_title",None)
     })
     doc.append("links",{"link_doctype":dt,"link_name":dn})
     doc.save(ignore_permissions=True)
-    address = get_address_by_site(kwargs.get("site_name"))
+    address = get_address_by_site(site_name)
     return frappe.render_template("templates/includes/upgrade/address.html",{"address":address})
     pass
 
@@ -896,6 +1039,7 @@ def update_address(name,**kwargs):
     doc.phone=kwargs.get("phone")
     doc.gst_state=kwargs.get("gst_state") or ""
     doc.gstin=kwargs.get("gstin") or ""
+    doc.address_title = kwargs.get("address_title")
     doc.save(ignore_permissions=True)
     # return doc
     address = get_address_by_site(kwargs.get("site_name"))

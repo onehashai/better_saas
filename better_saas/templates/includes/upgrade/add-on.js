@@ -30,7 +30,7 @@ frappe.ready(function () {
     }
 
     function verify_system_user() {
-        frappe.call("better_saas.www.upgrade.verify_system_user", {
+        frappe.call("better_saas.www.upgrade_old.verify_system_user", {
             site_name: site_name,
             email: email,
         }).then(r => {
@@ -41,7 +41,7 @@ frappe.ready(function () {
     }
 
     function get_billing_address() {
-		frappe.call('better_saas.www.upgrade.get_billing_address', {
+		frappe.call('better_saas.www.upgrade_old.get_billing_address', {
 			site_name: site_name
 		}).then(r => {
 			if (r.message.status_code !== '404') {
@@ -173,15 +173,15 @@ frappe.ready(function () {
 			'Uttarakhand',
 			'West Bengal'
 		];
-		frappe.call("better_saas.www.upgrade.get_country_list").then(r=>{
+		frappe.call("better_saas.www.upgrade_old.get_country_list").then(r=>{
 			if(r.message){
 				country_list = r.message
 			}
-			frappe.call("better_saas.www.upgrade.get_billing_address", {
+			frappe.call("better_saas.www.upgrade_old.get_billing_address", {
 				site_name: site_name
 			}).then(r => {
 				if (r.message.status_code !== '404') {
-					frappe.call('better_saas.www.upgrade.get_address', {
+					frappe.call('better_saas.www.upgrade_old.get_address', {
 						address: r.message.address_object,
 					}).then(r => {
 						let address = r.message;
@@ -278,7 +278,7 @@ frappe.ready(function () {
 								default: address.phone,
 							},
 						], (values) => {
-							frappe.call('better_saas.www.upgrade.update_billing_address', {
+							frappe.call('better_saas.www.upgrade_old.update_billing_address', {
 								values: values,
 							}).then(r => {
 								get_billing_address();
@@ -370,7 +370,7 @@ frappe.ready(function () {
 							fieldtype: 'Data',
 						},
 					], (values) => {
-						frappe.call('better_saas.www.upgrade.create_billing_address', {
+						frappe.call('better_saas.www.upgrade_old.create_billing_address', {
 							site_name: site_name,
 							values: values,
 						}).then(r => {
