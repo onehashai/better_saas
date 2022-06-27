@@ -24,6 +24,7 @@
   "default_limit_for_email_group",
   "default_expiry",
   "ltd_expiry",
+  "grace_period",
   "addons_section",
   "instafinancial_key",
   "deafult_addon_limits"
@@ -159,11 +160,17 @@
    "fieldname": "default_tax_rate_id_stripe",
    "fieldtype": "Data",
    "label": "Default Tax Rate ID Stripe"
+  },
+  {
+   "default": "0",
+   "fieldname": "grace_period",
+   "fieldtype": "Int",
+   "label": "Grace Period"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2021-10-28 16:39:09.232170",
+ "modified": "2022-06-26 13:41:49.376886",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Settings",
