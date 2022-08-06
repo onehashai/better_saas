@@ -175,7 +175,7 @@ def get_lead_by_site(site_name):
 @frappe.whitelist(allow_guest=True)
 def get_cart_value(cart, site_name,email,onehash_partner,currency):
     cart  = json.loads(cart)
-    plans = get_all_plans()
+    plans = get_all_plans(current_plan=cart["base_plan"]["plan"])
     add_ons = get_all_addons()
     cart_object = []
     if(len(cart["base_plan"])>0):
