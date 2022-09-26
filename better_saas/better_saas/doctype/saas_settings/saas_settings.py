@@ -14,9 +14,12 @@ class SaasSettings(Document):
 			commands.append("bench set-config -g grace_period {0}".format(self.grace_period))
 		if self.instafinancial_key:
 			commands.append("bench set-config -g insta_financial_api_key {0}".format(self.instafinancial_key))
-		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
-			commands=commands,
-			doctype="Bench Settings",
-			key=today() + " " + nowtime(),
-			now = True)
+		bench_list = frappe.get_all("OneHash Bench",fields=["name","bench_path"])
+		for bench in bench_list:	
+			frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+				commands=commands,
+				doctype="Bench Settings",
+				key=today() + " " + nowtime(),
+				now = True,
+				cwd = bench.bench_path)
 		pass

@@ -231,6 +231,7 @@ $(document).ready(function(){
                         args['utm_medium'] = urlParams.get('utm_medium');
                         args['utm_content'] = urlParams.get('utm_content');
                         args['utm_term'] = urlParams.get('utm_term');
+                        args['product'] = urlParams.get('product');
                         //	args['ga_params'] = ga_params
     
                     } else {
@@ -240,6 +241,7 @@ $(document).ready(function(){
                         args['utm_medium'] = urlParams.get('utm_medium');
                         args['utm_content'] = urlParams.get('utm_content');
                         args['utm_term'] = urlParams.get('utm_term');
+                        args['product'] = urlParams.get('product');
                     }
     
     
