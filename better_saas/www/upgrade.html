@@ -82,6 +82,7 @@
                 <section>
                     <div class="row text-center align-items-end">
                     {% for plan_name,plan in plans.items() %}
+                    {% if active_plan.name==plan.name %}
                         <!-- Pricing Table-->
                     <div class="col-lg-4 mb-5 ">
                         <div class="bg-white p-5 rounded-lg shadow">
@@ -102,6 +103,7 @@
                         <a href="javascript:;" data-type="plan" data-name="{{plan.name}}" class="btn btn-primary plan btn-block p-2 shadow rounded-pill {% if active_plan.name==plan.name %}disabled{% endif %}">{% if active_plan.name==plan.name %}Current Plan{% else %}Select{% endif %}</a>
                         </div>
                     </div>
+                    {% endif %}
                     {% endfor %}    
                 </div>
                 </section>

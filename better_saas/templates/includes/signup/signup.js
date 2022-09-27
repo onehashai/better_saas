@@ -481,6 +481,7 @@ function setup_account_request($page) {
                     args['utm_medium'] = urlParams.get('utm_medium');
                     args['utm_content'] = urlParams.get('utm_content');
                     args['utm_term'] = urlParams.get('utm_term');
+                    args['utm_term'] = urlParams.get('utm_term');
                     //	args['ga_params'] = ga_params
 
                 } else {
@@ -490,6 +491,7 @@ function setup_account_request($page) {
                     args['utm_medium'] = urlParams.get('utm_medium');
                     args['utm_content'] = urlParams.get('utm_content');
                     args['utm_term'] = urlParams.get('utm_term');
+                    args['product'] = urlParams.get('product');
                 }
 
 

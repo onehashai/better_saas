@@ -23,6 +23,7 @@
   "default_limit_for_space",
   "default_limit_for_email_group",
   "default_expiry",
+  "default_bench",
   "ltd_expiry",
   "grace_period",
   "addons_section",
@@ -166,11 +167,18 @@
    "fieldname": "grace_period",
    "fieldtype": "Int",
    "label": "Grace Period"
+  },
+  {
+   "default": "Frappe Bench",
+   "fieldname": "default_bench",
+   "fieldtype": "Link",
+   "label": "Default Bench",
+   "options": "OneHash Bench"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2022-06-26 13:41:49.376886",
+ "modified": "2022-09-16 12:00:40.737184",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Settings",

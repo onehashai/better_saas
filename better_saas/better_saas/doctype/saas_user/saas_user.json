@@ -33,6 +33,8 @@
   "timezone",
   "expected_users",
   "industry_type",
+  "product",
+  "bench",
   "designation",
   "referral_source",
   "utm_details_section",
@@ -149,12 +151,14 @@
   {
    "fieldname": "mobile",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Mobile",
    "options": "Phone"
   },
   {
    "fieldname": "promocode",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Promocode"
   },
   {
@@ -240,6 +244,20 @@
    "fieldname": "utm_term",
    "fieldtype": "Data",
    "label": "UTM Term"
+  },
+  {
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Product",
+   "options": "OneHash Product"
+  },
+  {
+   "default": "Frappe Bench",
+   "fieldname": "bench",
+   "fieldtype": "Link",
+   "label": "Bench",
+   "options": "OneHash Bench"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -249,7 +267,7 @@
    "link_fieldname": "linked_saas_site"
   }
  ],
- "modified": "2022-02-01 16:49:55.702610",
+ "modified": "2022-09-16 10:32:52.205678",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas User",

@@ -34,6 +34,7 @@
   "apply_addon_limits",
   "section_break_21",
   "base_plan",
+  "bench",
   "column_break_23",
   "customer",
   "subscription",
@@ -219,6 +220,12 @@
    "hidden": 1,
    "label": "Command key",
    "read_only": 1
+  },
+  {
+   "fieldname": "bench",
+   "fieldtype": "Link",
+   "label": "Bench",
+   "options": "OneHash Bench"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -232,7 +239,7 @@
    "link_fieldname": "linked_saas_site"
   }
  ],
- "modified": "2021-10-14 14:49:25.959329",
+ "modified": "2022-09-16 11:05:04.396735",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas Site",

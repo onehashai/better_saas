@@ -3,6 +3,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+from better_saas.better_saas.doctype.saas_user.saas_user import get_bench_path
 import frappe
 import json
 from frappe import _
@@ -134,13 +135,19 @@ def update_user_to_main_app():
 # mute emails for the site which are going to expire tomorrow unsubscribe from Schedule Error notification
 def mute_emails_on_expiry():
     try:
-        all_sites = frappe.get_all("Saas Site",filters=[["Saas Site","expiry","Timespan","yesterday"]])
+        all_sites = frappe.get_all("Saas Site",filters=[["Saas Site","expiry","Timespan","yesterday"]],fields=["name", "bench"])
+        all_bench = frappe.get_all("OneHash Bench",fields=["bench_path","name"])
+        bench_path = {}
+        for bench in all_bench:
+            bench_path[bench.name] = bench.bench_path
+            pass
         for site in all_sites:
             commands = ["bench --site {site_name} set-config mute_emails true".format(site_name = site.name)]
             frappe.enqueue('bench_manager.bench_manager.utils.run_command',
                 commands=commands,
                 doctype="Bench Settings",
-                key=today() + " " + nowtime()
+                key=today() + " " + nowtime(),
+                cwd = bench_path[site.bench]
             )
     except Exception as e:
         frappe.error_log(str(e),title="Error while muting Email")
@@ -155,7 +162,8 @@ def set_site_config(site_name,key,value):
     frappe.enqueue('bench_manager.bench_manager.utils.run_command',
                 commands=commands,
                 doctype="Bench Settings",
-                key=today() + " " + nowtime()
+                key=today() + " " + nowtime(),
+                cwd = get_bench_path(site_name)
             )
 
 def get_all_database_config():
@@ -194,7 +202,8 @@ def add_custom_domain(site_name,custom_domain,user):
 			commands=commands,
 			doctype="Bench Settings",
 			key=command_key,
-            now=True
+            now=True,
+            cwd = get_bench_path(site_name)
 		)
     
     saas_site = frappe.get_doc("Saas Site",site_name)
@@ -219,7 +228,8 @@ def remove_custom_domain(site_name,custom_domain,user):
 			commands=commands,
 			doctype="Bench Settings",
 			key=command_key,
-            is_async=False
+            is_async=False,
+            cwd = get_bench_path(site_name)
 		)
     saas_site = frappe.get_doc("Saas Site",site_name)
     saas_site.custom_domain = ""
@@ -246,7 +256,8 @@ def verify_domain(site_name,custom_domain,user):
 			commands=commands,
 			doctype="Bench Settings",
 			key=command_key,now=True,
-            job_name=site_name+custom_domain
+            job_name=site_name+custom_domain,
+            cwd = get_bench_path(site_name)
 		)
     saas_site = frappe.get_doc("Saas Site",site_name)
     saas_site.custom_domain = custom_domain

@@ -5,19 +5,13 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from bench_manager.bench_manager.doctype.site.site import create_site
 from frappe.sessions import get_geo_ip_country
-from frappe.utils import today, nowtime, add_days
 from frappe.utils.data import getdate
 from frappe.utils import today, nowtime, add_days, get_formatted_email
-from frappe.utils.file_manager import get_file_path
 from frappe import _, throw
-from frappe.utils.background_jobs import enqueue
-import requests
-import math, random, re, time
+import math, random, re, time, os, json
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.core.doctype.user.user import test_password_strength
-from werkzeug.exceptions import ExpectationFailed
 
 class SaasUser(Document):
 	pass
@@ -31,12 +25,13 @@ def setup(account_request):
 		admin_password = saas_user.password
 		key = saas_user.key
 		site_name = saas_user.subdomain + "." + saas_settings.domain
-
+		bench_path,bench,install_apps = frappe.db.get_value("OneHash Product",saas_user.product,["bench_path","bench","install_apps"]) if saas_user.product else ("/home/frappe/frappe-bench","Frappe Bench","")
+		install_apps = " ".join(list(set(install_apps.replace("\n",",").split(",") + ["erpnext", "journeys"])))
 		## create user 
 		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
 		
 		# check if stock site available
-		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available"}, order_by='creation asc', ignore_permissions=True)
+		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available","bench":bench}, order_by='creation asc', ignore_permissions=True)
 		stock_site_doc = None
 		if stock_list:
 			stock_site = stock_list[0].get("name")
@@ -52,7 +47,7 @@ def setup(account_request):
 			# creation of site and install erpnext
 			if saas_settings.install_erpnext:
 				install_erpnext = "true"
-				commands.append("bench --site {site_name} install-app erpnext journeys".format(site_name=site_name))
+				commands.append("bench --site {site_name} install-app {install_apps}".format(site_name=site_name,install_apps=install_apps))
 			else:
 				install_erpnext = "false"
 		
@@ -70,16 +65,16 @@ def setup(account_request):
 		master_site_name = frappe.conf.get("master_site_name") or "admin_onehash"
 		commands.append("bench setup nginx --yes")
 		commands.append("bench setup reload-nginx")
-		commands.append("bench --site "+master_site_name+" execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(master_site_name=master_site_name,saas_user=saas_user.name)+'"')
+		# commands.append("bench --site "+master_site_name+" execute better_saas.better_saas.doctype.saas_user.saas_user.create_first_user_on_target_site --args="+'"'+"['{saas_user}']".format(master_site_name=master_site_name,saas_user=saas_user.name)+'"')
 		limit_users,limit_emails, limit_space, limit_email_group,limit_expiry,discounted_users,customer = get_site_limits(saas_user.promocode,saas_settings)
-		commands.append("bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
-			site_name = site_name,
-			limit_users = limit_users,
-			limit_emails = limit_emails,
-			limit_space = limit_space,
-			limit_email_group = limit_email_group,
-			limit_expiry = limit_expiry
-		))
+		site_limits = {
+			"email_group":limit_email_group,
+			"emails":limit_emails,
+			"expiry":limit_expiry,
+			"space":limit_space,
+			"users":limit_users
+		}
+		commands.append("bench --site {site_name} set-config -p limits '{site_limits}'".format(site_name=site_name,site_limits=json.dumps(site_limits)))
 		command_key = today() + " " + nowtime()
 		
 		
@@ -92,21 +87,23 @@ def setup(account_request):
 		saas_site.limit_for_space = limit_space
 		saas_site.limit_for_email_group = limit_email_group
 		saas_site.customer = customer
+		saas_site.bench = bench
 		saas_site.expiry = limit_expiry
 		saas_site.base_plan = saas_settings.base_plan_india if saas_user.country=="India" else saas_settings.base_plan_international
 		if frappe.db.exists({'doctype': 'User','name': saas_user.email}):
 			saas_user.user = saas_user.email
 		saas_site.insert(ignore_permissions=True)
 		saas_user.linked_saas_site = saas_site.name
+		saas_user.bench = saas_site.bench
 		saas_user.linked_saas_domain = new_subdomain.name
 		saas_user.key = command_key
 		saas_user.save()
-
 		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 			commands=commands,
 			doctype="Bench Settings",
 			key=command_key,
-			now=True
+			now=True,
+			cwd = bench_path
 		)
 		# Redeem Promocode
 		if saas_user.promocode:
@@ -171,7 +168,7 @@ def get_status(account_request):
 		stock_site = frappe.get_value("Stock Sites", filters={"renamed": doc.linked_saas_site, "status": "Picked"})
 		if stock_site:
 			frappe.db.set_value('Stock Sites', stock_site, 'status', 'Assigned')
-		#create_first_user_on_target_site(doc.name)
+		create_first_user_on_target_site(doc.name)
 		result['user'] = doc.email
 		result['password'] = doc.password
 		result['link'] = "https://"+doc.linked_saas_site
@@ -274,6 +271,10 @@ def create_user(first_name, last_name, email, password):
 	user.save(ignore_permissions=True)
 	frappe.db.commit()
 
+def get_bench_path(saas_site):
+	bench = frappe.get_value("Saas Site",saas_site,'bench')
+	return frappe.get_value("OneHash Bench",bench,'bench_path')
+
 @frappe.whitelist()
 def delete_site(site_name):
 	try:			
@@ -284,6 +285,7 @@ def delete_site(site_name):
 		domain = frappe.get_doc("Saas Domains", site.linked_saas_domain)
 		domain.delete()
 		saas_site = frappe.get_doc("Saas Site", site.linked_saas_site)
+		bench_path = get_bench_path(site_name)
 		subs = frappe.get_list("Subscription", filters={"reference_site": site_name})
 		if subs:
 			for sub in subs:
@@ -325,13 +327,15 @@ def delete_site(site_name):
 			commands=commands,
 			doctype="Bench Settings",
 			key=today() + " " + nowtime(),
-			now = True
+			now = True,
+			cwd = bench_path
 		)
 	except:
 		frappe.log_error(frappe.get_traceback())
 
 @frappe.whitelist()
 def disable_enable_site(site_name, status):
+	bench_path = get_bench_path(site_name)
 	if status == "Active":
 		commands = ["bench --site {site_name} set-maintenance-mode on".format(site_name=site_name)]
 	else:
@@ -341,7 +345,8 @@ def disable_enable_site(site_name, status):
 		commands=commands,
 		doctype="Bench Settings",
 		key=today() + " " + nowtime(),
-		now = True
+		now = True,
+		cwd = bench_path
 	)
 
 @frappe.whitelist(allow_guest=True)
@@ -372,6 +377,7 @@ def check_email_avai(email):
 
 @frappe.whitelist()
 def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_for_email_group, expiry, site_name):
+	bench_path = get_bench_path(site_name)
 	commands = ["bench --site {site_name} set-limits --limit users {limit_users} --limit emails {limit_emails} --limit space {limit_space} --limit email_group {limit_email_group} --limit expiry {limit_expiry}".format(
 		site_name = site_name,
 		limit_users = limit_for_users,
@@ -386,7 +392,8 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 		commands=commands,
 		doctype="Bench Settings",
 		key=today() + " " + nowtime(),
-		now = True
+		now = True,
+		cwd = bench_path
 	)
 
 @frappe.whitelist()
@@ -410,7 +417,7 @@ def check_password_strength(passphrase,first_name,last_name,email):
 	return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
-def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_name=None,country=None,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None):
+def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_name=None,country=None,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None,product=None):
 	phone_number = re.sub(r"[^0-9]","",phone_number)
 	subdomain = re.sub(r"[^a-zA-Z0-9]","",subdomain)
 	geo_country = get_geo_ip_country(frappe.local.request_ip) if frappe.local.request_ip else None
@@ -434,6 +441,7 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_
 		saas_user.country = country
 		saas_user.otp = generate_otp()
 		saas_user.flags.ignore_permissions=True
+		saas_user.product = product
 		result = saas_user.save()
 		lead = create_lead(result)
 	else:
@@ -454,7 +462,8 @@ def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_
 				"utm_term":utm_term,
 				"country":country,
 				"company_name":company_name,
-				"utm_campaign":utm_campaign
+				"utm_campaign":utm_campaign,
+				"product":product
 			})
 		#sass_user.flags.ignore_permissions = True
 		result = sass_user.insert(ignore_permissions=True)
@@ -490,6 +499,7 @@ def create_lead(saas_user):
 		lead_doc.primary_mobile = saas_user.mobile
 		lead_doc.promocode = saas_user.promocode
 		lead_doc.industry_type = saas_user.industry_type
+		lead_doc.product = saas_user.product
 		lead_doc.company_name = saas_user.company_name
 		lead_doc.expected_users = saas_user.expected_users
 		lead_doc.flags.ignore_permissions = True
@@ -507,7 +517,8 @@ def create_lead(saas_user):
 				"utm_campaign":saas_user.utm_campaign,
 				"utm_medium":saas_user.utm_medium,
 				"utm_term":saas_user.utm_term,
-				"utm_content":saas_user.utm_content
+				"utm_content":saas_user.utm_content,
+				"product":saas_user.product
 			})
 		lead.lead_name = saas_user.first_name+" "+saas_user.last_name
 		lead.source = "Walk In"
