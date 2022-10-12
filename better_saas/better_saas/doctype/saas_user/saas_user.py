@@ -92,12 +92,15 @@ def setup(account_request):
 		saas_site.base_plan = saas_settings.base_plan_india if saas_user.country=="India" else saas_settings.base_plan_international
 		if frappe.db.exists({'doctype': 'User','name': saas_user.email}):
 			saas_user.user = saas_user.email
+		saas_site.set_secret_key()
 		saas_site.insert(ignore_permissions=True)
 		saas_user.linked_saas_site = saas_site.name
 		saas_user.bench = saas_site.bench
 		saas_user.linked_saas_domain = new_subdomain.name
 		saas_user.key = command_key
 		saas_user.save()
+
+		commands.append(f"bench --site {site_name} set-config sk_onehash {saas_site.secret_key}")
 		frappe.enqueue('bench_manager.bench_manager.utils.run_command',
 			commands=commands,
 			doctype="Bench Settings",

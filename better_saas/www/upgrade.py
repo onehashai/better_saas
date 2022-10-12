@@ -25,6 +25,8 @@ def get_context(context):
         frappe.local.jenv.filters["timeformat"] = datetime.fromtimestamp
         site_name = args["site"] if "site" in args else ""
         context.site = get_current_limits(site_name)
+        settings = frappe.get_doc("Saas Settings")
+        context.min_space_block = 0 if (context.site.total/1024-settings.default_limit_for_space)<0 else (context.site.total/1024-settings.default_limit_for_space)
         active_plan = frappe.get_doc("Subscription Plan",context.site.base_plan,ignore_permissions=True)
         context.active_plan = active_plan
         context.active_plan_name = context.site.base_plan
@@ -182,8 +184,11 @@ def get_cart_value(cart, site_name,email,onehash_partner,currency):
         cart_object.append(cart["base_plan"])
     for plan,qty in cart["add_ons"].items():
         cart_object.append({"plan":plan,"qty":qty})
+    settings = frappe.get_doc("Saas Settings")
+    site_doc = get_current_limits(site_name)
+    min_space_block = 0 if (site_doc.total/1024-settings.default_limit_for_space)<0 else (site_doc.total/1024-settings.default_limit_for_space)
     tax_rate = get_tax_rate(plans[cart["base_plan"]["plan"]].sales_taxes_and_charges_template)
-    return frappe.render_template("templates/includes/upgrade/cart.html", {"cart":cart_object,"plans":plans,"add_ons":add_ons,"currency":currency,"tax_rate":tax_rate})
+    return frappe.render_template("templates/includes/upgrade/cart.html", {"cart":cart_object,"plans":plans,"add_ons":add_ons,"currency":currency,"tax_rate":tax_rate,"min_space_block":min_space_block})
     pass
 
 def get_cart(cart, site_name,currency):
@@ -363,7 +368,7 @@ def stripe_webhook():
         try:
             stripe_subscription = frappe._dict(data.get("data", {}).get("object", {}))
             stripe_subscription_items = stripe_subscription.get("items",{}).get("data",[])
-            if stripe_subscription.get("status") not in ["active","canceled"]:
+            if stripe_subscription.get("status") not in ["active","canceled","unpaid","past_due"]:
                 return {"success":True,"response":"Request rejected due to invalid status "+stripe_subscription.get("status")}
                 pass
             metadata = stripe_subscription.get("metadata",{})
@@ -375,7 +380,7 @@ def stripe_webhook():
                 frappe.throw(_("Site Name is required"),ValidationError)
             
             stripe_subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start).strftime("%Y-%m-%d")
-            stripe_subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end).strftime("%Y-%m-%d")
+            stripe_subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end).strftime("%Y-%m-%d") if stripe_subscription.get("status") not in ["unpaid","past_due"] else today()
             
             saas_site = get_current_limits(site_name)
             if not saas_site.customer:

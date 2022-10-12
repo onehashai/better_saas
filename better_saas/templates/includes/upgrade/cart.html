@@ -11,6 +11,7 @@
 {% set total = namespace(value=0) %}
 {% for item in cart %}
 {% set plan_details = plans[item.plan] if item.plan in plans else add_ons[item.plan] if item.plan in add_ons else frappe.get_doc("Subscription Plan",item.plan)  -%}
+{% set min_space_block = min_space_block/plan_details.limit_multiplier | round(1,"ceil") if min_space_block!=0 and plan_details.addon_type=="Space" else 0 -%}
 <div class="row">
     <div class="col-md-5 col-xs-4 py-2 px-3">
         {{item.plan}}
@@ -20,7 +21,7 @@
         <span class="input-group-prepend">
             <button type="button" class="btn btn-outline-primary btn-number btn-xs" style="" data-type="minus" data-field="{{item.plan}}">-</button>
         </span>                     
-    <input type="text" name="{{item.plan}}" data-upgrade-type="{{item.plan}}" data-type="{% if plan_details.is_addon %}add_ons{% else %}base_plan{% endif %}" data-current-value="{{plan_details.cost}}" class="form-control input-number text-center" value="{{item.qty}}" id="{{item.plan}}"  min="0" {% if plan_details.is_unlimited %} max="1"{% endif %} data-currency="{{plan_details.currency}}" data-rate="{{plan_details.cost}}" step="1">                     
+    <input type="text" name="{{item.plan}}" data-upgrade-type="{{item.plan}}" data-type="{% if plan_details.is_addon %}add_ons{% else %}base_plan{% endif %}" data-current-value="{{plan_details.cost}}" class="form-control input-number text-center" value="{% if min_space_block<item.qty %}{{item.qty}} {% else %} {{min_space_block | round(0,'ceil')}}{% endif %}" id="{{item.plan}}"  min="{{min_space_block}}" {% if plan_details.is_unlimited %} max="1"{% endif %} data-currency="{{plan_details.currency}}" data-rate="{{plan_details.cost}}" step="1">                     
     <span class="input-group-append">
     <button type="button" class="btn btn-outline-primary btn-number btn-xs" data-type="plus" data-field="{{item.plan}}">+</button>                     </span>                 </div>
        
