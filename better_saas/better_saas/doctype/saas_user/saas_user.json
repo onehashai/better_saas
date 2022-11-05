@@ -72,7 +72,7 @@
   },
   {
    "fieldname": "password",
-   "fieldtype": "Data",
+   "fieldtype": "Password",
    "ignore_xss_filter": 1,
    "in_list_view": 1,
    "label": "Password",
@@ -81,7 +81,7 @@
   },
   {
    "fieldname": "confirm_password",
-   "fieldtype": "Data",
+   "fieldtype": "Password",
    "ignore_xss_filter": 1,
    "label": "Confirm Password",
    "read_only": 1,
@@ -267,7 +267,7 @@
    "link_fieldname": "linked_saas_site"
   }
  ],
- "modified": "2022-09-16 10:32:52.205678",
+ "modified": "2022-10-18 13:03:31.230232",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "Saas User",

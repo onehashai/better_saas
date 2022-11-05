@@ -140,7 +140,7 @@
                     <h5>Cart</h5>
                     <hr>
                     <div id="checkout-wrapper">
-                        {{ frappe.render_template("templates/includes/upgrade/cart.html", {"cart":current_subscription.plans,"plans":plans,"add_ons":add_ons,"currency":active_plan.currency, "tax_rate":tax_rate}) }}
+                        {{ frappe.render_template("templates/includes/upgrade/cart.html", {"cart":current_subscription.plans,"plans":plans,"add_ons":add_ons,"currency":active_plan.currency, "tax_rate":tax_rate,"min_space_block":min_space_block}) }}
                     </div>
                     <div class="mt-3 row">
                         <div class="card border col-md-6">

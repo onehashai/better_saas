@@ -7,13 +7,36 @@ from better_saas.better_saas.doctype.saas_user.saas_user import get_bench_path
 import frappe
 import json
 from frappe import _
+from frappe.exceptions import DoesNotExistError
 from frappe.utils import today, nowtime, add_days
 from frappe.model.document import Document
 from journeys.addon_limits import update_limits
 from werkzeug.exceptions import ExpectationFailed
 
 class SaasSite(Document):
-    pass            
+    def validate(self):
+        self.set_secret_key()
+
+    def set_secret_key(self):
+        if not self.secret_key:
+            from hashlib import blake2b
+            h = blake2b(digest_size=20)
+            h.update(self.site_name.encode())
+            self.secret_key = h.hexdigest()
+        if not self.is_new():
+            commands = []
+            commands.append(f"bench --site {self.site_name} set-config sk_onehash '{self.secret_key}'")
+            command_key = today() + " " + nowtime()
+            frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+			commands=commands,
+			doctype="Bench Settings",
+			key=command_key,
+			now=True,
+			cwd = get_bench_path(self.name))
+
+    def verify_secret_key(self,secret):
+        if not self.secret_key==secret:
+            frappe.throw(PermissionError)
 
 @frappe.whitelist()
 def update_addon_limits(addon_limits,site_name):
@@ -264,3 +287,57 @@ def verify_domain(site_name,custom_domain,user):
     saas_site.domain_status = "Verified"
     saas_site.save(ignore_permissions=True)
     return True
+
+@frappe.whitelist(allow_guest=True)
+def update_space_usage():
+    try:
+        # frappe.log_error(frappe.request.data)
+        request_data =  frappe.form_dict #json.loads(frappe.request.data)
+        site = request_data.get("site_name")
+        secret = request_data.get("secret")
+        saas_site = frappe.get_doc("Saas Site",site)
+        saas_site.verify_secret_key(secret)
+    except DoesNotExistError as e:
+        return
+    except Exception as e:
+        frappe.log_error(request_data)
+        frappe.log_error(frappe.get_traceback(),_("Invalid Request Params"))
+
+    try:
+        saas_site.backup_size = request_data.get("backup_size")
+        saas_site.file_size = request_data.get("file_size")
+        saas_site.database_size = request_data.get("database_size")
+        saas_site.total = request_data.get("total")
+        saas_site.save(ignore_permissions=True)
+    except Exception as e:
+        frappe.log_error(request_data,_("Usages update failed"))
+
+@frappe.whitelist(allow_guest=True)
+def update_user():
+    try:
+        request_data = frappe.form_dict
+        frappe.log_error(request_data, "request data")
+        site = request_data.get("site_name")
+        secret = request_data.get("secret")
+        saas_site = frappe.get_doc("Saas Site",site)
+        saas_site.verify_secret_key(secret)
+    
+        if frappe.db.exists("User Details",{"emai_id":request_data.get("emai_id"),"parent":site}):
+            doc = frappe.get_doc("User Details",{"emai_id":request_data.get("emai_id"),"parent":site})
+            doc.emai_id = request_data.get("emai_id")
+            doc.active = request_data.get("active")
+            doc.user_type = request_data.get("user_type")
+            doc.first_name = request_data.get("first_name")
+            doc.last_name = request_data.get("last_name")
+            doc.last_active = request_data.get("last_active")
+            doc.modified_by = "Administrator"
+            doc.save(ignore_permissions=True)
+        else:
+            saas_site.append("user_details",{"emai_id":request_data.get("emai_id"),"active":request_data.get("active"),"user_type":request_data.get("user_type"),"first_name":request_data.get("first_name"),"last_name":request_data.get("last_name"), "last_active":request_data.get("last_active"), "modified_by":"Administrator"})
+            saas_site.modified_by = "Administrator"
+            saas_site.save(ignore_permissions=True)
+        pass
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(),"Error User Update")
+        pass
+    
