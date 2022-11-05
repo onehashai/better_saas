@@ -9,11 +9,26 @@ from frappe.sessions import get_geo_ip_country
 from frappe.utils.data import getdate
 from frappe.utils import today, nowtime, add_days, get_formatted_email
 from frappe import _, throw
-import math, random, re, time, os, json
+import math, random, re, time, os, json,requests
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.core.doctype.user.user import test_password_strength
+from frappe.utils.password import get_decrypted_password
 
 class SaasUser(Document):
+	def get_login_sid(self):
+		password = get_decrypted_password("Saas User", self.name, "password")
+		response = requests.post(
+			f"https://{self.linked_saas_site}/api/method/login",
+			data={"usr": "Administrator", "pwd": password},
+		)
+		sid = response.cookies.get("sid")
+		if sid:
+			return sid
+	pass
+
+@frappe.whitelist()
+def login(name,reason=None):
+	return frappe.get_doc("Saas User",name).get_login_sid()
 	pass
 
 @frappe.whitelist(allow_guest=True)

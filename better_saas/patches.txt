@@ -1,0 +1,1 @@
+better_saas.patches.make_password_encrypted
