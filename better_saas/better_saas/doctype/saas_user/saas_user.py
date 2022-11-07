@@ -37,7 +37,7 @@ def setup(account_request):
 		saas_user = frappe.get_doc("Saas User",account_request)
 		saas_settings = frappe.get_doc("Saas Settings")
 		mysql_password = saas_settings.mysql_root_password
-		admin_password = get_decrypted_password("Saas User", saas_user.password, "password")
+		admin_password = get_decrypted_password("Saas User", saas_user.name, "password")
 		key = saas_user.key
 		site_name = saas_user.subdomain + "." + saas_settings.domain
 		bench_path,bench,install_apps = frappe.db.get_value("OneHash Product",saas_user.product,["bench_path","bench","install_apps"]) if saas_user.product else ("/home/frappe/frappe-bench","Frappe Bench","")
@@ -188,7 +188,7 @@ def get_status(account_request):
 			frappe.db.set_value('Stock Sites', stock_site, 'status', 'Assigned')
 		create_first_user_on_target_site(doc.name)
 		result['user'] = doc.email
-		result['password'] = get_decrypted_password("Saas User", doc.password, "password")
+		result['password'] = get_decrypted_password("Saas User", doc.name, "password")
 		result['link'] = "https://"+doc.linked_saas_site
 	elif commandStatus.status=="Failed":
 		create_first_user_on_target_site(doc.name)
@@ -418,7 +418,7 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 def get_users_list(site_name):
 	saas_settings = frappe.get_doc("Saas Settings")
 	site = frappe.get_doc("Saas User", {"linked_saas_site": site_name})
-	site_password = get_decrypted_password("Saas User", site.password, "password")
+	site_password = get_decrypted_password("Saas User", site.name, "password")
 	domain = site.linked_saas_domain
 	domain = domain + "." + saas_settings.domain
 	from better_saas.better_saas.doctype.saas_user.frappeclient import FrappeClient
