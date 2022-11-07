@@ -43,7 +43,7 @@ def setup(account_request):
 		bench_path,bench,install_apps = frappe.db.get_value("OneHash Product",saas_user.product,["bench_path","bench","install_apps"]) if saas_user.product else ("/home/frappe/frappe-bench","Frappe Bench","")
 		install_apps = " ".join(list(set(install_apps.replace("\n",",").split(",") + ["erpnext", "journeys"])))
 		## create user 
-		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = saas_user.password)
+		frappe.enqueue(create_user, timeout=2000, is_async = True, first_name = saas_user.first_name, last_name = saas_user.last_name, email = saas_user.email, password = admin_password)
 		
 		# check if stock site available
 		stock_list = frappe.get_list("Stock Sites", filters={"status":"Available","bench":bench}, order_by='creation asc', ignore_permissions=True)
@@ -188,7 +188,7 @@ def get_status(account_request):
 			frappe.db.set_value('Stock Sites', stock_site, 'status', 'Assigned')
 		create_first_user_on_target_site(doc.name)
 		result['user'] = doc.email
-		result['password'] = doc.password
+		result['password'] = get_decrypted_password("Saas User", doc.password, "password")
 		result['link'] = "https://"+doc.linked_saas_site
 	elif commandStatus.status=="Failed":
 		create_first_user_on_target_site(doc.name)
@@ -239,7 +239,7 @@ def create_first_user_on_target_site(saas_user):
 		"last_name": site_user.last_name,
 		"email": site_user.email,
 		"send_welcome_email":0,	
-		"new_password":site_user.password,
+		"new_password":site_password,
 		"enabled":1
 		})
 		is_new_user = True
@@ -418,7 +418,7 @@ def apply_new_limits(limit_for_users, limit_for_emails, limit_for_space, limit_f
 def get_users_list(site_name):
 	saas_settings = frappe.get_doc("Saas Settings")
 	site = frappe.get_doc("Saas User", {"linked_saas_site": site_name})
-	site_password = site.password
+	site_password = get_decrypted_password("Saas User", site.password, "password")
 	domain = site.linked_saas_domain
 	domain = domain + "." + saas_settings.domain
 	from better_saas.better_saas.doctype.saas_user.frappeclient import FrappeClient
