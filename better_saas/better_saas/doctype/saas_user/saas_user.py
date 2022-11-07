@@ -200,7 +200,7 @@ def get_status(account_request):
 def create_first_user_on_target_site(saas_user):
 	site_user =  frappe.get_doc('Saas User',saas_user)
 	domain = site_user.linked_saas_site
-	site_password = site_user.password
+	site_password = get_decrypted_password("Saas User", site_user.name, "password")
 	is_new_user = False
 	conn=""
 	user=None
