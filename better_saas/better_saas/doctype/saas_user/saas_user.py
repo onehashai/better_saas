@@ -37,7 +37,7 @@ def setup(account_request):
 		saas_user = frappe.get_doc("Saas User",account_request)
 		saas_settings = frappe.get_doc("Saas Settings")
 		mysql_password = saas_settings.mysql_root_password
-		admin_password = saas_user.password
+		admin_password = get_decrypted_password("Saas User", saas_user.password, "password")
 		key = saas_user.key
 		site_name = saas_user.subdomain + "." + saas_settings.domain
 		bench_path,bench,install_apps = frappe.db.get_value("OneHash Product",saas_user.product,["bench_path","bench","install_apps"]) if saas_user.product else ("/home/frappe/frappe-bench","Frappe Bench","")
