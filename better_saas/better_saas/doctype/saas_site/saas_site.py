@@ -112,7 +112,7 @@ def update_user_to_main_app():
         frappe.init(site=current_site_name)
         frappe.connect()
         enabled_system_users = frappe.get_all("User",fields=['name','email','last_active','user_type','enabled','first_name','last_name','creation'])
-        
+        space_usage = frappe.conf.get("limits",{}).get("space_usage",{})
         frappe.destroy()
         frappe.init(site=admin_site_name)
         frappe.connect()        
@@ -148,6 +148,10 @@ def update_user_to_main_app():
             site_doc.number_of_users =   (len(enabled_system_users)-2)
             site_doc.number_of_active_users= enabled_users_count
             site_doc.last_activity_time = max_last_active
+            site_doc.backup_size = space_usage.get("backup_size")
+            site_doc.file_size = space_usage.get("file_size")
+            site_doc.database_size = space_usage.get("database_size")
+            site_doc.total = space_usage.get("total")
             site_doc.save()
             frappe.db.commit()            
         except Exception as e:
