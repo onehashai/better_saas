@@ -19,7 +19,8 @@
   "cancel_url",
   "email_template",
   "invoice_print_format",
-  "code_prefix"
+  "code_prefix",
+  "enabled"
  ],
  "fields": [
   {
@@ -124,12 +125,18 @@
    "fieldname": "code_prefix",
    "fieldtype": "Data",
    "label": "Promocode Prefix"
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2021-08-28 14:37:12.083951",
+ "modified": "2022-11-10 16:10:58.425519",
  "modified_by": "Administrator",
  "module": "Better Saas",
  "name": "LTD Checkout Settings",
