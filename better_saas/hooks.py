@@ -94,7 +94,7 @@ scheduler_events = {
 # 	"all": [
 # 		"better_saas.tasks.all"
 # 	],
- 	"daily": [
+ 	"daily_long": [
  		"better_saas.better_saas.doctype.saas_site.saas_site.update_user_to_main_app",
 		"better_saas.better_saas.doctype.saas_site.saas_site.mute_emails_on_expiry"
  	],

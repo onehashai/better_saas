@@ -18,7 +18,8 @@ expected_keys = ('amount', 'title', 'description',
 	'payer_name', 'payer_email', 'order_id', 'currency','reference_docname','reference_doctype')
 
 def get_context(context):
-    raise PageDoesNotExistError
+    if not cint(frappe.get_value("LTD Checkout Settings",None,"enabled")):
+        raise PageDoesNotExistError
     context.no_cache = 1
     try:
         args = frappe.request.args.to_dict() or {}

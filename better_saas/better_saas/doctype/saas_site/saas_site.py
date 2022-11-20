@@ -23,16 +23,16 @@ class SaasSite(Document):
             h = blake2b(digest_size=20)
             h.update(self.site_name.encode())
             self.secret_key = h.hexdigest()
-        if not self.is_new():
-            commands = []
-            commands.append(f"bench --site {self.site_name} set-config sk_onehash '{self.secret_key}'")
-            command_key = today() + " " + nowtime()
-            frappe.enqueue('bench_manager.bench_manager.utils.run_command',
-			commands=commands,
-			doctype="Bench Settings",
-			key=command_key,
-			now=True,
-			cwd = get_bench_path(self.name))
+            if not self.is_new():
+                commands = []
+                commands.append(f"bench --site {self.site_name} set-config sk_onehash '{self.secret_key}'")
+                command_key = today() + " " + nowtime()
+                frappe.enqueue('bench_manager.bench_manager.utils.run_command',
+                commands=commands,
+                doctype="Bench Settings",
+                key=command_key,
+                now=True,
+                cwd = get_bench_path(self.name))
 
     def verify_secret_key(self,secret):
         if not self.secret_key==secret:
