@@ -6,8 +6,6 @@
 </style>
 {% endblock %} {% block page_content %}
 <!-- {{ for_test }} -->
-
-
 <div class="row" >
     <div class="col-md-1">
     </div>
@@ -90,12 +88,16 @@
                                         </div>
                                         <div class="form-check col-md-12" style="margin-left:10px;">
                                             <label class="form-check-label" style="font-size:12px;">
-                                                <input type="checkbox" class="form-check-input" value="" style="font-size:12px;">
+                                                <input type="checkbox" name="agree-checkbox" class="form-check-input" value="" style="font-size:12px;">
                                                 
                                                 I have read and agree to the <a href="https://onehash.ai/terms-of-use" target="_blank">Terms of Use</a> and <a href="https://onehash.ai/privacy" target="_blank">Privacy Policy</a>
                                                 
-                                            </label>
-                                            </div>
+                                        </label>
+                                        </div>
+                                        <div id="recaptcha" class="g-recaptcha"
+                                        data-sitekey="6LftSf0lAAAAAB5IOAN6uWO1KGqpDsorIBVTylLF"
+                                        data-callback="verify_captcha"
+                                        data-size="invisible"></div>
                                         <div class="form-group floating-label col-md-4" style="margin-top:20px;">
                                         <button class="btn btn-primary get-started-button btn-block"style="width:100%;">Get OTP</button>
                                         </div>
@@ -131,7 +133,7 @@
 <script src="https://kit.fontawesome.com/b597afc600.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>{% include "templates/includes/signup/signup.js" %}</script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="3375d605-22a8-4347-8a1e-6e30ce39c15b";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
-<script src="https://www.google.com/recaptcha/api.js?render=6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q"></script>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9HWLSJ"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 {% endblock %} {% block sidebar %}{% endblock %}

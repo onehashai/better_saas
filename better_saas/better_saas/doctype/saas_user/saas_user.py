@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+import json
 from frappe.sessions import get_geo_ip_country
 from frappe.utils.data import getdate
 from frappe.utils import today, nowtime, add_days, get_formatted_email
@@ -13,6 +14,8 @@ import math, random, re, time, os, json,requests
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.core.doctype.user.user import test_password_strength
 from frappe.utils.password import get_decrypted_password
+
+from frappe.integrations.utils import make_get_request, make_post_request, create_request_log
 
 class SaasUser(Document):
 	def get_login_sid(self):
@@ -433,6 +436,24 @@ def check_password_strength(passphrase,first_name,last_name,email):
 	if("'" in passphrase or '"' in passphrase):
 		return {"feedback":{"password_policy_validation_passed":False,"suggestions":["Password should not contain ' or \""]}}
 	return test_password_strength(passphrase,user_data=user_data)
+
+@frappe.whitelist(allow_guest=True)
+def verify_captcha():
+	# frappe.log_error("","Test")
+	# frappe.log_error(frappe.form_dict)
+	# frappe.log_error(frappe.form_dict['captchaToken'])
+	captchaToken=frappe.form_dict['captchaToken']
+	frappe.log_error(captchaToken,"Backend Token")
+	response = requests.post(
+			f"https://www.google.com/recaptcha/api/siteverify?secret=6LftSf0lAAAAAEIC9JQRi2XSG593uWRo7eB9Wh9D&response={captchaToken}",
+		)
+	if "true" in response.text:
+		frappe.log_error("","True")
+		return True
+	if "false" in response.text:
+		frappe.log_error("","False")
+		return False
+	return False
 
 @frappe.whitelist(allow_guest=True)
 def signup(subdomain,first_name,last_name,phone_number,email,passphrase,company_name=None,country=None,promocode=None,utm_source=None,utm_campaign=None,utm_medium=None,utm_content=None,utm_term=None,plan=None,product=None):

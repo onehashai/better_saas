@@ -98,9 +98,26 @@ frappe.ready(function () {
 
     // Check if form is completed and all values are valid
     $page.find('.get-started-button').on('click', () => {
+        
         if ($('.get-started-button').text() == "Get OTP") {
-            setup_account_request($page);
+            if(callbackCaptchaVerification=="True"){
+
+                // Runs if captcha already verified
+                let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
+                // console.log("Waiting to execute")
+                setup_account_request($page);
+            }
+            else{
+
+                // Fetch captcha first
+                grecaptcha.execute();
+                var $btn = $page.find('.get-started-button');
+                $btn.prop("disabled", true);
+            }
         } else if ($('.get-started-button').text() == "Resend OTP") {
+            
+            // console.log('aniket test')
+            
             resend_otp($page);
         } else if ($('.get-started-button').text() == "Get Started") {
             // setup_regional_details($page);
@@ -377,153 +394,211 @@ setup_signup = function (page) {
 };
 
 // ------------------------------- Setup Signup Request ----------------------------------------------
-function setup_account_request($page) {
-    grecaptcha.ready(function () {
-        grecaptcha.execute('6Lf6AeoaAAAAAASjFWeZlIS4zUpaa0jSxFAkjG2q', { action: 'submit' }).then(function (token) {
-            // Add your logic to submit to your backend server here.
-            hide_phonenumber = "{{hide_phonenumber}}";
-            if (!$page.find('input[name="first_name"]').val() ||
-                !$page.find('input[name="last_name"]').val() ||
-                !$page.find('input[name="subdomain"]').val() ||
-                !$page.find('input[name="email"]').val() ||
-                (hide_phonenumber!=1 && !$page.find('input[name="phone_number"]').val()) ||
-                !$page.find('input[name="passphrase"]').val() || !$page.find('input[name="company_name"]').val()) {
+let captchaVerified="False";
+let callbackCaptchaVerification="False";
+async function verify_captcha(token){
+    // console.log(token)
+    captchaToken=token;
+    await frappe.call({
+        method: 'better_saas.better_saas.doctype.saas_user.saas_user.verify_captcha',
+        args: {'captchaToken':captchaToken},
+        type: 'POST',
+        callback: function (r) {
+            // console.log(r.message,"Response")
+            if(r.message==true)
+            {
+                captchaVerified="True";
 
-                frappe.msgprint("All fields are necessary. Please try again.");
-                return false;
-
-            } else if ($page.find('input[name="email"]').parent().hasClass('invalid')) {
-
-                frappe.msgprint("Please enter a valid email.");
-                return false;
-
-            } else if ($page.find('input[name="email"]').parent().hasClass('not-available')) {
-
-                frappe.msgprint("Email already in use, try logging in instead.");
-                return false;
-
-            } else if ($page.find('input[name="passphrase"]').parent().hasClass('invalid')) {
-
-                frappe.msgprint("Please enter a strong password.");
-                return false;
-
-            } else if ($page.find('input[name="phone_number"]').parent().hasClass('invalid')) {
-
-                frappe.msgprint("Please enter Phone Number.");
-                return false;
-
-            } else if ($page.find('input[name="company_name"]').parent().hasClass('invalid')) {
-                frappe.msgprint("Please enter Company Name.");
-                return false;
-
-            } else {
-                var args = Array.from($page.find('.signup-state-details input'))
-                    .reduce(
-                        (acc, input) => {
-                            acc[$(input).attr('name')] = $(input).val();
-                            return acc;
-                        }, {});
-
-                // Update Phone Number with Country Code 
-                args.phone_number = localStorage.getItem('phoneNum');
-                console.log("Form Data",args)
-                // validate inputs
-                const validations = Array.from($page.find('.form-group.invalid'))
-                    .map(form_group => $(form_group).find('.validation-message').html());
-                if (validations.length > 0) {
-                    frappe.msgprint(validations.join("<br>"));
-                    return;
-                }
-
-                if ($("input[name*='agree-checkbox']").prop("checked") === false) {
-                    frappe.msgprint("Please agree to the Terms of Use and Privacy Policy.");
-                    return;
-                }
-
-                // add plan to args
-                var plan = frappe.utils.get_url_arg('plan');
-                if (plan) args.plan = plan;
-
-                var res = frappe.utils.get_url_arg('res');
-                if (res) args.partner = res;
-
-                
-                var $btn = $page.find('.get-started-button');
-                var btn_html = $btn.html();
-                $btn.prop("disabled", true).html("OTP Sent");
-                $page.find('input[name="otp"]').parent().removeClass('hide');
-                
-
-                // Lock Form Fields
-                let inputArray = Array.from($page.find('.signup-card form input'));
-                inputArray.pop();
-                for (input in inputArray) {
-                    console.log(inputArray[input]);
-                    $(inputArray[input]).prop('readonly', true);
-                }
-                $("input[name*='agree-checkbox']").prop('disabled', true);
-                $page.find('input[name="otp"]').prop('readonly',false);
-                //goog_report_conversion(); // eslint-disable-line
-
-                let locationParams = localStorage.getItem('urlKeywordParams')
-                if (locationParams) {
-                    let urlParams = new URLSearchParams(locationParams);
-                    /*let ga_params = {
-                        keyword: urlParams.get('utm_keyword'),
-                        utm_source: urlParams.get('utm_source'),
-                        campaignid: urlParams.get('utm_campaign'),
-                        adgroupid: urlParams.get('adgroupid'),
-                        loc_physical_ms: urlParams.get('utm_loc_physical_ms'),
-                        vertical: urlParams.get('vertical')
-                    }*/
-                    args['utm_source'] = urlParams.get('utm_source');
-                    args['utm_campaign'] = urlParams.get('utm_campaign');
-                    args['utm_medium'] = urlParams.get('utm_medium');
-                    args['utm_content'] = urlParams.get('utm_content');
-                    args['utm_term'] = urlParams.get('utm_term');
-                    args['utm_term'] = urlParams.get('utm_term');
-                    //	args['ga_params'] = ga_params
-
-                } else {
-                    let urlParams = new URLSearchParams(window.location.search)
-                    args['utm_source'] = urlParams.get('utm_source');
-                    args['utm_campaign'] = urlParams.get('utm_campaign');
-                    args['utm_medium'] = urlParams.get('utm_medium');
-                    args['utm_content'] = urlParams.get('utm_content');
-                    args['utm_term'] = urlParams.get('utm_term');
-                    args['product'] = urlParams.get('product');
-                }
-
-
-                delete args['agree-checkbox'];
-
-                frappe.call({
-                    method: 'better_saas.better_saas.doctype.saas_user.saas_user.signup',
-                    args: args,
-                    type: 'POST',
-                    btn: $btn,
-                    callback: function (r) {
-                        if (r.exc) return;
-
-                        if (r.message) {
-                            localStorage.setItem("reference", r.message.reference);
-                            localStorage.setItem("email", r.message.email);
-                            localStorage.setItem("mobile", r.message.mobile);
-                            $('.verify-otp .email').text(r.message.email);
-                            $('.mobile').text(r.message.mobile);
-                            $page.find('input[name="otp"]').parent().removeClass('hide');
-                            $('.get-started-button').text("Resend OTP").removeClass('btn-primary').addClass('btn-secondary');
-                        }
-                    },
-
-                }).always(function () {
-                    $btn.prop("disabled", false).html(btn_html);
-                });
-                return false;
-
+                // console.log(captchaVerified,"Verified")
             }
-        });
+            callbackCaptchaVerification="True";
+
+            // Calling Setup_account_request after captcha
+            let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
+            // console.log("Executing after callback")
+            var $btn = $page.find('.get-started-button');
+            setup_account_request($page);
+            $btn.prop("disabled", false);
+        },
     });
+}
+async function setup_account_request($page) {
+    // console.log("Setup Account Request")
+
+    // Add your logic to submit to your backend server here.
+    hide_phonenumber = "{{hide_phonenumber}}";
+    if (!$page.find('input[name="first_name"]').val() ||
+        !$page.find('input[name="last_name"]').val() ||
+        !$page.find('input[name="subdomain"]').val() ||
+        !$page.find('input[name="email"]').val() ||
+        (hide_phonenumber!=1 && !$page.find('input[name="phone_number"]').val()) ||
+        !$page.find('input[name="passphrase"]').val() || !$page.find('input[name="company_name"]').val()) {
+ 
+        frappe.msgprint("All fields are necessary. Please try again.");
+        return false;
+ 
+    } else if ($page.find('input[name="email"]').parent().hasClass('invalid')) {
+ 
+        frappe.msgprint("Please enter a valid email.");
+        return false;
+ 
+    } else if ($page.find('input[name="email"]').parent().hasClass('not-available')) {
+ 
+        frappe.msgprint("Email already in use, try logging in instead.");
+        return false;
+ 
+    } else if ($page.find('input[name="passphrase"]').parent().hasClass('invalid')) {
+ 
+        frappe.msgprint("Please enter a strong password.");
+        return false;
+ 
+    } else if ($page.find('input[name="phone_number"]').parent().hasClass('invalid')) {
+ 
+        frappe.msgprint("Please enter Phone Number.");
+        return false;
+ 
+    } else if ($page.find('input[name="company_name"]').parent().hasClass('invalid')) {
+        frappe.msgprint("Please enter Company Name.");
+        return false;
+ 
+            } else {
+        var args = Array.from($page.find('.signup-state-details input'))
+            .reduce(
+                (acc, input) => {
+                    acc[$(input).attr('name')] = $(input).val();
+                    return acc;
+                }, {});
+ 
+        // Update Phone Number with Country Code 
+        args.phone_number = localStorage.getItem('phoneNum');
+        // console.log("Form Data",args)
+        // validate inputs
+        const validations = Array.from($page.find('.form-group.invalid'))
+            .map(form_group => $(form_group).find('.validation-message').html());
+        if (validations.length > 0) {
+            frappe.msgprint(validations.join("<br>"));
+            return;
+        }
+        // console.log("A",$("input[name*='agree-checkbox']").prop("checked"))
+        if ($("input[name*='agree-checkbox']").prop("checked") == false) {
+            frappe.msgprint("Please agree to the Terms of Use and Privacy Policy.");
+            return;
+        }
+        // console.log("B")
+        // while(verified=="false"){}
+        if (callbackCaptchaVerification=="True" && captchaVerified=="True"){
+            // Uncomment to see dialog if the token is verified
+            // frappe.msgprint(captchaVerified,"Captcha Token Verified")
+        }
+        else{
+            frappe.msgprint("Captcha failed.");
+            return false;
+        } 
+        callbackCaptchaVerification="False";
+        captchaVerified="False";
+       
+ 
+        // console.log("C")
+        // add plan to args
+        var plan = frappe.utils.get_url_arg('plan');
+        if (plan) args.plan = plan;
+ 
+        var res = frappe.utils.get_url_arg('res');
+        if (res) args.partner = res;
+ 
+        
+        var $btn = $page.find('.get-started-button');
+        var btn_html = $btn.html();
+        incTimer();
+    var countdownNum = 30;
+        
+
+        function incTimer(){
+          setTimeout (function(){
+            if(countdownNum != 0){
+            countdownNum--;
+            $btn.prop("disabled", true).html("Resend OTP "+countdownNum);
+            incTimer();
+       } 
+        },1000);
+    }
+        
+        
+        $page.find('input[name="otp"]').parent().removeClass('hide');
+        
+ 
+        // Lock Form Fields
+        let inputArray = Array.from($page.find('.signup-card form input'));
+        inputArray.pop();
+        for (input in inputArray) {
+            console.log(inputArray[input]);
+            $(inputArray[input]).prop('readonly', true);
+        }
+        $("input[name*='agree-checkbox']").prop('disabled', true);
+        $page.find('input[name="otp"]').prop('readonly',false);
+        //goog_report_conversion(); // eslint-disable-line
+ 
+        let locationParams = localStorage.getItem('urlKeywordParams')
+        if (locationParams) {
+            let urlParams = new URLSearchParams(locationParams);
+            /*let ga_params = {
+                keyword: urlParams.get('utm_keyword'),
+                utm_source: urlParams.get('utm_source'),
+                campaignid: urlParams.get('utm_campaign'),
+                adgroupid: urlParams.get('adgroupid'),
+                loc_physical_ms: urlParams.get('utm_loc_physical_ms'),
+                vertical: urlParams.get('vertical')
+            }*/
+            args['utm_source'] = urlParams.get('utm_source');
+            args['utm_campaign'] = urlParams.get('utm_campaign');
+            args['utm_medium'] = urlParams.get('utm_medium');
+            args['utm_content'] = urlParams.get('utm_content');
+            args['utm_term'] = urlParams.get('utm_term');
+            args['utm_term'] = urlParams.get('utm_term');
+            //	args['ga_params'] = ga_params
+ 
+        } else {
+            let urlParams = new URLSearchParams(window.location.search)
+            args['utm_source'] = urlParams.get('utm_source');
+            args['utm_campaign'] = urlParams.get('utm_campaign');
+            args['utm_medium'] = urlParams.get('utm_medium');
+            args['utm_content'] = urlParams.get('utm_content');
+            args['utm_term'] = urlParams.get('utm_term');
+            args['product'] = urlParams.get('product');
+        }
+ 
+ 
+        delete args['agree-checkbox'];
+ 
+        frappe.call({
+            method: 'better_saas.better_saas.doctype.saas_user.saas_user.signup',
+            args: args,
+            type: 'POST',
+            btn: $btn,
+            callback: function (r) {
+                if (r.exc) return;
+ 
+                if (r.message) {
+                    localStorage.setItem("reference", r.message.reference);
+                    localStorage.setItem("email", r.message.email);
+                    localStorage.setItem("mobile", r.message.mobile);
+                    $('.verify-otp .email').text(r.message.email);
+                    $('.mobile').text(r.message.mobile);
+                    $page.find('input[name="otp"]').parent().removeClass('hide');
+                    setTimeout(function() {
+                    $('.get-started-button').text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary');
+                   }, 28000);
+                }
+            },
+ 
+        }).always(function () {
+            setTimeout(function() {
+            $btn.prop("disabled", false).html(btn_html);
+          }, 28000);
+        });
+        return false;
+ 
+    }
 }
 
 function verify_otp($page) {
@@ -579,8 +654,20 @@ function resend_otp($page) {
     var $btn = $page.find('.get-started-button');
     var btn_html = $btn.html();
     $btn.prop("disabled", true);
-    $btn.text("Sending OTP").addClass('btn-primary').removeClass('btn-secondary');
+    // $btn.text("Resend OTP "+"30");
+    incTimer();
+    var countdownNum = 30;
 
+        function incTimer(){
+          setTimeout (function(){
+            if(countdownNum != 0){
+            $btn.prop("disabled", true);
+            countdownNum--;
+            $btn.text("Resend OTP "+countdownNum);
+          incTimer();
+       } 
+        },1000);
+    }
     frappe.call({
         method: 'better_saas.better_saas.doctype.saas_user.saas_user.resend_otp',
         args: { "id": localStorage.getItem("reference") },
@@ -589,12 +676,16 @@ function resend_otp($page) {
     }).always(function () {
         $('#otp').css('border-color', '#377DE2');
         $('#otp').next().text("OTP resent").css('color', '#377DE2').show();
-        $btn.prop("disabled", false).html(btn_html);
-        $btn.text("Resend OTP").removeClass('btn-primary').addClass('btn-secondary');
+        
+        setTimeout(function() {
+            //$btn.show();
+            $btn.prop("disabled", false).html(btn_html);
+        $btn.text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary');
+        }, 28000); // 30 seconds in milliseconds
+
+        //$btn.hide();
     });
-}
-
-
+} 
 
 function toggle_button(event) {
     let button = $(".get-started-button");
