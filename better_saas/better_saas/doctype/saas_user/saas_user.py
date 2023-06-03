@@ -445,9 +445,35 @@ def check_password_strength(passphrase,first_name,last_name,email):
 	has_special = any(c for c in password if c.isalnum() is False)
 	
 	# Strength evaluation
-	if not has_lowercase or has_uppercase or not has_digit or not has_special or len(password) < 8 or len(password)>20:
-		return "Should be between 8 to 20 characters long and contain at least one digit, and a special character. Password is case insensitive."
-	return "Passed"
+	messages = []
+	count=0
+	if not (8 <= len(password) <= 20):
+		messages.append({"message": "Should be between 8 to 20 characters long", "success": False})
+	else:
+		count+=1
+		messages.append({"message": "Should be between 8 to 20 characters long", "success": True})
+		
+	if not has_digit:
+		messages.append({"message": "Should contain at least one digit", "success": False})
+	else:
+		count+=1
+		messages.append({"message": "Should contain at least one digit", "success": True})
+		
+	if not has_uppercase:
+		messages.append({"message": "Should contain at least one uppercase letter", "success": False})
+	else:
+		count+=1
+		messages.append({"message": "Should contain at least one uppercase letter", "success": True})
+		
+	if not has_special:
+		messages.append({"message": "Should contain at least one special character", "success": False})
+	else:
+		count+=1
+		messages.append({"message": "Should contain at least one special character", "success": True})
+	
+	if(count==4):
+		return "Passed"
+	return messages
 	# return test_password_strength(passphrase,user_data=user_data)
 
 @frappe.whitelist(allow_guest=True)
