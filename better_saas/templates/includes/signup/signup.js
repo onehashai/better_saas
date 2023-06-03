@@ -234,7 +234,7 @@ validateSubdomain= async function () {
         $this.data('timeout', setTimeout(async function () {
             let page = $('#page-signup,#page-signup-1,#page-signup_ltd');
             // console.log("Inside Set Timeout")
-            let subdomain = document.getElementById('input-group-append').value;
+            let subdomain = document.getElementById('input-group-append').value.toLowerCase();
             // set_availability_status('empty');
             if (subdomain.length !== 0) {
                 page.find('.availability-status').addClass('hidden');
@@ -270,7 +270,7 @@ async function is_a_valid_subdomain(subdomain) {
     //     return [0, `Sub-domain cannot have more than ${MAX_LENGTH} characters`];
     // }
     if (!/^[a-z0-9]+$/.test(subdomain)) {
-        return [0, 'Subdomain can only contain lowercase letters and numbers'];
+        return [0, 'Sitename should be Alphanumeric'];
     }
       
     return [1, ''];
@@ -408,7 +408,7 @@ setup_signup = function (page) {
             type: 'GET',
             method: 'better_saas.better_saas.doctype.saas_user.saas_user.check_password_strength',
             args: {
-                passphrase:  $('#passphrase').val().toLowerCase(),                
+                passphrase:  $('#passphrase').val(),                
                 first_name: $('input[name="first_name"]').val(),
                 last_name: $('input[name="last_name"]').val(),
                 email: $('input[name="email"]').val()
@@ -422,21 +422,49 @@ setup_signup = function (page) {
 
                     // feedback.crack_time_display = r.message.crack_time_display;
                     // feedback.score = score;
+                    // strength_message.removeAttr('style').removeAttr('class').addClass('password-strength-message');
 
                     if (r.message=="Passed") {
                         // console.log("Passed")
                         // strength_indicator.removeClass().addClass('password-strength-indicator indicator ' + color);
                         strength_message.html("Success! You are good to go 👍").removeClass('hidden');
                         strength_message.attr('class', 'octicon-check text-success');
+                        strength_message.attr('style',"position: absolute;font-size:80%");
                         $('#passphrase').css('border-color', '#0E8C4A');
 
                         // set_strength_indicator('green',"Success! You are good to go 👍");
                         $('input[name="passphrase"]').closest('.form-group').removeClass('invalid');
                     } else {
                         
-                        strength_message.attr('class', `octicon-x text-danger`);
-                        strength_message.html(r.message).removeClass('hidden');
-                        $('#passphrase').css('border-color', '#377DE2');
+                        // strength_message.attr('class', `octicon-x text-danger`);
+
+                        let successIcons = {
+                            true: '<span class="tick-mark">&#10004;</span>',
+                            false: '<span class="cross-mark">&#10006;</span>'
+                          };
+                        
+                        let messageContent = '';
+                        for (let i = 0; i < r.message.length; i++) {
+                        let isSuccess = r.message[i].success;
+                        let message = r.message[i].message;
+                        let icon = successIcons[isSuccess];   
+                        if(!isSuccess) {
+                            messageContent += `<div style="color:#dc3545!important;"> ${icon} ${message}</div>`;
+                        }else{
+                            messageContent += `<div style="color:#28a745!important;"> ${icon} ${message}</div>`;
+                        }
+                            
+                        }
+                        strength_message.html(messageContent).removeClass('hidden');
+                        strength_message.attr('style',`position:absolute;
+                        padding: 0px 2px 1px 0px;
+                        margin-top: 4px;
+                        margin-right: 0px;
+                        z-index: 5;
+                        font-size:10px;
+                        border-radius:8px;
+                        background: #fff;`);
+                        $('#passphrase').css('border-color', '#dc3545');
 
                         // set_strength_indicator('red', r.message);
                         $('input[name="passphrase"]').closest('.form-group').addClass('invalid');
@@ -446,42 +474,42 @@ setup_signup = function (page) {
         });
     }
 
-    function set_strength_indicator(color, feedback) {
-        var message = [];
-        feedback.help_msg = "";
-        if (!feedback.password_policy_validation_passed) {
-            feedback.help_msg = "<br>" + "Suggestions: Include symbols, numbers and at least one capital letter";
-            strength_message.attr('style', `color: #377DE2 !important; 
-                                            border: 1px #377ce2 solid; 
-                                            padding: 0px 2px 1px 6px;
-                                            margin-top: 4px;
-                                            margin-right: 14px;
-                                            z-index: 5;
-                                            font-size:10px;
-                                            border-radius:8px;
-                                            background: #fff;`);
-            $('#passphrase').css('border-color', '#377DE2');
-        }
-        if (feedback) {
-            if (!feedback.password_policy_validation_passed) {
-                if (feedback.suggestions && feedback.suggestions.length) {
-                    message = message.concat(feedback.suggestions);
-                } else if (feedback.warning) {
-                    message.push(feedback.warning);
-                }
-                message.push(feedback.help_msg);
+    // function set_strength_indicator(color, feedback) {
+    //     var message = [];
+    //     feedback.help_msg = "";
+    //     if (!feedback.password_policy_validation_passed) {
+    //         feedback.help_msg = "<br>" + "Suggestions: Include symbols, numbers and at least one capital letter";
+    //         strength_message.attr('style', `color: #377DE2 !important; 
+    //                                         border: 1px #377ce2 solid; 
+    //                                         padding: 0px 2px 1px 6px;
+    //                                         margin-top: 4px;
+    //                                         margin-right: 14px;
+    //                                         z-index: 5;
+    //                                         font-size:10px;
+    //                                         border-radius:8px;
+    //                                         background: #fff;`);
+    //         $('#passphrase').css('border-color', '#377DE2');
+    //     }
+    //     if (feedback) {
+    //         if (!feedback.password_policy_validation_passed) {
+    //             if (feedback.suggestions && feedback.suggestions.length) {
+    //                 message = message.concat(feedback.suggestions);
+    //             } else if (feedback.warning) {
+    //                 message.push(feedback.warning);
+    //             }
+    //             message.push(feedback.help_msg);
 
-            } else {
-                message.push("Success! You are good to go 👍");
-                strength_message.attr('style', 'color: #0E8C4A !important');
-                $('#passphrase').css('border-color', '#0E8C4A');
-            }
-        }
+    //         } else {
+    //             message.push("Success! You are good to go 👍");
+    //             strength_message.attr('style', 'color: #0E8C4A !important');
+    //             $('#passphrase').css('border-color', '#0E8C4A');
+    //         }
+    //     }
 
-        strength_indicator.removeClass().addClass('password-strength-indicator indicator ' + color);
-        strength_message.html(message.join(' ') || '').removeClass('hidden');
-        // strength_indicator.attr('title', message.join(' ') || '');
-    }
+    //     strength_indicator.removeClass().addClass('password-strength-indicator indicator ' + color);
+    //     strength_message.html(message.join(' ') || '').removeClass('hidden');
+    //     // strength_indicator.attr('title', message.join(' ') || '');
+    // }
 };
 
 // ------------------------------- Setup Signup Request ----------------------------------------------
