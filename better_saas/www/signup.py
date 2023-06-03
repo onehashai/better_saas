@@ -56,52 +56,52 @@ def load_dropdowns():
     return response
 
 
-@frappe.whitelist(allow_guest=True)
-def apply_promocode(promocode, site_name):
-	saas_user = frappe.get_list("Saas User",filters={"linked_saas_site":site_name},ignore_permissions=True)
-	if(len(saas_user)==0):
-		frappe.throw("Invalid Request",ExpectationFailed)
-		return
-	validResult = is_valid_promocode(promocode)
-	if(validResult):
-		promocode = frappe.get_list("Coupon Code", filters={'coupon_code': promocode}, ignore_permissions=True)[0].name
-		coupon_code  = frappe.get_list("Coupon Code", promocode, ignore_permissions=True)[0]
+# @frappe.whitelist(allow_guest=True)
+# def apply_promocode(promocode, site_name):
+# 	saas_user = frappe.get_list("Saas User",filters={"linked_saas_site":site_name},ignore_permissions=True)
+# 	if(len(saas_user)==0):
+# 		frappe.throw("Invalid Request",ExpectationFailed)
+# 		return
+# 	validResult = is_valid_promocode(promocode)
+# 	if(validResult):
+# 		promocode = frappe.get_list("Coupon Code", filters={'coupon_code': promocode}, ignore_permissions=True)[0].name
+# 		coupon_code  = frappe.get_list("Coupon Code", promocode, ignore_permissions=True)[0]
 
-		base_plan = coupon_code.base_plan
-		limit_users = int(coupon_code.limit_for_users) ## Applying Users count from promocode
-		limit_emails = int(coupon_code.limit_for_emails)
-		limit_space = int (coupon_code.limit_for_space)
-		limit_email_group = int(coupon_code.limit_for_email_group)
+# 		base_plan = coupon_code.base_plan
+# 		limit_users = int(coupon_code.limit_for_users) ## Applying Users count from promocode
+# 		limit_emails = int(coupon_code.limit_for_emails)
+# 		limit_space = int (coupon_code.limit_for_space)
+# 		limit_email_group = int(coupon_code.limit_for_email_group)
 
-		## Check for Life-Time Deals (i.e. for 100 years)
-		if coupon_code.no_expiry == 1:
-			limit_expiry = add_days(today(), int(36500))
+# 		## Check for Life-Time Deals (i.e. for 100 years)
+# 		if coupon_code.no_expiry == 1:
+# 			limit_expiry = add_days(today(), int(36500))
 		
-		apply_new_limits(limit_users,limit_emails,limit_space,limit_email_group,limit_expiry,site_name)
+# 		apply_new_limits(limit_users,limit_emails,limit_space,limit_email_group,limit_expiry,site_name)
 
-		## Promocode Consumed
-		coupon_code.used = coupon_code.used + 1
-		coupon_code.save(ignore_permissions=True)
-	else:
-		frappe.throw("Please Enter valid code",ExpectationFailed)
-		return False
+# 		## Promocode Consumed
+# 		coupon_code.used = coupon_code.used + 1
+# 		coupon_code.save(ignore_permissions=True)
+# 	else:
+# 		frappe.throw("Please Enter valid code",ExpectationFailed)
+# 		return False
 
 
-@frappe.whitelist(allow_guest=True)
-def is_valid_promocode(promocode):
-	code = frappe.get_list("Coupon Code", filters={'is_signup_scheme':1, 'coupon_code': promocode}, ignore_permissions=True)
-	print(code)
-	if(len(code)==0):
-		return False
-    # # Check for Promocode Validation
+# @frappe.whitelist(allow_guest=True)
+# def is_valid_promocode(promocode):
+# 	code = frappe.get_list("Coupon Code", filters={'is_signup_scheme':1, 'coupon_code': promocode}, ignore_permissions=True)
+# 	print(code)
+# 	if(len(code)==0):
+# 		return False
+#     # # Check for Promocode Validation
 	
-	from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
-	return validate_coupon_code(code[0].name)
+# 	from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
+# 	return validate_coupon_code(code[0].name)
 	
 
 @frappe.whitelist(allow_guest=True)
 def email_exists(email):
-    linked_saas_site = frappe.db.get_value('Saas User', {'email': email, 'linked_saas_site': ['!=','']}, ['linked_saas_site'])
-    if linked_saas_site:
-        return linked_saas_site
+    email = frappe.db.get_value('Saas User', {'email': email}, ['email'])
+    if email:
+        return email
     return False

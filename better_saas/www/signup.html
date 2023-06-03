@@ -1,7 +1,6 @@
 {% extends "templates/web.html" %} {% block style %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
 <style>
-    
     {% include "templates/includes/signup/signup.css" %}
 </style>
 {% endblock %} {% block page_content %}
@@ -11,11 +10,11 @@
     </div>
     <div class="col-md-10">
         <div class="col-md-12 signup-inner" style="border:1px solid #DADCE0;">
-            <img src="https://uploads-ssl.webflow.com/5e53d34464688e6f5960a338/610a36c2792530d601aaf35f_OneHash_Logo.svg" width="110px;" aria-hidden="true">
-            {% if partner_logo %}
-            |
-            <img src="{{partner_logo}}" aria-hidden="true" width="110px;">
-            {% endif %}
+        <img src="https://uploads-ssl.webflow.com/5e53d34464688e6f5960a338/610a36c2792530d601aaf35f_OneHash_Logo.svg" width="110px;" aria-hidden="true">
+        {% if partner_logo %}
+        |
+        <img src="{{partner_logo}}" aria-hidden="true" width="110px;">
+        {% endif %}
             <h1>
                 Create an Account
             </h1>
@@ -37,7 +36,7 @@
                                             <p class="validation-message"></p>
                                         </div>
                                         
-                                        <div class="form-group col-md-12" style="margin-top:10px;">
+                                        <div class="form-group col-md-12" style="margin-top:9px;">
                                             <div class="input-group floating-label">
                                             <input id="input-group-append" name="subdomain" class="form-control" placeholder=" " />
                                             <label for="input-group-append" style="left:5px;">Your Sitename</label>
@@ -47,45 +46,56 @@
                                             </div>
                                             <div class="availability" style="font-size: 80%; font-weight: 400;">
                                                 <span class="availability-status text-success" style="height: 21px;"><span></span></span>
-                                                <span class="availability-spinner small text-muted hidden">checking...</span>
+                                                <span class="availability-subdomain-spinner small text-muted hidden">checking...</span>
                                             </div>
-                                            <p class="validation-message small"></p>
+                                            <!-- <p class="validation-site-message hidden"></p> -->
                                         </div>
                                         
                                         <div class="form-group floating-label col-md-12" style="margin-top:10px;">
                                             <input id="companyname" name="company_name" class="form-control" placeholder=" " />
                                             <label for="companyname">Company Name</label>
                                         </div>
-                                        
-                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                        <div class="col-md-6" style="margin-top:10px;">
+                                        <div class="form-group floating-label">
                                             <input id="email" name="email" class="form-control" placeholder="jane_doe@example.com" value="{{email}}"/>
                                             <label for="email">Email</label>
-                                            <p class="validation-message" id="emailValidationMsg">Please enter a valid email address</p>
+                                            <!-- <span class="availability-email-spinner =small text-muted hidden">checking...</span> -->
+                                            <span class="validation-message" id="emailValidationMsg" style="position: absolute;"></span>
                                         </div>
-                                        
-                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                        </div>
+                                        <div class="col-md-6" style="margin-top:10px;">
+                                        <div class="form-group floating-label">
                                             <input type="password" id="passphrase" name="passphrase" class="form-control" placeholder=" " />
                                             <label for="password">Password</label>
                                             <span class="password-strength-indicator indicator"></span>
-                                            <p class="password-strength-message text-muted small hidden"></p>
+                                            <span class="password-strength-message text-muted small hidden" style="position: absolute;font-size:80%"></span>
+                                        </div>
                                         </div>
                                         
-                                            <div class="form-group floating-label col-md-6" style="margin-top:10px; ">
-                                            <input id="tphone" name="phone_number" type="text" min=0 class="form-control" placeholder="Mobile"  value="{{phone_number}}" style="width:100% !important; "/>
-                                            <label for="tphone"></label>
+                                        <div class="form-group  col-md-6" style="margin-top:10px; ">
+                                            <div class="form-group floating-label col-md-12" style="margin:0px;padding:0px">
+                                            <input id="tphone" name="phone_number" type="text" min=0 class="form-control" placeholder="Mobile" value="{{phone_number}}"/>         
+                                             </div>
                                         </div>
+                                        <!-- <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                            <label for="tphone">Mobile</label>
+                                             <div class="form-group floating-label col-md-6" style="margin-top:10px; "> -->
+                                            <!-- <input id="tphone" name="phone_number" type="text" min=0 class="form-control" placeholder=" "  value="{{phone_number}}" style="width:200% !important; "/> -->
+                                            <!-- </div> -->
+                                        <!-- </div>  -->
                                         
-                                        <div class="form-group floating-label col-md-6" style="margin-top:10px;">
+                                        <!-- <div class="form-group floating-label col-md-6" style="margin-top:10px;">
                                             <input id="promocode" name="promocode" class="form-control" placeholder=" " value="{{promocode}}"/>
                                             <label for="promocode">Promocode</label>
                                             <p class="validation-message" style="font-weight: 400;font-size: small;"></p>
-                                        </div>
-                                        <div class="form-group floating-label col-md-6 .verify-otp hide" style="margin-top:10px;">
-                                            <input id="enterOTP" name="otp" class="form-control" placeholder=" " />
-                                            <label for="enterOTP">Enter OTP</label>
-                                            <small>OTP is sent on Your Email{% if hide_phonenumber!=1 %} and Phone{%endif%}.</small>
-                                            <p class="validation-message"></p>
-                                        </div>
+                                        </div> -->
+                                        <!-- <div class="form-group floating-label col-md-6" style="margin-top:10px; padding:0px"></div> -->
+                                        <div class="form-group col-md-6 .verify-otp hide" style="margin-top:10px;padding-top:0px">
+                                            <input id="enterOTP" name="otp" placeholder="Enter OTP" class="form-control" placeholder=" "/>
+                                            <small  style="position:absolute">OTP is sent on your Email{% if hide_phonenumber!=1 %} and Phone{%endif%}.</small>
+                                            <!-- <p class="validation-message"></p> -->
+                                            </div>
+                                        <!-- </div> -->
                                         <div class="form-check col-md-12" style="margin-left:10px;">
                                             <label class="form-check-label" style="font-size:12px;">
                                                 <input type="checkbox" name="agree-checkbox" class="form-check-input" value="" style="font-size:12px;">
@@ -94,10 +104,6 @@
                                                 
                                         </label>
                                         </div>
-                                        <div id="recaptcha" class="g-recaptcha"
-                                        data-sitekey="6LftSf0lAAAAAB5IOAN6uWO1KGqpDsorIBVTylLF"
-                                        data-callback="verify_captcha"
-                                        data-size="invisible"></div>
                                         <div class="form-group floating-label col-md-4" style="margin-top:20px;">
                                         <button class="btn btn-primary get-started-button btn-block"style="width:100%;">Get OTP</button>
                                         </div>
@@ -107,12 +113,20 @@
                                     </div>
                                 </div>
                                 <div class="col-md-5 text-center">
-                                <div style="padding:0 50px;">
-                                <p>
-                                    All of this can be yours in just OneClick
-                                </p>
+                                 <div style="padding:0 50px;">
+                                
                                     <img src="https://uploads-ssl.webflow.com/5e53d34464688e6f5960a338/612768909db25502848f8062_Signup-image.svg" width="100%">
+                                    <p style=" 
+                                    font-size: 14px;
+                                    font-weight: bold;
+                                    letter-spacing: 1px;">
+                                        The most powerful all in one software.
+                                    </p>   
                                 </div>
+                                <div id="recaptcha" class="g-recaptcha"
+                                data-sitekey="6LftSf0lAAAAAB5IOAN6uWO1KGqpDsorIBVTylLF"
+                                data-callback="verify_captcha" data-expired-callback="expired_captcha"  data-error-callback="error_captcha"
+                                data-size="invisible"></div>
                             </div>
                             </div>
                     </div>
@@ -133,7 +147,7 @@
 <script src="https://kit.fontawesome.com/b597afc600.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>{% include "templates/includes/signup/signup.js" %}</script>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback" async defer></script>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="3375d605-22a8-4347-8a1e-6e30ce39c15b";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9HWLSJ"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 {% endblock %} {% block sidebar %}{% endblock %}

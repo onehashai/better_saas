@@ -1,5 +1,9 @@
+let repeat = 5;
 frappe.ready(function () {
     let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
+    // console.log("AAAAAAAAAAAAA")
+    // $page.find('#input-group-append').addClass('invalid');
+    // $page.find('.validation-site-message').addClass('hidden');
     let minimum = {
         'P-Pro-2020': 1,
         'P-Standard-2020': 1
@@ -7,12 +11,13 @@ frappe.ready(function () {
 
     // Get Country Codes
     const hide_phonenumber = "{{hide_phonenumber}}";
-    if(hide_phonenumber==1){
+    // console.log(hide_phonenumber,"Hide")
+    if (hide_phonenumber == 1) {
         $("#tphone").parent().hide();
     }
     const phoneInputField = document.querySelector("#tphone");
     const phoneInput = window.intlTelInput(phoneInputField, {
-        initialCountry: "auto",
+        initialCountry: "IN",
         preferredCountries: ["US", "IN", "SG"],
         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         geoIpLookup: function (callback) {
@@ -22,67 +27,45 @@ frappe.ready(function () {
             });
         },
     });
-
+    // console.log("BBBBBBBBBb")
     // Define the signup stages
     setup_signup($('#page-signup'));
     setup_signup($('#page-signup_ltd'));
     setup_signup($('#page-appsumo'));
 
     //  Check for valid email
-    $page.find('input[name="email"]').on('change load', function () {
-        let email = $(this).val();
-        $('#emailValidationMsg').text('Please enter a valid email address');
-        if (!email) { return }
-        else if (!valid_email(email)) {
-            $(this).closest('.form-group').addClass('invalid');
-        } else {
-            $(this).closest('.form-group').removeClass('invalid');
-
-            frappe.call('better_saas.www.signup.email_exists', {
-                email: email
-            }).then(r => {
-                if (r.message) {
-                    let site = r.message;
-                    $('#emailValidationMsg').html(`Email already in use, try <a href="https://${site}/login" style="color:#2490ef">logging in</a>`);
-                    $(this).closest('.form-group').addClass('invalid');
-                } else {
-                    $(this).closest('.form-group').removeClass('invalid');
-                    $('#emailValidationMsg').html(`<span style="color:#0E8C4A;">Email is available</span>`).show();
-                    $('input[name="email"]').css('border-color', '#0E8C4A');
-                }
-            });
-        }
-    });
-
+    // console.log("CCCCCCCCCCCC")
+    $page.find('input[name="email"]').on('change load', validateMail);
+    // console.log("DDDDDDDDDDDD")
     // PHONE 
     $page.find('input[name="phone_number"]').on('change focus', function () {
         const phoneNumber = phoneInput.getNumber();
         localStorage.setItem('phoneNum', phoneNumber);
     });
 
-    // Check if Promocode is invalid
-    $page.find('input[name="promocode"]').on('change', function () {
-        let promocode = $(this).val();
-        $(this).closest('.form-group').removeClass('invalid');
+    // // Check if Promocode is invalid
+    // $page.find('input[name="promocode"]').on('change', function () {
+    //     let promocode = $(this).val();
+    //     $(this).closest('.form-group').removeClass('invalid');
 
-        if (promocode != '') {
-            $(this).closest('.form-group').removeClass('invalid');
-            frappe.call('better_saas.better_saas.doctype.saas_user.saas_user.is_valid_promocode', {
-                promocode: promocode,
-                is_new_user:1
-            }).then(r => {
-                if (!r.message || !r.message[0]) {
-                    $(this).closest('.form-group').addClass('invalid');
-                    $(this).css('border-color', '#D13830');
-                    $(this).next().text("Please enter a valid promocode").css('color', '#D13830');
-                } else {
-                    $(this).closest('.form-group').removeClass('invalid');
-                    $(this).css('border-color', '#0E8C4A');
-                    $(this).next().text("Promocode is valid").css('color', '#0E8C4A').show();
-                }
-            });
-        }
-    });
+    //     if (promocode != '') {
+    //         $(this).closest('.form-group').removeClass('invalid');
+    //         frappe.call('better_saas.better_saas.doctype.saas_user.saas_user.is_valid_promocode', {
+    //             promocode: promocode,
+    //             is_new_user: 1
+    //         }).then(r => {
+    //             if (!r.message || !r.message[0]) {
+    //                 $(this).closest('.form-group').addClass('invalid');
+    //                 $(this).css('border-color', '#D13830');
+    //                 $(this).next().text("Please enter a valid promocode").css('color', '#D13830');
+    //             } else {
+    //                 $(this).closest('.form-group').removeClass('invalid');
+    //                 $(this).css('border-color', '#0E8C4A');
+    //                 $(this).next().text("Promocode is valid").css('color', '#0E8C4A').show();
+    //             }
+    //         });
+    //     }
+    // });
 
     // Verify OTP
     $page.find('input[name="otp"]').on('keyup', () => {
@@ -98,26 +81,28 @@ frappe.ready(function () {
 
     // Check if form is completed and all values are valid
     $page.find('.get-started-button').on('click', () => {
-        
-        if ($('.get-started-button').text() == "Get OTP") {
-            if(callbackCaptchaVerification=="True"){
+        // console.log("C")
 
+        if ($('.get-started-button').text() == "Get OTP") {
+            if (callbackCaptchaVerification == "True") {
                 // Runs if captcha already verified
                 let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
                 // console.log("Waiting to execute")
+                // console.log("2RRRRRRRRRRRRRRRRRRRR")
                 setup_account_request($page);
             }
-            else{
+            else {
 
-                // Fetch captcha first
+                // console.log("3SSSSSSSSSSSSSSSSSSSSS")
+                // // Fetch captcha first
                 grecaptcha.execute();
-                var $btn = $page.find('.get-started-button');
-                $btn.prop("disabled", true);
+                // var $btn = $page.find('.get-started-button');
+                // $btn.prop("disabled", true);
             }
         } else if ($('.get-started-button').text() == "Resend OTP") {
-            
+
             // console.log('aniket test')
-            
+
             resend_otp($page);
         } else if ($('.get-started-button').text() == "Get Started") {
             // setup_regional_details($page);
@@ -127,6 +112,192 @@ frappe.ready(function () {
     });
 });
 
+validateMail= async function() {
+    // console.log("Inside Validate Mail")
+    let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
+        // console.log("Email change onload")
+        $page.find('.availability-email-spinner').removeClass('hidden');
+        $('#emailValidationMsg').addClass('hidden');
+        await new Promise((resolve) => {
+        setTimeout(()=>{
+            $page.find('.availability-email-spinner').addClass('hidden');
+            let email = document.getElementById('email').value;
+            // console.log(email,"Email")
+            $('#emailValidationMsg').html(`Please enter a valid email address`).removeClass('hidden').addClass('octicon-x text-warning');
+            $(this).closest('.form-group').addClass('invalid');
+            $('#emailValidationMsg').text('');
+            // console.log(email,"Email")
+            if (!email) { console.log(email,"No Email");
+                $('#emailValidationMsg').html(`Please enter a valid email address`)
+                .removeClass('hidden').removeClass('octicon-x text-danger');
+                $(this).closest('.form-group').addClass('invalid');
+            }
+            else if (!valid_email(email)) {
+                // console.log(email,"Invalid Mail")
+                $('#emailValidationMsg').html(`Please enter a valid email address`)
+                .removeClass('hidden').removeClass('octicon-x text-danger');
+                $(this).closest('.form-group').addClass('invalid');
+                // $('#emailValidationMsg').html(`Invalid Email Id`).addClass('octicon-x text-danger')
+                // .removeClass('hidden');
+                // $(this).closest('.form-group').addClass('invalid');
+            } else {
+                $(this).closest('.form-group').removeClass('invalid');
+
+                frappe.call('better_saas.www.signup.email_exists', {
+                    email: email
+                }).then(r => {
+                    // console.log(r.message)
+                    if (r.message ==false) {
+                        $(this).closest('.form-group').removeClass('invalid');
+                        $('#emailValidationMsg').html(`<span style="color:#0E8C4A;">Email is available</span>`).show().removeClass('hidden').removeClass('octicon-x text-danger');
+                        $('input[name="email"]').css('border-color', '#0E8C4A');
+                        console.log("Completed And Email Doesnt exist")
+                    } else {
+                        let site = r.message;
+                        $('#emailValidationMsg').html(`Email already in use, try <a href="https://${site}/login" style="color:#2490ef">logging in</a>`)
+                        .removeClass('hidden').addClass('octicon-x text-danger');
+                        $(this).closest('.form-group').addClass('invalid');
+                        console.log("Completed")
+                    }
+                });    
+            }
+        },200);
+        resolve();
+        });
+        //  console.log("Outside Validate Mail")
+}
+async function set_availability_status(is_available, subdomain, validation_msg) {
+
+    await new Promise((resolve) => {
+    // console.log("Inside set Availability_Status")
+    let page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
+    // reset
+    page.find('.availability-status').addClass('hidden');
+    // console.log("==========Added Invalid")
+    page.find('#input-group-append').addClass('invalid');
+    if (typeof is_available === 'string') {
+        // console.log(1)
+        if (is_available === 'empty') {
+            // blank state
+        } else if (is_available === 'invalid') {
+            // custom validation message
+            // console.log("Invalid")
+            // console.log("Test")
+            // console.log("Add validation Message.",validation_msg)
+            page.find('.availability-status').removeClass('hidden');
+            page.find('.availability-status i').removeClass('octicon-check text-success');
+            page.find('.availability-status i').addClass('octicon-x text-danger');
+
+            page.find('.availability-status').removeClass('text-success');
+            page.find('.availability-status').addClass('text-danger');
+            page.find('.availability-status span').html(`${validation_msg}`);
+            // form_control.find('.validation-message').html(validation_msg || '');
+        }
+    }else{
+
+    // console.log(2)
+    page.find('.availability-status').removeClass('hidden');
+    // console.log(is_available,"Is_Available")
+    if (is_available) {
+        // available state
+        page.find('.availability-status i').removeClass('octicon-x text-danger');
+        page.find('.availability-status i').addClass('octicon-check text-success');
+
+        page.find('.availability-status').removeClass('text-danger');
+        page.find('.availability-status').addClass('text-success');
+        console.log("==========Removed Invalid")
+        page.find('#input-group-append').removeClass('invalid');
+        page.find('.availability-status span').html(`${subdomain}.onehash.ai is available!`);
+    } else {
+        // not available state
+        page.find('.availability-status i').removeClass('octicon-check text-success');
+        page.find('.availability-status i').addClass('octicon-x text-danger');
+
+        page.find('.availability-status').removeClass('text-success');
+        page.find('.availability-status').addClass('text-danger');
+        page.find('.availability-status span').html(`${subdomain}.onehash.ai is not available`);
+    }
+    }
+    // console.log("Resolved;")
+    resolve();
+    });
+}
+validateSubdomain= async function () {
+    // console.log("Inside Validate Subdomain")
+    domain_input_flag = 1;
+    var $this = $(this);
+    // console.log("Domain check",$this.data('timeout'))
+    clearTimeout($this.data('timeout'));
+    let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
+    $page.find('.validation-site-message').addClass('hidden');
+    await new Promise((resolve) => {
+        $this.data('timeout', setTimeout(async function () {
+            let page = $('#page-signup,#page-signup-1,#page-signup_ltd');
+            // console.log("Inside Set Timeout")
+            let subdomain = document.getElementById('input-group-append').value;
+            // set_availability_status('empty');
+            if (subdomain.length !== 0) {
+                page.find('.availability-status').addClass('hidden');
+                var [is_valid, validation_msg] = await is_a_valid_subdomain(subdomain);
+                // console.log(validation_msg,"Validation message")
+                // console.log(is_valid,"IsValid")
+                if (is_valid) {
+                    // show spinner
+                    page.find('.availability-subdomain-spinner').removeClass('hidden');
+                    await check_if_available(subdomain, async function (status) {
+                        await set_availability_status(status, subdomain);
+                        // hide spinner
+                        page.find('.availability-subdomain-spinner').addClass('hidden');
+                    });
+                } else {
+                    await set_availability_status('invalid', subdomain, validation_msg);
+                }
+            }
+            // console.log("Outside Set timeout");
+            resolve();
+        }, 500));
+    });
+    // console.log("Outside Validate Subdomain");
+}
+
+async function is_a_valid_subdomain(subdomain) {
+    // var MIN_LENGTH = 4;
+    // var MAX_LENGTH = 20;
+    // if (subdomain.length < MIN_LENGTH) {
+    //     return [0, `Sub-domain cannot have less than ${MIN_LENGTH} characters`];
+    // }
+    // if (subdomain.length > MAX_LENGTH) {
+    //     return [0, `Sub-domain cannot have more than ${MAX_LENGTH} characters`];
+    // }
+    if (!/^[a-z0-9]+$/.test(subdomain)) {
+        return [0, 'Subdomain can only contain lowercase letters and numbers'];
+    }
+      
+    return [1, ''];
+}
+
+async function check_if_available(subdomain, callback) {
+    setTimeout(function () {
+        frappe.call({
+            method: 'better_saas.better_saas.doctype.saas_user.saas_user.check_subdomain_avai',
+            args: {
+                subdomain: subdomain
+            },
+            type: 'POST',
+            callback: function (r) {
+                if (r.message.status === "True") {
+                    callback(1);
+                } else {
+                    callback(0);
+                    callback(0);
+                    callback(0);
+                    callback(0);
+                    callback(0);
+                }
+            },
+        });
+    }, 2000);
+}
 setup_signup = function (page) {
     // button for signup event
     if (!page) {
@@ -158,67 +329,9 @@ setup_signup = function (page) {
 
     //-------------------------------------- Subdoamin Validation and Avalability Check -----------------------------
 
-    page.find('input[name="subdomain"]').on('input', function () {
-        domain_input_flag = 1;
-        var $this = $(this);
-        clearTimeout($this.data('timeout'));
-        $this.data('timeout', setTimeout(function () {
-            let subdomain = $this.val();
-            set_availability_status('empty');
-            if (subdomain.length === 0) {
-                return;
-            }
+    page.find('input[name="subdomain"]').on('input',validateSubdomain);
 
-            page.find('.availability-status').addClass('hidden');
-            var [is_valid, validation_msg] = is_a_valid_subdomain(subdomain);
-            if (is_valid) {
-                // show spinner
-                page.find('.availability-spinner').removeClass('hidden');
-                check_if_available(subdomain, function (status) {
-                    set_availability_status(status, subdomain);
-                    // hide spinner
-                    page.find('.availability-spinner').addClass('hidden');
-                });
-            } else {
-                set_availability_status('invalid', subdomain, validation_msg);
-            }
-        }, 500));
-    });
-
-    function set_availability_status(is_available, subdomain, validation_msg) {
-        // reset
-        page.find('.availability-status').addClass('hidden');
-        page.find('.signup-subdomain').removeClass('invalid');
-        if (typeof is_available === 'string') {
-            if (is_available === 'empty') {
-                // blank state
-            } else if (is_available === 'invalid') {
-                // custom validation message
-                const form_control = page.find('.signup-subdomain').addClass('invalid');
-                form_control.find('.validation-message').html(validation_msg || '');
-            }
-            return;
-        }
-
-        page.find('.availability-status').removeClass('hidden');
-        if (is_available) {
-            // available state
-            page.find('.availability-status i').removeClass('octicon-x text-danger');
-            page.find('.availability-status i').addClass('octicon-check text-success');
-
-            page.find('.availability-status').removeClass('text-danger');
-            page.find('.availability-status').addClass('text-success');
-            page.find('.availability-status span').html(`${subdomain}.onehash.ai is available!`);
-        } else {
-            // not available state
-            page.find('.availability-status i').removeClass('octicon-check text-success');
-            page.find('.availability-status i').addClass('octicon-x text-danger');
-
-            page.find('.availability-status').removeClass('text-success');
-            page.find('.availability-status').addClass('text-danger');
-            page.find('.availability-status span').html(`${subdomain}.onehash.ai is not available`);
-        }
-    }
+    
 
     page.find('.btn-request').off('click').on('click', function () {
 
@@ -237,43 +350,8 @@ setup_signup = function (page) {
     //
     // set_distribution();
 
-    function is_a_valid_subdomain(subdomain) {
-        var MIN_LENGTH = 4;
-        var MAX_LENGTH = 20;
-        if (subdomain.length < MIN_LENGTH) {
-            return [0, `Sub-domain cannot have less than ${MIN_LENGTH} characters`];
-        }
-        if (subdomain.length > MAX_LENGTH) {
-            return [0, `Sub-domain cannot have more than ${MAX_LENGTH} characters`];
-        }
-        if (subdomain.search(/^[A-Za-z0-9][A-Za-z0-9]*[A-Za-z0-9]$/) === -1) {
-            return [0, 'Subdomain can use only letters and numbers'];
-        }
-        return [1, ''];
-    }
 
-    function check_if_available(subdomain, callback) {
-        setTimeout(function () {
-            frappe.call({
-                method: 'better_saas.better_saas.doctype.saas_user.saas_user.check_subdomain_avai',
-                args: {
-                    subdomain: subdomain
-                },
-                type: 'POST',
-                callback: function (r) {
-                    if (r.message.status === "True") {
-                        callback(1);
-                    } else {
-                        callback(0);
-                        callback(0);
-                        callback(0);
-                        callback(0);
-                        callback(0);
-                    }
-                },
-            });
-        }, 2000);
-    }
+
 
     var query_params = frappe.utils.get_query_params();
     if (!query_params.plan) {
@@ -330,24 +408,37 @@ setup_signup = function (page) {
             type: 'GET',
             method: 'better_saas.better_saas.doctype.saas_user.saas_user.check_password_strength',
             args: {
-                passphrase: $('#passphrase').val(),
+                passphrase:  $('#passphrase').val().toLowerCase(),                
                 first_name: $('input[name="first_name"]').val(),
                 last_name: $('input[name="last_name"]').val(),
                 email: $('input[name="email"]').val()
             },
             callback: function (r) {
+                // console.log(r)
                 if (r.message) {
-                    var score = r.message.score,
-                        feedback = r.message.feedback;
+                    console.log(r.message,"Message")
+                    // var score = r.message.score,
+                    //     feedback = r.message.feedback;
 
-                    feedback.crack_time_display = r.message.crack_time_display;
-                    feedback.score = score;
+                    // feedback.crack_time_display = r.message.crack_time_display;
+                    // feedback.score = score;
 
-                    if (feedback.password_policy_validation_passed) {
-                        set_strength_indicator('green', feedback);
+                    if (r.message=="Passed") {
+                        // console.log("Passed")
+                        // strength_indicator.removeClass().addClass('password-strength-indicator indicator ' + color);
+                        strength_message.html("Success! You are good to go 👍").removeClass('hidden');
+                        strength_message.attr('class', 'octicon-check text-success');
+                        $('#passphrase').css('border-color', '#0E8C4A');
+
+                        // set_strength_indicator('green',"Success! You are good to go 👍");
                         $('input[name="passphrase"]').closest('.form-group').removeClass('invalid');
                     } else {
-                        set_strength_indicator('red', feedback);
+                        
+                        strength_message.attr('class', `octicon-x text-danger`);
+                        strength_message.html(r.message).removeClass('hidden');
+                        $('#passphrase').css('border-color', '#377DE2');
+
+                        // set_strength_indicator('red', r.message);
                         $('input[name="passphrase"]').closest('.form-group').addClass('invalid');
                     }
                 }
@@ -394,24 +485,32 @@ setup_signup = function (page) {
 };
 
 // ------------------------------- Setup Signup Request ----------------------------------------------
-let captchaVerified="False";
-let callbackCaptchaVerification="False";
-async function verify_captcha(token){
-    // console.log(token)
-    captchaToken=token;
+let captchaVerified = "False";
+let callbackCaptchaVerification = "False";
+function expired_captcha() {
+    // console.log("Expired Captcha")
+}
+function error_captcha() {
+    // console.log("Error Captcha")
+}
+async function onloadCallback(){
+    // console.log("Captcha is loadedddddddddddddddddddddddd.");
+}
+async function verify_captcha(token) {
+    // console.log("Token",token)
+    captchaToken = token;
     await frappe.call({
         method: 'better_saas.better_saas.doctype.saas_user.saas_user.verify_captcha',
-        args: {'captchaToken':captchaToken},
+        args: { 'captchaToken': captchaToken },
         type: 'POST',
         callback: function (r) {
             // console.log(r.message,"Response")
-            if(r.message==true)
-            {
-                captchaVerified="True";
+            if (r.message == true) {
+                captchaVerified = "True";
 
                 // console.log(captchaVerified,"Verified")
             }
-            callbackCaptchaVerification="True";
+            callbackCaptchaVerification = "True";
 
             // Calling Setup_account_request after captcha
             let $page = $('#page-signup,#page-appsumo, #page-signup-1, #page-signup_ltd');
@@ -426,107 +525,86 @@ async function setup_account_request($page) {
     // console.log("Setup Account Request")
 
     // Add your logic to submit to your backend server here.
+    // console.log("Setup Account Request")
+    await validateMail();
+    await validateSubdomain();
+    
+    // console.log("Validate After Subdomain.");
     hide_phonenumber = "{{hide_phonenumber}}";
     if (!$page.find('input[name="first_name"]').val() ||
         !$page.find('input[name="last_name"]').val() ||
         !$page.find('input[name="subdomain"]').val() ||
         !$page.find('input[name="email"]').val() ||
-        (hide_phonenumber!=1 && !$page.find('input[name="phone_number"]').val()) ||
+        (hide_phonenumber != 1 && !$page.find('input[name="phone_number"]').val()) ||
         !$page.find('input[name="passphrase"]').val() || !$page.find('input[name="company_name"]').val()) {
- 
+
         frappe.msgprint("All fields are necessary. Please try again.");
         return false;
- 
+
+    }else if($page.find('input[name="subdomain"]').hasClass('invalid')){
+        $page.find('.availability-status').removeClass('hidden');
+        frappe.msgprint("Please enter a valid Sitename.");
+
     } else if ($page.find('input[name="email"]').parent().hasClass('invalid')) {
- 
+
         frappe.msgprint("Please enter a valid email.");
+        $page.find('#input-group-append').addClass('invalid');
         return false;
- 
+
     } else if ($page.find('input[name="email"]').parent().hasClass('not-available')) {
- 
+
         frappe.msgprint("Email already in use, try logging in instead.");
         return false;
- 
+
     } else if ($page.find('input[name="passphrase"]').parent().hasClass('invalid')) {
- 
+
         frappe.msgprint("Please enter a strong password.");
         return false;
- 
+
     } else if ($page.find('input[name="phone_number"]').parent().hasClass('invalid')) {
- 
+
         frappe.msgprint("Please enter Phone Number.");
         return false;
- 
+
     } else if ($page.find('input[name="company_name"]').parent().hasClass('invalid')) {
         frappe.msgprint("Please enter Company Name.");
         return false;
- 
-            } else {
-        var args = Array.from($page.find('.signup-state-details input'))
-            .reduce(
-                (acc, input) => {
-                    acc[$(input).attr('name')] = $(input).val();
-                    return acc;
-                }, {});
- 
-        // Update Phone Number with Country Code 
-        args.phone_number = localStorage.getItem('phoneNum');
-        // console.log("Form Data",args)
-        // validate inputs
+
+    } else {
+
+        // Validate inputs
         const validations = Array.from($page.find('.form-group.invalid'))
             .map(form_group => $(form_group).find('.validation-message').html());
         if (validations.length > 0) {
             frappe.msgprint(validations.join("<br>"));
             return;
         }
-        // console.log("A",$("input[name*='agree-checkbox']").prop("checked"))
+
+        // Policy Verification
         if ($("input[name*='agree-checkbox']").prop("checked") == false) {
             frappe.msgprint("Please agree to the Terms of Use and Privacy Policy.");
             return;
         }
-        // console.log("B")
-        // while(verified=="false"){}
-        if (callbackCaptchaVerification=="True" && captchaVerified=="True"){
+
+        // console.log("Captcha Verification")
+        // Captcha Verification
+        if (callbackCaptchaVerification == "True" && captchaVerified == "True") {
             // Uncomment to see dialog if the token is verified
             // frappe.msgprint(captchaVerified,"Captcha Token Verified")
         }
-        else{
+        else {
             frappe.msgprint("Captcha failed.");
             return false;
-        } 
-        callbackCaptchaVerification="False";
-        captchaVerified="False";
-       
- 
-        // console.log("C")
-        // add plan to args
-        var plan = frappe.utils.get_url_arg('plan');
-        if (plan) args.plan = plan;
- 
-        var res = frappe.utils.get_url_arg('res');
-        if (res) args.partner = res;
- 
+        }
+        callbackCaptchaVerification = "False";
+        captchaVerified = "False";
         
+        // console.log("Captcha Verification Done")
+        //OTP Timer
         var $btn = $page.find('.get-started-button');
         var btn_html = $btn.html();
         incTimer();
-    var countdownNum = 30;
-        
 
-        function incTimer(){
-          setTimeout (function(){
-            if(countdownNum != 0){
-            countdownNum--;
-            $btn.prop("disabled", true).html("Resend OTP "+countdownNum);
-            incTimer();
-       } 
-        },1000);
-    }
-        
-        
-        $page.find('input[name="otp"]').parent().removeClass('hide');
-        
- 
         // Lock Form Fields
         let inputArray = Array.from($page.find('.signup-card form input'));
         inputArray.pop();
@@ -535,9 +613,53 @@ async function setup_account_request($page) {
             $(inputArray[input]).prop('readonly', true);
         }
         $("input[name*='agree-checkbox']").prop('disabled', true);
-        $page.find('input[name="otp"]').prop('readonly',false);
+        $page.find('input[name="otp"]').prop('readonly', false);
         //goog_report_conversion(); // eslint-disable-line
- 
+
+        // View Verify OTP Button
+        $page.find('input[name="otp"]').parent().removeClass('hide');
+        var args = Array.from($page.find('.signup-state-details input'))
+        .reduce(
+            (acc, input) => {
+                console.log($(input).attr('name'))
+                if($(input).attr('name') =='first_name'||$(input).attr('name') =='last_name'
+                || $(input).attr('name') =='email' || $(input).attr('name') =='phone_number')
+                acc[$(input).attr('name')] = $(input).val();
+                return acc;
+            }, {});
+        // console.log(localStorage.getItem('phoneNum'),"LocalStorage Phone Number")
+        // args.phone_number=localStorage.getItem('phoneNum');
+        // console.log(args);
+        // frappe.call({
+        //     method: 'better_saas.better_saas.doctype.saas_user.saas_user.send_otp',
+        //     args:args,
+        //     type: 'POST',
+        //     callback: function (r) {
+        //         console.log(r)
+        //         if (r.message) {
+        //             console.log(r.message,"Callback from SEND OTP Backend.")
+        //         }
+        //     },
+        // });  
+        var args = Array.from($page.find('.signup-state-details input'))
+            .reduce(
+                (acc, input) => {
+                    acc[$(input).attr('name')] = $(input).val();
+                    return acc;
+                }, {});
+
+        // Update Phone Number with Country Code 
+        args.phone_number = localStorage.getItem('phoneNum');
+
+        // console.log("Form Data",args)
+        // add plan to args
+        var plan = frappe.utils.get_url_arg('plan');
+        if (plan) args.plan = plan;
+
+        var res = frappe.utils.get_url_arg('res');
+        if (res) args.partner = res;
+
+
         let locationParams = localStorage.getItem('urlKeywordParams')
         if (locationParams) {
             let urlParams = new URLSearchParams(locationParams);
@@ -556,7 +678,7 @@ async function setup_account_request($page) {
             args['utm_term'] = urlParams.get('utm_term');
             args['utm_term'] = urlParams.get('utm_term');
             //	args['ga_params'] = ga_params
- 
+
         } else {
             let urlParams = new URLSearchParams(window.location.search)
             args['utm_source'] = urlParams.get('utm_source');
@@ -567,37 +689,39 @@ async function setup_account_request($page) {
             args['product'] = urlParams.get('product');
         }
  
- 
         delete args['agree-checkbox'];
- 
+
+        // console.log(args,"BUGGGGGGGGG")
         frappe.call({
             method: 'better_saas.better_saas.doctype.saas_user.saas_user.signup',
             args: args,
             type: 'POST',
             btn: $btn,
             callback: function (r) {
+                // console.log(r)
                 if (r.exc) return;
- 
+
                 if (r.message) {
+                    // console.log(r.message)
                     localStorage.setItem("reference", r.message.reference);
                     localStorage.setItem("email", r.message.email);
                     localStorage.setItem("mobile", r.message.mobile);
                     $('.verify-otp .email').text(r.message.email);
                     $('.mobile').text(r.message.mobile);
                     $page.find('input[name="otp"]').parent().removeClass('hide');
-                    setTimeout(function() {
-                    $('.get-started-button').text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary');
-                   }, 28000);
+                    setTimeout(function () {
+                        $('.get-started-button').text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary');
+                    }, 28000);
                 }
             },
- 
+
         }).always(function () {
-            setTimeout(function() {
-            $btn.prop("disabled", false).html(btn_html);
-          }, 28000);
+            setTimeout(function () {
+                $btn.prop("disabled", false).html(btn_html);
+            }, 28000);
         });
         return false;
- 
+
     }
 }
 
@@ -650,24 +774,40 @@ function verify_otp($page) {
     });
 }
 
+// Resend OTP Timer
+function incTimer() {
+    // console.log(repeat, "Repeat");
+    repeat--;
+    let $btn = $(".get-started-button");
+    if (repeat == 0) {
+        // console.log(repeat, "It is zero")
+        $btn.prop("disabled", true);
+        frappe.msgprint("Refreshing Page due to multiple attempts.");
+        setTimeout(() => {
+            location.reload();
+        }, 3000);
+        return;
+    }
+    for (let i = 30; i >= 0; i--) {
+        // console.log("A");
+        setTimeout(function () {
+            // console.log("B")
+            $btn.prop("disabled", true).html("Resend OTP " + i);
+            // console.log(i);
+        }, (30 - i) * 1000);
+    }
+    setTimeout(function () {
+        // console.log("Primary add.")
+        $btn.text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary').removeClass('disabled').removeAttr('disabled');
+    }, (31) * 1000);
+
+}
 function resend_otp($page) {
     var $btn = $page.find('.get-started-button');
     var btn_html = $btn.html();
     $btn.prop("disabled", true);
     // $btn.text("Resend OTP "+"30");
     incTimer();
-    var countdownNum = 30;
-
-        function incTimer(){
-          setTimeout (function(){
-            if(countdownNum != 0){
-            $btn.prop("disabled", true);
-            countdownNum--;
-            $btn.text("Resend OTP "+countdownNum);
-          incTimer();
-       } 
-        },1000);
-    }
     frappe.call({
         method: 'better_saas.better_saas.doctype.saas_user.saas_user.resend_otp',
         args: { "id": localStorage.getItem("reference") },
@@ -676,16 +816,16 @@ function resend_otp($page) {
     }).always(function () {
         $('#otp').css('border-color', '#377DE2');
         $('#otp').next().text("OTP resent").css('color', '#377DE2').show();
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             //$btn.show();
             $btn.prop("disabled", false).html(btn_html);
-        $btn.text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary');
+            $btn.text("Resend OTP").removeClass('btn-secondary').addClass('btn-primary');
         }, 28000); // 30 seconds in milliseconds
 
         //$btn.hide();
     });
-} 
+}
 
 function toggle_button(event) {
     let button = $(".get-started-button");
