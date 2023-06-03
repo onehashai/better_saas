@@ -128,7 +128,6 @@ h6 {
 }
 
 .validation-message {
-    display: none;
     margin-top: 0px;
     position: absolute;
 }
@@ -227,6 +226,11 @@ body[data-path="me"]>section.footer-message {
 
 .floating-label {
   position: relative;
+}
+.captcha_enter{
+  display:flex;
+  justify-content: center;
+  align-items: center;
 }
 .floating-label > select + label {
   position: absolute;
@@ -464,7 +468,7 @@ body[data-path="me"]>section.footer-message {
     font-weight:400;
     margin-top:15px;
     color:#333;
-]
+}
 @media screen and (max-width: 728px) {
 .signup-inner {
 padding:10px;
